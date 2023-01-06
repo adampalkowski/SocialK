@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="welcome_fragment" type="id" />
+    <item name="sign_in_fragment" type="id" />
+    <item name="sign_up_fragment" type="id" />
+    <item name="survey_fragment" type="id" />
+    <item name="home_fragment" type="id" />
+    <item name="profile_fragment" type="id" />
+    <item name="settings_fragment" type="id" />
+    <item name="chats_fragment" type="id" />
+    <item name="map_fragment" type="id" />
+    <item name="memories_fragment" type="id" />
+    <item name="live_fragment" type="id" />
+    <item name="event_fragment" type="id" />
+</resources>

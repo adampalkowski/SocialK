@@ -1,0 +1,42 @@
+<resources>
+    <string name="app_name">SocialK</string> <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="sign_in">Sign in</string>
+    <string name="sign_in_guest">Sign in as guest</string>
+    <string name="sign_in_create_account">Sign in or create an account</string>
+    <string name="or">or</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="user_continue">Continue</string>
+    <string name="create_account">Create account</string>
+    <string name="terms_and_conditions">By continuing, you agree to our Terms of Service. We’ll
+        handle your data according to our Privacy Policy.</string>
+    <string name="feature_not_available">Feature not available</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+    <string name="done">Done</string>
+    <string name="back">Back</string>
+    <string name="close">Close</string>
+    <string name="show_password">Show password</string>
+    <string name="hide_password">Hide password</string>
+
+    <!-- survey-->
+    <string name="which_jetpack_library">Which Jetpack library are you?</string>
+    <string name="question_count">\u00A0of %d</string>
+    <string name="select_one">Select one.</string>
+    <string name="select_all">Select all that apply.</string>
+    <string name="select_date">Select date.</string>
+
+    <string name="neutral">Neutral</string>
+
+    <!-- Permissions-->
+    <string name="permissions_rationale">This question requires some permissions. Please grant them.</string>
+    <string name="permissions_denied">Permissions were denied. Unfortunately, this question is not available at the moment. Please continue with the survey or grant access to the permissions on the Settings screen.</string>
+    <string name="request_permissions">OK!</string>
+    <string name="do_not_ask_permissions">Nope 🙅</string>
+    <string name="open_settings">Open Settings</string>
+    <string name="register_button">Register for free</string>
+    <string name="web_client_id" >265119178735-6eli1lnodebhpseid3ooftuve537as0b.apps.googleusercontent.com</string>
+
+</resources>
