@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import com.example.socialk.Chats
 import com.example.socialk.Destinations
 import com.example.socialk.bottomTabRowScreens
+import com.example.socialk.components.BottomBar
 import com.example.socialk.components.BottomBarRow
 import com.example.socialk.ui.theme.Ocean1
 import com.example.socialk.ui.theme.Ocean3
@@ -36,11 +37,6 @@ fun MapScreen( onEvent: (MapEvent) -> Unit, bottomNavEvent:(Destinations)->Unit)
 
 
         }
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(56.dp)
-            ,contentAlignment = Alignment.BottomCenter){
-            BottomBarRow(allScreens = bottomTabRowScreens, onTabSelected = { screen->bottomNavEvent(screen)},currentScreen = com.example.socialk.Map)
-        }
+        BottomBar( onTabSelected = { screen->bottomNavEvent(screen)},currentScreen = com.example.socialk.Map)
     }
 }

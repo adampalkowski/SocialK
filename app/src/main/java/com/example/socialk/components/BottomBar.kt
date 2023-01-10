@@ -31,10 +31,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.socialk.Destinations
-import com.example.socialk.Home
+import com.example.socialk.*
 import com.example.socialk.R
-import com.example.socialk.bottomTabRowScreens
 import com.example.socialk.ui.theme.SocialTheme
 import java.util.*
 
@@ -104,6 +102,17 @@ fun BottomBarRowCustom(     allScreens: List<Destinations>,
         }
     }
 }
+
+@Composable
+fun BottomBar( onTabSelected: (Destinations) -> Unit,currentScreen: Destinations){
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .heightIn(56.dp)
+        ,contentAlignment = Alignment.BottomCenter){
+        BottomBarRow(allScreens = bottomTabRowScreens, onTabSelected = {screen->onTabSelected(screen)},currentScreen = currentScreen)
+    }
+}
+
 @Composable
 fun SocialFab(){
     Surface(modifier = Modifier.size(56.dp), color =Color(0xFFCCCEEC), shape = RoundedCornerShape(16.dp) ) {

@@ -79,4 +79,9 @@
         android:name="com.example.socialk.create.EventFragment"
         android:label="Event">
     </fragment>
+    <fragment
+        android:id="@+id/edit_profile_fragment"
+        android:name="com.example.socialk.EditProfileFragment"
+        android:label="EditProfile">
+    </fragment>
 </navigation>

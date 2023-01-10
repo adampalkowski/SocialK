@@ -5,10 +5,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material3.CardElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -45,7 +42,8 @@ fun ActivityItem(
 ) {
     Box(
         modifier = Modifier
-            .padding(start = 24.dp).padding(end=12.dp)
+            .padding(start = 12.dp)
+            .padding(end = 12.dp)
             .padding(vertical = 12.dp)
     ) {
         Column() {
@@ -67,26 +65,28 @@ fun ActivityItem(
                             fontSize = 16.sp,
                             fontFamily = Inter,
                             fontWeight = FontWeight.Light
-                        )
+                        ),color= SocialTheme.colors.textPrimary
                     )
                     Text(
                         text = timeLeft, style = TextStyle(
                             fontFamily = Inter,
                             fontWeight = FontWeight.ExtraLight, fontSize = 10.sp
-                        ), textAlign = TextAlign.Center
+                        ), textAlign = TextAlign.Center,color= SocialTheme.colors.textPrimary
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 Icon(painter = painterResource(id = R.drawable.ic_more), contentDescription = null,tint =SocialTheme.colors.iconPrimary)
                 Spacer(modifier = Modifier.width(12.dp))
             }
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Row (modifier = Modifier, verticalAlignment = Alignment.CenterVertically){
-                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                Column(modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp)) {
                     Text(
                         modifier = Modifier, text = title, style = TextStyle(
                             fontSize = 18.sp, fontFamily = Inter, fontWeight = FontWeight.Normal
-                        ), textAlign = TextAlign.Left
+                        ),color=SocialTheme.colors.textPrimary, textAlign = TextAlign.Left
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
@@ -117,7 +117,7 @@ fun ActivityDetailsBar() {
 
         Box(modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .height(36.dp)
             .background(color = Color.Transparent) ){
 
             Row (modifier = Modifier
@@ -156,7 +156,8 @@ fun controls(){
         val isDark = isSystemInDarkTheme()
         Box(
             modifier = Modifier
-                .background(color = if (isDark) Color(0xFF25232A) else Color.White).fillMaxSize()
+                .background(color = if (isDark) Color(0xFF25232A) else Color.White)
+                .fillMaxSize()
         ) {
 
             Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = CenterHorizontally, verticalArrangement = Arrangement.SpaceEvenly) {

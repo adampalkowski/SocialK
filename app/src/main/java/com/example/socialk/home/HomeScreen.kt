@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.example.socialk.*
 import com.example.socialk.R
 import com.example.socialk.components.ActivityItem
+import com.example.socialk.components.BottomBar
 import com.example.socialk.components.BottomBarRow
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.Inter
@@ -51,7 +52,7 @@ fun HomeScreen(
             .fillMaxSize()
             .background(SocialTheme.colors.uiBackground), color = SocialTheme.colors.uiBackground
     ) {
-        Box (modifier = Modifier.fillMaxSize()){
+        Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 Spacer(modifier = Modifier.height(56.dp))
                 ActivityItem(
@@ -96,96 +97,115 @@ fun HomeScreen(
                 .heightIn(56.dp)
                 .padding(vertical = 12.dp), contentAlignment = Alignment.TopCenter
         ) {
-            topBar(isDark,onEvent = {onEvent(HomeEvent.GoToMemories)}, picked_screen = "Activities")
+            topBar(
+                isDark,
+                onEvent = { onEvent(HomeEvent.GoToMemories) },
+                picked_screen = "Activities"
+            )
         }
 
 
-        Box(modifier =Modifier, contentAlignment = Alignment.BottomEnd ){
+        Box(modifier = Modifier, contentAlignment = Alignment.BottomEnd) {
 
 
         }
 
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(100.dp), contentAlignment = Alignment.BottomCenter
-        ) {
 
 
 
-                BottomBarRow(
-                    allScreens = bottomTabRowScreens,
-                    onTabSelected = { screen -> bottomNavEvent(screen) },
-                    currentScreen = Home
-                )
-            }
+
+        BottomBar(
+            onTabSelected = { screen -> bottomNavEvent(screen) },
+            currentScreen = Home
+        )
+
 
     }
 }
 
 
 @Composable
-fun topBar(isDark:Boolean,modifier: Modifier = Modifier, onEvent: () -> Unit,picked_screen:String) {
-        Row(modifier = Modifier
+fun topBar(
+    isDark: Boolean,
+    modifier: Modifier = Modifier,
+    onEvent: () -> Unit,
+    picked_screen: String
+) {
+    Row(
+        modifier = Modifier
             .width(200.dp)
             .height(48.dp)
-            .padding(horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically) {
-            if (picked_screen.equals("Activities")){
-                cardHighlited(text = "Activities", isDark = isDark)
-                Spacer(Modifier.width(6.dp))
-                cardnotHighlited(text="Memories",onEvent= onEvent )
-            }else{
-                cardnotHighlited(text="Activities",onEvent= onEvent )
-                Spacer(Modifier.width(6.dp))
-                cardHighlited(text = "Memories", isDark = isDark)
-            }
-
+            .padding(horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (picked_screen.equals("Activities")) {
+            cardHighlited(text = "Activities", isDark = isDark)
+            Spacer(Modifier.width(6.dp))
+            cardnotHighlited(text = "Memories", onEvent = onEvent)
+        } else {
+            cardnotHighlited(text = "Activities", onEvent = onEvent)
+            Spacer(Modifier.width(6.dp))
+            cardHighlited(text = "Memories", isDark = isDark)
         }
+
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun cardnotHighlited(text:String,onEvent: () -> Unit){
+fun cardnotHighlited(text: String, onEvent: () -> Unit) {
     Card(
         modifier = Modifier
             .width(90.dp)
             .height(40.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors
-            (containerColor =Color.Transparent),
-
+            (containerColor = Color.Transparent),
         onClick = onEvent
     ) {
-        Row(modifier = Modifier
-            .fillMaxSize()
-            .padding(6.dp),
-            verticalAlignment = Alignment.CenterVertically
-            , horizontalArrangement = Arrangement.Center) {
-            Text(text = text, fontSize = 14.sp, color = Color(0xffB0B0B0), style = TextStyle(fontFamily = Inter,
-                fontWeight = FontWeight.Medium)
-                , textAlign = TextAlign.Center)
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = text, fontSize = 14.sp, color = Color(0xffB0B0B0), style = TextStyle(
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.Medium
+                ), textAlign = TextAlign.Center
+            )
         }
     }
 }
+
 @Composable
-fun cardHighlited(isDark:Boolean,text:String){
-        Column(modifier = Modifier
+fun cardHighlited(isDark: Boolean, text: String) {
+    Column(
+        modifier = Modifier
             .height(40.dp)
             .width(90.dp)
             .padding(6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            Text(text = text, fontSize = 14.sp
-                ,color =if (isDark) Color.White else Color(0xFF25232A) ,modifier=Modifier, style = TextStyle(fontFamily = Inter, fontWeight = FontWeight.SemiBold)
-                , textAlign = TextAlign.Center)
-            Spacer(modifier = Modifier.height(4.dp))
-            Box(modifier = Modifier
-                .background(color =if (isDark) Color.White else Color(0xFF25232A))
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            color = if (isDark) Color.White else Color(0xFF25232A),
+            modifier = Modifier,
+            style = TextStyle(fontFamily = Inter, fontWeight = FontWeight.SemiBold),
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Box(
+            modifier = Modifier
+                .background(color = if (isDark) Color.White else Color(0xFF25232A))
                 .height(1.dp)
-                .width(36.dp)
-               )
-        }
+                .width(40.dp)
+        )
+    }
 
 }
 

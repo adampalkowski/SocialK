@@ -40,6 +40,8 @@ class ProfileFragment :Fragment(){
                                 is ProfileEvent.GoToProfile -> viewModel.handleGoToProfile()
                                 is ProfileEvent.LogOut -> viewModel.handleLogOut()
                                 is ProfileEvent.GoToSettings -> viewModel.handleGoToSettings()
+                                is ProfileEvent.GoToHome -> viewModel.handleGoToHome()
+                                is ProfileEvent.GoToEditProfile -> viewModel.handleGoToEditProfile()
                             }
                         },
                         bottomNavEvent  ={screen->

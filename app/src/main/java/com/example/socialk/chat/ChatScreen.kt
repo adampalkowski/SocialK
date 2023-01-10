@@ -12,6 +12,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.socialk.*
 import com.example.socialk.R
+import com.example.socialk.components.BottomBar
 import com.example.socialk.components.BottomBarRow
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.Ocean1
@@ -38,11 +39,6 @@ fun ChatScreen( onEvent: (ChatEvent) -> Unit, bottomNavEvent:(Destinations)->Uni
 
 
         }
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(56.dp)
-            ,contentAlignment = Alignment.BottomCenter){
-            BottomBarRow(allScreens = bottomTabRowScreens, onTabSelected = { screen->bottomNavEvent(screen)},currentScreen = Chats)
-        }
+        BottomBar( onTabSelected = { screen->bottomNavEvent(screen)},currentScreen = Chats)
     }
 }

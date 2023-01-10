@@ -1,21 +1,29 @@
 package com.example.socialk.create
 
 import android.content.res.Configuration
-import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Surface
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.socialk.Create
 import com.example.socialk.Destinations
+import com.example.socialk.R
 import com.example.socialk.bottomTabRowScreens
+import com.example.socialk.components.BottomBar
 import com.example.socialk.components.BottomBarRow
 import com.example.socialk.home.cardHighlited
 import com.example.socialk.home.cardnotHighlited
+import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 
 
@@ -35,14 +43,60 @@ fun LiveScreen (onEvent: (LiveEvent) -> Unit, bottomNavEvent:(Destinations)->Uni
         .fillMaxSize()
         .background(SocialTheme.colors.uiBackground),color= SocialTheme.colors.uiBackground
     ) {
-
-        Column(modifier = Modifier
-            .fillMaxSize()
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(12.dp))
-            activityPickerLive(isSystemInDarkTheme(),onEvent= {event-> onEvent(event) })
+            activityPickerLive(isSystemInDarkTheme(), onEvent = { event -> onEvent(event) })
+            Spacer(modifier = Modifier.height(12.dp))
+
+
+            createField(
+                column = false,
+                action = {
+                    //TODO HARDCODED  TIME length, implement onclick,hardoced color
+                    ClickableText(text = AnnotatedString("1 hour"), style = TextStyle(
+                        color = Color(0xFF494949),
+                        fontSize = 18.sp,
+                        fontFamily = Inter,
+                        fontWeight = FontWeight.SemiBold,
+                    ), onClick = {})
+                },
+                title = "Time length",
+                icon = R.drawable.ic_hourglass
+            )
+            createField(
+                column = false,
+                action = {
+                    //todo hardcoced false switch , on change ??
+                    Switch(colors = SwitchDefaults.colors(checkedThumbColor =Color.Black ,
+                    uncheckedThumbColor = Color.Gray,
+                    checkedTrackColor =Color.Black ,
+                    uncheckedTrackColor =  Color.Gray),checked = false, onCheckedChange = {})
+                },
+                title = "Current location",
+                icon = R.drawable.ic_my_location
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+            CreateActivityButton(onClick = {})
+            Spacer(modifier = Modifier.height(64.dp))
         }
 
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(56.dp), contentAlignment = Alignment.BottomCenter
+        ) {
+            BottomBarRow(
+                allScreens = bottomTabRowScreens,
+                onTabSelected = { screen -> bottomNavEvent(screen) },
+                currentScreen = Create
+            )
+        }
+    }
 
         Box(modifier = Modifier
             .fillMaxWidth()
@@ -51,13 +105,8 @@ fun LiveScreen (onEvent: (LiveEvent) -> Unit, bottomNavEvent:(Destinations)->Uni
 
 
         }
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(56.dp)
-            ,contentAlignment = Alignment.BottomCenter){
-            BottomBarRow(allScreens = bottomTabRowScreens, onTabSelected = { screen->bottomNavEvent(screen)},currentScreen = Create)
-        }
-    }
+        BottomBar(onTabSelected = { screen->bottomNavEvent(screen)},currentScreen = Create)
+
 }
 
 @Composable

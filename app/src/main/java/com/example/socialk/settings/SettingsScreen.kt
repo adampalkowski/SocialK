@@ -49,7 +49,7 @@ fun SettingsScreen(viewModel: AuthViewModel?, onEvent: (SettingsEvent) -> Unit) 
     ) {
 
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            ScreenHeading(title = "Settings",onClick={onEvent(SettingsEvent.GoToHome)})
+            ScreenHeading(title = "Settings",onClick={onEvent(SettingsEvent.GoToProfile)})
             Spacer(modifier = Modifier.height(12.dp))
             settingsDivider(text = "Account")
             settingsItem(

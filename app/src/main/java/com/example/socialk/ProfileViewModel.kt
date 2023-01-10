@@ -31,4 +31,7 @@ class ProfileViewModel : ViewModel() {
     fun handleGoToCreate( ) {
         _navigateTo.value = Event(Screen.Create)
     }
+    fun handleGoToEditProfile( ) {
+        _navigateTo.value = Event(Screen.EditProfile)
+    }
 }
