@@ -20,6 +20,9 @@ class ChatViewModel :ViewModel(){
     fun handleGoToSettings( ) {
         _navigateTo.value = Event(Screen.Settings)
     }
+    fun handleGoToSearch( ) {
+        _navigateTo.value = Event(Screen.Search)
+    }
     fun handleGoToHome( ) {
         _navigateTo.value = Event(Screen.Home)
     }

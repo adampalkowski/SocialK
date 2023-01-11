@@ -81,7 +81,7 @@ fun LiveScreen (onEvent: (LiveEvent) -> Unit, bottomNavEvent:(Destinations)->Uni
             )
 
             Spacer(modifier = Modifier.height(48.dp))
-            CreateActivityButton(onClick = {})
+            CreateActivityButton(onClick = {}, text = "Create activity")
             Spacer(modifier = Modifier.height(64.dp))
         }
 

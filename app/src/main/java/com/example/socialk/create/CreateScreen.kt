@@ -64,7 +64,7 @@ fun CreateScreen(onEvent: (CreateEvent) -> Unit, bottomNavEvent: (Destinations) 
                         .padding(horizontal = 24.dp),
                     shape = RoundedCornerShape(12.dp),
                     backgroundColor = SocialTheme.colors.uiBackground,
-                    border = BorderStroke(1.dp, color = Color(0xffD3D3D3))
+                    border = BorderStroke(1.dp, color =SocialTheme.colors.uiFloated)
                 ) {
                     Box(modifier = Modifier) {
                         //TODO TEXT FIELDS SHOULD BE DONE THE SAME WAY AS IT IS IN THE LOGIN SECTION
@@ -128,7 +128,7 @@ fun CreateScreen(onEvent: (CreateEvent) -> Unit, bottomNavEvent: (Destinations) 
                 icon = R.drawable.ic_hourglass
             )
             Spacer(modifier = Modifier.height(48.dp))
-            CreateActivityButton(onClick = {})
+            CreateActivityButton(onClick = {}, text = "Create activity")
             Spacer(modifier = Modifier.height(64.dp))
         }
 
@@ -143,7 +143,7 @@ fun CreateScreen(onEvent: (CreateEvent) -> Unit, bottomNavEvent: (Destinations) 
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun CreateActivityButton(onClick: () -> Unit) {
+fun CreateActivityButton(onClick: () -> Unit,text:String) {
     Card(
         modifier = Modifier
             .height(56.dp)
@@ -154,7 +154,7 @@ fun CreateActivityButton(onClick: () -> Unit) {
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(
-                text = "Create activity",
+                text = text,
                 style = TextStyle(
                     color = SocialTheme.colors.textSecondary, fontSize = 18.sp,
                     fontFamily = Inter, fontWeight = FontWeight.Bold
@@ -230,13 +230,13 @@ fun createField(action: @Composable () -> Unit, title: String, icon: Int, column
                     modifier = Modifier
                         .width(300.dp)
                         .height(1.dp)
-                        .background(color = Color(0xFFE0E0E0))
+                        .background(color = SocialTheme.colors.uiFloated)
                 )
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
-                        .background(color = Color(0xFFE0E0E0))
+                        .background(color = SocialTheme.colors.uiFloated)
                 )
             } else {
                 Row(
@@ -264,13 +264,13 @@ fun createField(action: @Composable () -> Unit, title: String, icon: Int, column
                     modifier = Modifier
                         .width(300.dp)
                         .height(1.dp)
-                        .background(color = Color(0xFFE0E0E0))
+                        .background(color =SocialTheme.colors.uiFloated)
                 )
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
-                        .background(color = Color(0xFFE0E0E0))
+                        .background(color =SocialTheme.colors.uiFloated)
                 )
             }
 

@@ -65,7 +65,7 @@ fun EventScreen (onEvent: (EventEvent) -> Unit, bottomNavEvent:(Destinations)->U
                         .padding(horizontal = 24.dp),
                     shape = RoundedCornerShape(12.dp),
                     backgroundColor = SocialTheme.colors.uiBackground,
-                    border = BorderStroke(1.dp, color = Color(0xffD3D3D3))
+                    border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated)
                 ) {
                     Box(modifier = Modifier) {
                         //TODO TEXT FIELDS SHOULD BE DONE THE SAME WAY AS IT IS IN THE LOGIN SECTION
@@ -133,7 +133,7 @@ fun EventScreen (onEvent: (EventEvent) -> Unit, bottomNavEvent:(Destinations)->U
             )
 
             Spacer(modifier = Modifier.height(48.dp))
-            CreateActivityButton(onClick = {})
+            CreateActivityButton(onClick = {},"Create activity")
             Spacer(modifier = Modifier.height(64.dp))
         }
 

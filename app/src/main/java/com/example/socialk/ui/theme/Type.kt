@@ -39,40 +39,35 @@ val Typography =Typography(
     ),
     h2 = TextStyle(
         fontFamily = Inter,
-        fontSize = 60.sp,
-        fontWeight = FontWeight.Light,
-        letterSpacing = (-0.5).sp
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Medium,
     ),
     h3 = TextStyle(
         fontFamily = Inter,
-        fontSize = 48.sp,
-        fontWeight = FontWeight.Normal,
-        lineHeight = 59.sp
+        fontSize = 18.sp,
+        fontWeight = FontWeight.Medium,
+
     ),
     h4 = TextStyle(
         fontFamily = Inter,
-        fontSize = 30.sp,
-        fontWeight = FontWeight.SemiBold,
-        lineHeight = 37.sp
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Normal,
     ),
     h5 = TextStyle(
         fontFamily = Inter,
-        fontSize = 24.sp,
-        fontWeight = FontWeight.SemiBold,
-        lineHeight = 29.sp
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Normal,
     ),
     h6 = TextStyle(
         fontFamily = Inter,
-        fontSize = 18.sp,
-        fontWeight = FontWeight.SemiBold,
-        lineHeight = 20.sp
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Light,
     ),
     subtitle1 = TextStyle(
         fontFamily = Inter,
-        fontSize = 18.sp,
-        fontWeight = FontWeight.Medium,
-        lineHeight = 24.sp,
-        letterSpacing = 0.15.sp
+        fontSize = 10.sp,
+        fontWeight = FontWeight.Light,
+
     ),
     subtitle2 = TextStyle(
         fontFamily = Karla,
@@ -98,10 +93,7 @@ val Typography =Typography(
     button = TextStyle(
         fontFamily = Inter,
         fontSize = 14.sp,
-        color= Color(0xFF8C36F9),
-        fontWeight = FontWeight.Medium,
-        lineHeight = 16.sp,
-        letterSpacing = 1.25.sp
+        fontWeight = FontWeight.SemiBold,
     ),
     caption = TextStyle(
         fontFamily = Karla,

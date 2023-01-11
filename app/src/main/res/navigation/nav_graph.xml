@@ -82,6 +82,12 @@
     <fragment
         android:id="@+id/edit_profile_fragment"
         android:name="com.example.socialk.EditProfileFragment"
-        android:label="EditProfile">
+        android:label=
+            "EditProfile">
+    </fragment>
+    <fragment
+        android:id="@+id/search_fragment"
+        android:name="com.example.socialk.SearchFragment"
+        android:label="Search">
     </fragment>
 </navigation>

@@ -39,6 +39,7 @@ class ChatFragment:Fragment() {
                                 is ChatEvent.GoToProfile -> viewModel.handleGoToProfile()
                                 is ChatEvent.LogOut -> viewModel.handleLogOut()
                                 is ChatEvent.GoToSettings -> viewModel.handleGoToSettings()
+                                is ChatEvent.GoToSearch -> viewModel.handleGoToSearch()
                             }
                         },
                         bottomNavEvent  ={screen->

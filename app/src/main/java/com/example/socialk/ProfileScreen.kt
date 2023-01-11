@@ -35,6 +35,7 @@ import com.example.socialk.settings.SettingsEvent
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.Ocean1
 import com.example.socialk.ui.theme.SocialTheme
+import com.example.socialk.ui.theme.Typography
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.pagerTabIndicatorOffset
@@ -47,6 +48,7 @@ sealed class ProfileEvent {
     object GoToSettings : ProfileEvent()
     object GoToEditProfile : ProfileEvent()
     object GoToHome : ProfileEvent()
+    object GoToSearch : ProfileEvent()
 }
 
 data class TabRowItem(
@@ -90,11 +92,7 @@ fun profileInfo(profileUrl: String, username: String, name: String) {
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = name, color = SocialTheme.colors.textPrimary, style = TextStyle(
-                        fontFamily = Inter,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 16.sp,
-                    )
+                    text = name, color = SocialTheme.colors.textPrimary, style = Typography.h5
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -149,7 +147,7 @@ fun LiveActivities(
 @Composable
 fun profileButton(onClick: () -> Unit, label: String, iconDrawable: Int) {
     Card(modifier = Modifier.background(color=SocialTheme.colors.uiBackground),
-        border = BorderStroke(1.dp,color=Color(0xFFEDEDED)),
+        border = BorderStroke(1.dp,color=SocialTheme.colors.uiFloated),
         shape = RoundedCornerShape(12.dp), onClick =onClick) {
         Box(modifier = Modifier
             .background(color = SocialTheme.colors.uiBackground)
@@ -223,13 +221,12 @@ fun ProfileScreenHeading(onClickBack: () -> Unit, title: String, onClickSettings
         )
 
         //settings button
-        //todo HARDCODED COLOR of border
         Card(
             modifier = Modifier
                 .size(56.dp)
                 .align(Alignment.CenterEnd)
                 .background(color = SocialTheme.colors.uiBackground),
-            border = BorderStroke(1.dp, color = Color(0xFFE0E0E0)),
+            border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
             shape = RoundedCornerShape(16.dp),onClick = onClickSettings
 
         ) {
@@ -312,7 +309,7 @@ fun ProfileScreen(onEvent: (ProfileEvent) -> Unit, bottomNavEvent: (Destinations
                 profileButton(
                     label = "Add friends",
                     iconDrawable = R.drawable.ic_add_person,
-                    onClick = {})
+                    onClick = {onEvent(ProfileEvent.GoToSearch)})
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -321,6 +318,7 @@ fun ProfileScreen(onEvent: (ProfileEvent) -> Unit, bottomNavEvent: (Destinations
                 selectedTabIndex = pagerState.currentPage,
                 contentColor = SocialTheme.colors.textPrimary,
                 containerColor = SocialTheme.colors.uiBackground
+
             ) {
                 tabRowItems.forEachIndexed { index, item ->
                     Tab(

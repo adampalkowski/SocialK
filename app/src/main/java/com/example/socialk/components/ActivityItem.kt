@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.socialk.R
 import com.example.socialk.ui.theme.*
+import kotlin.text.Typography
 
 @Composable
 fun ActivityItem(
@@ -61,17 +62,10 @@ fun ActivityItem(
                 Column(modifier = Modifier) {
                     Text(
                         text = username,
-                        style = TextStyle(
-                            fontSize = 16.sp,
-                            fontFamily = Inter,
-                            fontWeight = FontWeight.Light
-                        ),color= SocialTheme.colors.textPrimary
+                        style = com.example.socialk.ui.theme.Typography.h4, fontWeight = FontWeight.Light,color= SocialTheme.colors.textPrimary
                     )
                     Text(
-                        text = timeLeft, style = TextStyle(
-                            fontFamily = Inter,
-                            fontWeight = FontWeight.ExtraLight, fontSize = 10.sp
-                        ), textAlign = TextAlign.Center,color= SocialTheme.colors.textPrimary
+                        text = timeLeft, style = com.example.socialk.ui.theme.Typography.subtitle1, textAlign = TextAlign.Center,color= SocialTheme.colors.textPrimary
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
@@ -84,15 +78,13 @@ fun ActivityItem(
                     .weight(1f)
                     .padding(end = 8.dp)) {
                     Text(
-                        modifier = Modifier, text = title, style = TextStyle(
-                            fontSize = 18.sp, fontFamily = Inter, fontWeight = FontWeight.Normal
-                        ),color=SocialTheme.colors.textPrimary, textAlign = TextAlign.Left
+                        modifier = Modifier, text = title, style = com.example.socialk.ui.theme.Typography.h3, fontWeight = FontWeight.Normal
+                        ,color=SocialTheme.colors.textPrimary, textAlign = TextAlign.Left
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = description, style = TextStyle(
-                            fontSize = 14.sp, fontFamily = Inter, fontWeight = FontWeight.Light
-                        ), color = SocialTheme.colors.iconPrimary,
+                        text = description, style = com.example.socialk.ui.theme.Typography.h5,fontWeight = FontWeight.Light
+                        , color = SocialTheme.colors.iconPrimary,
                         textAlign = TextAlign.Left
                     )
                 }
@@ -105,7 +97,7 @@ fun ActivityItem(
                 .fillMaxWidth()
                 .padding(horizontal = 32.dp)
                 .height(1.dp)
-                .background(color = Color(0xFFE8E8E8)))
+                .background(color =SocialTheme.colors.uiFloated))
 
 
         }
