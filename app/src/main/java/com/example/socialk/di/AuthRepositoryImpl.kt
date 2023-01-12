@@ -5,12 +5,14 @@ import com.example.socialk.model.Response
 import com.example.socialk.di.AuthRepository
 import com.example.socialk.di.OneTapSignInResponse
 import com.example.socialk.di.SignInWithGoogleResponse
+import com.example.socialk.model.User
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -31,11 +33,11 @@ class AuthRepositoryImpl @Inject constructor(
     override val currentUser: FirebaseUser?
         get() = auth.currentUser
 
-    override suspend fun login(email: String, password: String): Response<FirebaseUser> {
-       return try {
-            val result=auth.signInWithEmailAndPassword(email,password).await()
+    override suspend fun signin(email: String, password: String): Response<FirebaseUser> {
+        return try {
+            val result = auth.signInWithEmailAndPassword(email, password).await()
             Response.Success(result.user!!)
-        }catch (e:Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
             Response.Failure(e)
         }
@@ -46,11 +48,18 @@ class AuthRepositoryImpl @Inject constructor(
         email: String,
         password: String
     ): Response<FirebaseUser> {
-      return  try {
-            val result=auth.createUserWithEmailAndPassword(email,password).await()
-            result?.user?.updateProfile(UserProfileChangeRequest.Builder().setDisplayName(name).build())
+        return try {
+            val result = auth.createUserWithEmailAndPassword(email, password).await()
+            result?.user?.updateProfile(
+                UserProfileChangeRequest.Builder().setDisplayName(name).build()
+            )
+            val isNewUser = result.additionalUserInfo?.isNewUser ?: false
+            if (isNewUser) {
+                addUserToFirestore(name)
+            }
+
             Response.Success(result.user!!)
-        }catch (e:Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
             Response.Failure(e)
         }
@@ -68,12 +77,12 @@ class AuthRepositoryImpl @Inject constructor(
 
         } catch (e: Exception) {
             try {
-                Log.d("looooo,",auth.toString())
+                Log.d("looooo,", auth.toString())
                 val signUpResult = oneTapClient.beginSignIn(signUpRequest).await()
-                Log.d("looooo,","s")
+                Log.d("looooo,", "s")
                 Response.Success(signUpResult)
             } catch (e: Exception) {
-                Log.d("looooo,","exep"+e.toString())
+                Log.d("looooo,", "exep" + e.toString())
                 Response.Failure(e)
             }
         }
@@ -86,7 +95,7 @@ class AuthRepositoryImpl @Inject constructor(
             val authResult = auth.signInWithCredential(googleCredential).await()
             val isNewUser = authResult.additionalUserInfo?.isNewUser ?: false
             if (isNewUser) {
-                addUserToFirestore()
+                addUserToFirestore(null)
             }
             Response.Success(true)
         } catch (e: Exception) {
@@ -94,16 +103,17 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun addUserToFirestore() {
+    private suspend fun addUserToFirestore(name:String?) {
         auth.currentUser?.apply {
-          //  val user = toUser()
-           // db.collection(USERS).document(uid).set(user).await()
+            val user = User(
+                name =name,
+                email = this.email,
+                id = uid,
+                pictureUrl = null,
+                username = null
+            )
+            db.collection("Users").document(uid).set(user).await()
         }
     }
 }
 
-//fun FirebaseUser.toUser() = mapOf(
-  //  DISPLAY_NAME to displayName,
-   // EMAIL to email,
-    //PHOTO_URL to photoUrl?.toString(),
-   // CREATED_AT to FieldValue.serverTimestamp() )

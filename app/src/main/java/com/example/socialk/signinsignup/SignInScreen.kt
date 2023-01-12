@@ -56,7 +56,7 @@ fun SignIn(viewModel: AuthViewModel?,onNavigationEvent: (SignInEvent) -> Unit) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     SignInContent(
                         onSignInSubmitted = { email,password->
-                            viewModel?.login(email,password)
+                            viewModel?.signin(email,password)
                         }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
