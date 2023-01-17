@@ -35,6 +35,7 @@ import com.example.socialk.R
 import com.example.socialk.components.BottomBar
 import com.example.socialk.home.cardHighlited
 import com.example.socialk.home.cardnotHighlited
+import com.example.socialk.signinsignup.EmailState
 import com.example.socialk.signinsignup.TextFieldError
 import com.example.socialk.signinsignup.TextFieldState
 import com.example.socialk.ui.theme.Inter
@@ -64,8 +65,6 @@ fun CreateScreen(onEvent: (CreateEvent) -> Unit, bottomNavEvent: (Destinations) 
     val activityTextState by rememberSaveable(stateSaver = ActivityTextStateSaver) {
         mutableStateOf(ActivityTextFieldState())
     }
-
-    val calendar = Calendar.getInstance()
 
     var timeState by rememberSaveable {
         mutableStateOf(LocalTime.now().noSeconds())
@@ -117,7 +116,7 @@ fun CreateScreen(onEvent: (CreateEvent) -> Unit, bottomNavEvent: (Destinations) 
             title = { Text(text = "Select time") }
         )
     }
-
+    var hideKeyboard by remember { mutableStateOf(false) }
     if (isTimeLengthDialogShown) {
         TimePickerDialog(
             onDismissRequest = { isTimeLengthDialogShown = false },
@@ -139,21 +138,27 @@ fun CreateScreen(onEvent: (CreateEvent) -> Unit, bottomNavEvent: (Destinations) 
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
-                .fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .clickable { hideKeyboard = true }, horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
             activityPickerCreate(isSystemInDarkTheme(), onEvent = { event -> onEvent(event) })
             Spacer(modifier = Modifier.height(12.dp))
 
-            EditTextField(textState = activityTextState,
+            EditTextField(hint="What are you planning?",
+                hideKeyboard = hideKeyboard,
+                onFocusClear = { hideKeyboard = false },
+                textState = activityTextState,
                 modifier = Modifier, title = "Text",
                 icon = R.drawable.ic_edit, focusManager = focusManager, onClick = {})
 
 
             CreateClickableTextField(
                 modifier = Modifier,
-                onClick = { isDateDialogShown = true   },
+                onClick = {
+                    focusManager.clearFocus()
+                    isDateDialogShown = true   },
                 title = "Date",
                 value=dateState,
                 icon = R.drawable.ic_calendar
@@ -161,14 +166,18 @@ fun CreateScreen(onEvent: (CreateEvent) -> Unit, bottomNavEvent: (Destinations) 
 
             CreateClickableTextField(
                 modifier = Modifier,
-                onClick = { isTimeDialogShown = true},
+                onClick = {
+                    focusManager.clearFocus()
+                    isTimeDialogShown = true},
                 title = "Start time",
                 value=timeState.toString(),
                 icon = R.drawable.ic_schedule
             )
 
             CreateClickableTextField(
-                onClick = { isTimeLengthDialogShown = true },
+                onClick = {
+                    focusManager.clearFocus()
+                    isTimeLengthDialogShown = true },
                 modifier = Modifier,
                 title = "Time length",
                 value=timeLengthState,
@@ -198,33 +207,13 @@ fun keyboardAsState(): State<Boolean> {
     return rememberUpdatedState(isImeVisible)
 }
 
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun CreateActivityButton(onClick: () -> Unit, text: String) {
-    Card(
-        modifier = Modifier
-            .height(56.dp)
-            .width(300.dp),
-        shape = RoundedCornerShape(16.dp),
-        backgroundColor = Color(0xFF494949),
-        onClick = { onClick }
-    ) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(
-                text = text,
-                style = TextStyle(
-                    color = SocialTheme.colors.textSecondary, fontSize = 18.sp,
-                    fontFamily = Inter, fontWeight = FontWeight.Bold
-                )
-            )
-        }
-    }
 
-}
 
 @Composable
-fun EditTextField(
-    textState: TextFieldState = remember { ActivityTextFieldState() },
+fun EditTextField(     hint: String = "What are you planning",
+                       hideKeyboard: Boolean = false,
+                       onFocusClear: () -> Unit = {},
+    textState: TextFieldState= remember { ActivityTextFieldState()} ,
     onClick: () -> Unit,
     focusManager: FocusManager,
     modifier: Modifier,
@@ -274,12 +263,21 @@ fun EditTextField(
                 )
             }
         }
-        textState.getError()?.let { error -> TextFieldError(textError = error) }
+        textState.getError()?.let { error -> Row() {
+            Spacer(modifier = Modifier.width(24.dp))
+            TextFieldError(textError = error)
+        }}
         Spacer(modifier = Modifier.height(12.dp))
 
         Divider()
     }
 
+    if (hideKeyboard) {
+
+        focusManager.clearFocus()
+        // Call onFocusClear to reset hideKeyboard state to false
+        onFocusClear()
+    }
 }
 
 @OptIn(ExperimentalComposeUiApi::class)

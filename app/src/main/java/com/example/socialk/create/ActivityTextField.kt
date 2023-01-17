@@ -1,23 +1,28 @@
 package com.example.socialk.create
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 import com.example.socialk.signinsignup.TextFieldState
 
 
 @Composable
 fun ActivityTextField(
-    textState: TextFieldState,
-    focusManager: FocusManager
+    textState: TextFieldState= remember { ActivityTextFieldState()},
+    focusManager: FocusManager,
+    imeAction: ImeAction = ImeAction.Done,
 ) {
     val maxChar = 250
     TextField(
@@ -53,7 +58,9 @@ fun ActivityTextField(
             disabledIndicatorColor = Color.Transparent,
             errorIndicatorColor = Color.Transparent
         ),
-
+        keyboardOptions = KeyboardOptions.Default.copy(
+            imeAction = imeAction
+        ),
         )
 
 }
