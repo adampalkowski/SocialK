@@ -6,9 +6,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +45,10 @@ sealed class LiveEvent{
 }
 @Composable
 fun LiveScreen (onEvent: (LiveEvent) -> Unit, bottomNavEvent:(Destinations)->Unit){
+
+
+    val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
     Surface(modifier = Modifier
         .fillMaxSize()
         .background(SocialTheme.colors.uiBackground),color= SocialTheme.colors.uiBackground
@@ -49,36 +59,25 @@ fun LiveScreen (onEvent: (LiveEvent) -> Unit, bottomNavEvent:(Destinations)->Uni
                 .fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(12.dp))
+
             activityPickerLive(isSystemInDarkTheme(), onEvent = { event -> onEvent(event) })
             Spacer(modifier = Modifier.height(12.dp))
 
 
-            createField(
-                column = false,
-                action = {
-                    //TODO HARDCODED  TIME length, implement onclick,hardoced color
-                    ClickableText(text = AnnotatedString("1 hour"), style = TextStyle(
-                        color = Color(0xFF494949),
-                        fontSize = 18.sp,
-                        fontFamily = Inter,
-                        fontWeight = FontWeight.SemiBold,
-                    ), onClick = {})
-                },
+            CreateClickableTextField(
+                modifier = Modifier,
+                onClick = {  },
+                title = "Start time",
+                icon = R.drawable.ic_schedule
+            )
+
+            CreateClickableTextField(
+                onClick = { },
+                modifier = Modifier,
                 title = "Time length",
                 icon = R.drawable.ic_hourglass
             )
-            createField(
-                column = false,
-                action = {
-                    //todo hardcoced false switch , on change ??
-                    Switch(colors = SwitchDefaults.colors(checkedThumbColor =Color.Black ,
-                    uncheckedThumbColor = Color.Gray,
-                    checkedTrackColor =Color.Black ,
-                    uncheckedTrackColor =  Color.Gray),checked = false, onCheckedChange = {})
-                },
-                title = "Current location",
-                icon = R.drawable.ic_my_location
-            )
+
 
             Spacer(modifier = Modifier.height(48.dp))
             CreateActivityButton(onClick = {}, text = "Create activity")
@@ -102,7 +101,6 @@ fun LiveScreen (onEvent: (LiveEvent) -> Unit, bottomNavEvent:(Destinations)->Uni
             .fillMaxWidth()
             .heightIn(56.dp)
             .padding(vertical = 16.dp), contentAlignment = Alignment.TopEnd){
-
 
         }
         BottomBar(onTabSelected = { screen->bottomNavEvent(screen)},currentScreen = Create)

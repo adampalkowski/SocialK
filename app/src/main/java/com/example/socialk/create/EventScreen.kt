@@ -10,10 +10,14 @@ import androidx.compose.material.Surface
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +46,12 @@ sealed class EventEvent{
 }
 @Composable
 fun EventScreen (onEvent: (EventEvent) -> Unit, bottomNavEvent:(Destinations)->Unit){
+    val activityTextState by rememberSaveable(stateSaver = ActivityTextStateSaver) {
+        mutableStateOf(ActivityTextFieldState())
+    }
+    val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+    var value by rememberSaveable { mutableStateOf("initial value") }
     Surface(modifier = Modifier
         .fillMaxSize()
         .background(SocialTheme.colors.uiBackground),color= SocialTheme.colors.uiBackground
@@ -58,79 +68,33 @@ fun EventScreen (onEvent: (EventEvent) -> Unit, bottomNavEvent:(Destinations)->U
 
             Spacer(modifier = Modifier.height(12.dp))
             //TEXT FIELD
-            createField(column = true, action = {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    backgroundColor = SocialTheme.colors.uiBackground,
-                    border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated)
-                ) {
-                    Box(modifier = Modifier) {
-                        //TODO TEXT FIELDS SHOULD BE DONE THE SAME WAY AS IT IS IN THE LOGIN SECTION
-                        TextField(
-                            textStyle = TextStyle(fontSize = 14.sp),
-                            value = "",
-                            onValueChange = {},
-                            placeholder = {
-                                Text(
-                                    color = Color(0xff757575),
-                                    text = "What are you planning?"
-                                )
-                            },
-                            colors = TextFieldDefaults.textFieldColors(
-                                backgroundColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                            )
-                        )
-                    }
-                }
+
+            EditTextField(textState=activityTextState,
+                modifier = Modifier, title = "Text",
+                icon = R.drawable.ic_edit, focusManager = focusManager, onClick = {})
 
 
-            }, title = "Text", icon = R.drawable.ic_edit)
-            //DATE FIELD
-            //TODO HARDCODED DATE, implement onclick
-            createField(column = false, action = {
-                ClickableText(text = AnnotatedString("06/01/22"), style = TextStyle(
-                    fontSize = 18.sp,
-                    color = Color(0xFF494949),
-                    fontFamily = Inter,
-                    fontWeight = FontWeight.SemiBold,
-                ), onClick = {})
-            }, title = "Date", icon = R.drawable.ic_calendar)
-            //DATE END FIELD
-            createField(
-                column = false,
-                action = {
-                    //TODO HARDCODED  TIME length, implement onclick,hardoced color
-                    ClickableText(text = AnnotatedString("09/01/2024"), style = TextStyle(
-                        color = Color(0xFF494949),
-                        fontSize = 18.sp,
-                        fontFamily = Inter,
-                        fontWeight = FontWeight.SemiBold,
-                    ), onClick = {})
-                },
-                title = "Date end",
-                icon = R.drawable.ic_date_end
+            CreateClickableTextField(
+                modifier = Modifier,
+                onClick = {},
+                title = "Date",
+                icon = R.drawable.ic_calendar
             )
-            //TIME FIELD
-            createField(
 
-                column = false,
-                action = {
-                    //TODO HARDCODED START TIME , implement onclick
-                    ClickableText(text = AnnotatedString("10:48"), style = TextStyle(
-                        fontSize = 18.sp,
-                        color = Color(0xFF494949),
-                        fontFamily = Inter,
-                        fontWeight = FontWeight.SemiBold,
-                    ), onClick = {})
-                },
+            CreateClickableTextField(
+                modifier = Modifier,
+                onClick = {},
                 title = "Start time",
                 icon = R.drawable.ic_schedule
             )
+
+            CreateClickableTextField(
+                onClick = { },
+                modifier = Modifier,
+                title = "Time length",
+                icon = R.drawable.ic_hourglass
+            )
+
 
             Spacer(modifier = Modifier.height(48.dp))
             CreateActivityButton(onClick = {},"Create activity")

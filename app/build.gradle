@@ -129,6 +129,9 @@ dependencies {
     def accompanist_version = "0.28.0"
     implementation "com.google.accompanist:accompanist-pager:$accompanist_version" // Pager
     implementation "com.google.accompanist:accompanist-pager-indicators:$accompanist_version" // Pager Indicato
+
+    //date picker dialog
+    implementation "com.marosseleng.android:compose-material3-datetime-pickers:0.4.0"
 }
 kapt {
     correctErrorTypes true

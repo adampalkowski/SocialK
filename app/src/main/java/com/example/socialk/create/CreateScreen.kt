@@ -1,35 +1,51 @@
 package com.example.socialk.create
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
-import android.widget.Space
 import androidx.compose.foundation.*
-import com.example.socialk.R
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.*
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.socialk.Create
-import com.example.socialk.Destinations
-import com.example.socialk.bottomTabRowScreens
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.example.socialk.*
+import com.example.socialk.R
 import com.example.socialk.components.BottomBar
-import com.example.socialk.components.BottomBarRow
-import com.example.socialk.home.HomeEvent
 import com.example.socialk.home.cardHighlited
 import com.example.socialk.home.cardnotHighlited
+import com.example.socialk.signinsignup.TextFieldError
+import com.example.socialk.signinsignup.TextFieldState
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
+import com.marosseleng.compose.material3.datetimepickers.date.domain.DatePickerShapes
+import com.marosseleng.compose.material3.datetimepickers.date.ui.dialog.DatePickerDialog
+import com.marosseleng.compose.material3.datetimepickers.time.domain.noSeconds
+import com.marosseleng.compose.material3.datetimepickers.time.ui.dialog.TimePickerDialog
+import java.time.LocalDate
+import java.time.LocalTime
+import java.util.*
 
 sealed class CreateEvent {
     object GoToProfile : CreateEvent()
@@ -41,109 +57,150 @@ sealed class CreateEvent {
     object GoToActivity : CreateEvent()
 }
 
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun CreateScreen(onEvent: (CreateEvent) -> Unit, bottomNavEvent: (Destinations) -> Unit) {
+
+    val activityTextState by rememberSaveable(stateSaver = ActivityTextStateSaver) {
+        mutableStateOf(ActivityTextFieldState())
+    }
+
+    val calendar = Calendar.getInstance()
+
+    var timeState by rememberSaveable {
+        mutableStateOf(LocalTime.now().noSeconds())
+    }
+    var dateState by rememberSaveable {
+        mutableStateOf(LocalDate.now().toString())
+    }
+    var timeLengthState by rememberSaveable{
+        mutableStateOf("1 hour")
+    }
+    var isDateDialogShown: Boolean by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var isTimeDialogShown: Boolean by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var isTimeLengthDialogShown: Boolean by rememberSaveable {
+        mutableStateOf(false)
+    }
+    val focusManager = LocalFocusManager.current
+    val isKeyboardOpen by keyboardAsState() // true or false
+    var date: LocalDate? by remember {
+        mutableStateOf(null)
+    }
+    // Initializing a Calendar
+    val (selectedTime, setSelectedTime) = rememberSaveable {
+        mutableStateOf(LocalTime.now().noSeconds())
+    }
+    if (isDateDialogShown) {
+        DatePicker(onDismissRequest = { isDateDialogShown = false },
+            onDateChange = {
+            date = it
+            isDateDialogShown = false
+                dateState=date.toString()
+
+        })
+    }
+
+    if (isTimeDialogShown) {
+        TimePickerDialog(
+            onDismissRequest = { isTimeDialogShown = false },
+            initialTime = selectedTime,
+            onTimeChange = {
+
+                setSelectedTime(it)
+                isTimeDialogShown = false
+                timeState=it
+                           },
+            title = { Text(text = "Select time") }
+        )
+    }
+
+    if (isTimeLengthDialogShown) {
+        TimePickerDialog(
+            onDismissRequest = { isTimeLengthDialogShown = false },
+            initialTime = selectedTime,
+            onTimeChange = {
+
+                setSelectedTime(it)
+                isTimeLengthDialogShown = false
+                timeLengthState=it.toString()
+            },
+            title = { Text(text = "Select time") }
+        )
+    }
     Surface(
         modifier = Modifier
             .fillMaxSize()
             .background(SocialTheme.colors.uiBackground), color = SocialTheme.colors.uiBackground
     ) {
-
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(12.dp))
+
             activityPickerCreate(isSystemInDarkTheme(), onEvent = { event -> onEvent(event) })
             Spacer(modifier = Modifier.height(12.dp))
-            createField(column = true, action = {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    backgroundColor = SocialTheme.colors.uiBackground,
-                    border = BorderStroke(1.dp, color =SocialTheme.colors.uiFloated)
-                ) {
-                    Box(modifier = Modifier) {
-                        //TODO TEXT FIELDS SHOULD BE DONE THE SAME WAY AS IT IS IN THE LOGIN SECTION
-                        TextField(
-                            textStyle = TextStyle(fontSize = 14.sp),
-                            value = "",
-                            onValueChange = {},
-                            placeholder = {
-                                Text(
-                                    color = Color(0xff757575),
-                                    text = "What are you planning?"
-                                )
-                            },
-                            colors = TextFieldDefaults.textFieldColors(
-                                backgroundColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                            )
-                        )
-                    }
-                }
+
+            EditTextField(textState = activityTextState,
+                modifier = Modifier, title = "Text",
+                icon = R.drawable.ic_edit, focusManager = focusManager, onClick = {})
 
 
-            }, title = "Text", icon = R.drawable.ic_edit)
-            //TODO HARDCODED DATE, implement onclick
-            createField(column = false, action = {
-                ClickableText(text = AnnotatedString("06/01/22"), style = TextStyle(
-                    fontSize = 18.sp,
-                    color = Color(0xFF494949),
-                    fontFamily = Inter,
-                    fontWeight = FontWeight.SemiBold,
-                ), onClick = {})
-            }, title = "Date", icon = R.drawable.ic_calendar)
-            createField(
+            CreateClickableTextField(
+                modifier = Modifier,
+                onClick = { isDateDialogShown = true   },
+                title = "Date",
+                value=dateState,
+                icon = R.drawable.ic_calendar
+            )
 
-                column = false,
-                action = {
-                    //TODO HARDCODED START TIME , implement onclick
-                    ClickableText(text = AnnotatedString("10:48"), style = TextStyle(
-                        fontSize = 18.sp,
-                        color = Color(0xFF494949),
-                        fontFamily = Inter,
-                        fontWeight = FontWeight.SemiBold,
-                    ), onClick = {})
-                },
+            CreateClickableTextField(
+                modifier = Modifier,
+                onClick = { isTimeDialogShown = true},
                 title = "Start time",
+                value=timeState.toString(),
                 icon = R.drawable.ic_schedule
             )
-            createField(
-                column = false,
-                action = {
-                    //TODO HARDCODED  TIME length, implement onclick,hardoced color
-                    ClickableText(text = AnnotatedString("1 hour"), style = TextStyle(
-                        color = Color(0xFF494949),
-                        fontSize = 18.sp,
-                        fontFamily = Inter,
-                        fontWeight = FontWeight.SemiBold,
-                    ), onClick = {})
-                },
+
+            CreateClickableTextField(
+                onClick = { isTimeLengthDialogShown = true },
+                modifier = Modifier,
                 title = "Time length",
+                value=timeLengthState,
                 icon = R.drawable.ic_hourglass
             )
             Spacer(modifier = Modifier.height(48.dp))
+
             CreateActivityButton(onClick = {}, text = "Create activity")
             Spacer(modifier = Modifier.height(64.dp))
+
         }
-
-
-        BottomBar(
-            onTabSelected = { screen -> bottomNavEvent(screen) },
-            currentScreen = Create
-        )
-
+        if (!isKeyboardOpen) {
+            BottomBar(
+                onTabSelected = { screen -> bottomNavEvent(screen) },
+                currentScreen = Create
+            )
+        }
     }
+
+}
+
+
+
+@Composable
+fun keyboardAsState(): State<Boolean> {
+    val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    return rememberUpdatedState(isImeVisible)
 }
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun CreateActivityButton(onClick: () -> Unit,text:String) {
+fun CreateActivityButton(onClick: () -> Unit, text: String) {
     Card(
         modifier = Modifier
             .height(56.dp)
@@ -165,156 +222,97 @@ fun CreateActivityButton(onClick: () -> Unit,text:String) {
 
 }
 
-@Preview
 @Composable
-fun previewFiendPicker() {
-    friendPicker()
-}
+fun EditTextField(
+    textState: TextFieldState = remember { ActivityTextFieldState() },
+    onClick: () -> Unit,
+    focusManager: FocusManager,
+    modifier: Modifier,
+    title: String,
+    icon: Int
+) {
 
-//todo FINISH THE FRIEND PICKER WITH SOME PICTURES
-@Composable
-fun friendPicker() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp)
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Friends",
-            style = TextStyle(
-                fontSize = 14.sp,
-                fontFamily = Inter,
-                fontWeight = FontWeight.SemiBold
-            )
-        )
-
-    }
-}
-
-@Composable
-fun createField(action: @Composable () -> Unit, title: String, icon: Int, column: Boolean) {
-    Box(
-        modifier = Modifier
-    ) {
-
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .padding(top = 24.dp), verticalAlignment = Alignment.CenterVertically
         ) {
-            if (column) {
-                Row(
-                    modifier = Modifier
-                        .padding(horizontal = 24.dp)
-                        .padding(top = 24.dp), verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(id = icon),
-                        contentDescription = null,
-                        tint = SocialTheme.colors.iconSecondary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = title,
-                        fontFamily = Inter,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 16.sp,
-                        color = SocialTheme.colors.iconSecondary
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-                action()
-                Spacer(modifier = Modifier.height(12.dp))
-                Spacer(
-                    modifier = Modifier
-                        .width(300.dp)
-                        .height(1.dp)
-                        .background(color = SocialTheme.colors.uiFloated)
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(color = SocialTheme.colors.uiFloated)
-                )
-            } else {
-                Row(
-                    modifier = Modifier.padding(24.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(id = icon),
-                        contentDescription = null,
-                        tint = SocialTheme.colors.iconSecondary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = title,
-                        fontFamily = Inter,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 16.sp,
-                        color = SocialTheme.colors.iconSecondary
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    action()
-                }
-
-                Box(
-                    modifier = Modifier
-                        .width(300.dp)
-                        .height(1.dp)
-                        .background(color =SocialTheme.colors.uiFloated)
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(color =SocialTheme.colors.uiFloated)
-                )
-            }
+            Icon(
+                painter = painterResource(id = icon),
+                contentDescription = null,
+                tint = SocialTheme.colors.iconSecondary
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = title,
+                fontFamily = Inter,
+                fontWeight = FontWeight.Normal,
+                fontSize = 16.sp,
+                color = SocialTheme.colors.iconSecondary
+            )
+            Spacer(modifier = Modifier.weight(1f))
 
         }
+        Spacer(modifier = Modifier.height(12.dp))
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
+            shape = RoundedCornerShape(12.dp),
+            backgroundColor = SocialTheme.colors.uiBackground,
+            border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated)
+        ) {
+            Box(modifier = Modifier, contentAlignment = Alignment.Center) {
+                ActivityTextField(
+                    textState,
+                    focusManager = focusManager
+                )
+            }
+        }
+        textState.getError()?.let { error -> TextFieldError(textError = error) }
+        Spacer(modifier = Modifier.height(12.dp))
 
+        Divider()
     }
+
 }
 
-@Preview(showBackground = true)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun previewCreateField() {
-    SocialTheme {
-        createField(action = { textF() }, title = "Time", icon = R.drawable.ic_timer, column = true)
+fun DatePicker(onDismissRequest: () -> Unit, onDateChange: (LocalDate) -> Unit) {
+    DatePickerDialog(
+        onDismissRequest =onDismissRequest,
+        onDateChange = onDateChange,
+        // Optional but recommended parameter to provide the title for the dialog
+        title = { Text(text = "Select date") },
+        textContentColor = SocialTheme.colors.textPrimary,
+        containerColor = SocialTheme.colors.uiBackground,
+        titleContentColor = SocialTheme.colors.textPrimary,
+        iconContentColor = SocialTheme.colors.iconPrimary,
+        shapes = object : DatePickerShapes {
+            override val currentMonthDaySelected: Shape
+                get() = RoundedCornerShape(8.dp)
+            override val currentMonthDayToday: Shape
+                get() = RoundedCornerShape(4.dp)
+            override val currentMonthDayUnselected: Shape
+                get() = RoundedCornerShape(8.dp)
+            override val month: Shape
+                get() = RoundedCornerShape(4.dp)
+            override val nextMonthDay: Shape
+                get() = RoundedCornerShape(4.dp)
+            override val previousMonthDay: Shape
+                get() = RoundedCornerShape(4.dp)
+            override val year: Shape
+                get() = RoundedCornerShape(4.dp)
+        }
+    )
 
-    }
 }
-
-@Composable
-fun textF() {
-    TextField(value = "s", onValueChange = {})
-}
-
-
-@Composable
-fun activityPickerCreate(
-    isDark: Boolean,
-    modifier: Modifier = Modifier,
-    onEvent: (CreateEvent) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .padding(horizontal = 8.dp), horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        cardnotHighlited(text = "Live", onEvent = { onEvent(CreateEvent.GoToLive) })
-        Spacer(Modifier.width(6.dp))
-        cardHighlited(text = "Activities", isDark = isDark)
-        Spacer(Modifier.width(6.dp))
-        cardnotHighlited(text = "Event", onEvent = { onEvent(CreateEvent.GoToEvent) })
-    }
-}
-
 
 @Preview(showBackground = true)
 @Composable

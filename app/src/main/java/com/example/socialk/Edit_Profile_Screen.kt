@@ -56,6 +56,7 @@ fun EditProfileScreen(onEvent: (EditProfileEvent) -> Unit,profileUrl:String){
             .verticalScroll(rememberScrollState())
             .padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Spacer(modifier =Modifier.height(24.dp) )
+
             Image(
                 painter = rememberAsyncImagePainter(profileUrl),
                 contentDescription = "profile image", modifier = Modifier
@@ -63,17 +64,23 @@ fun EditProfileScreen(onEvent: (EditProfileEvent) -> Unit,profileUrl:String){
                     .clip(CircleShape)
             )
             Spacer(modifier = Modifier.height(12.dp))
+
             ClickableText(text = AnnotatedString("Change profile picture")
                 , onClick ={}, style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium, fontFamily = Inter) )
             Spacer(modifier = Modifier.height(24.dp))
+
             editField(label="First and last name" )
             Spacer(modifier = Modifier.height(12.dp))
+
             editField(label="Username" )
             Spacer(modifier = Modifier.height(12.dp))
+
             editField(label="Profile description" )
             Spacer(modifier = Modifier.height(12.dp))
+
             editField(label="Email" )
             Spacer(modifier = Modifier.height(48.dp))
+
             CreateActivityButton(onClick = { onEvent(EditProfileEvent.ConfirmChanges)}, text = "Confirm changes")
         }
 

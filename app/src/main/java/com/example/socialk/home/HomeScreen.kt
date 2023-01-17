@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.IconButton
+import androidx.compose.material.ScaffoldState
 import androidx.compose.material.Surface
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -47,83 +49,96 @@ fun HomeScreen(
     bottomNavEvent: (Destinations) -> Unit
 ) {
     val isDark = isSystemInDarkTheme()
-    Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(SocialTheme.colors.uiBackground), color = SocialTheme.colors.uiBackground
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                Spacer(modifier = Modifier.height(56.dp))
-                ActivityItem(
-                    "Adamo",
-                    "URl",
-                    "Starts in 12 minutes",
-                    "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-                    "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-                    "DATE",
-                    "15:15 - 15:15",
-                    "location"
-                )
-                ActivityItem(
-                    "Adsamo",
-                    "UsRl",
-                    "Starts isn 12 minutes",
-                    "LONG TITLEVERY LONG TIsTLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-                    "LONG TITLsEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-                    "DATE",
-                    "15:15 - 15:15",
-                    "location"
-                )
-                ActivityItem(
-                    "Adamo",
-                    "URl",
-                    "Starts in 12 minutes",
-                    "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-                    "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-                    "DATE",
-                    "15:15 - 15:15",
-                    "location"
-                )
-                Spacer(modifier = Modifier.height(56.dp))
+    val scaffoldState= rememberScaffoldState()
 
+        androidx.compose.material.Scaffold(
+            scaffoldState =scaffoldState,
+            bottomBar ={
+                BottomBar(
+                    onTabSelected = { screen -> bottomNavEvent(screen) },
+                    currentScreen = Home
+                )
+            },
+            content = { it->
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(SocialTheme.colors.uiBackground), color = SocialTheme.colors.uiBackground
+                ) {
+                HomeScreenContent(it,isDark=isDark,onEvent={homeEvent ->onEvent(homeEvent)  })
+                }
 
             }
-
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(56.dp)
-                .padding(vertical = 12.dp), contentAlignment = Alignment.TopCenter
-        ) {
-            topBar(
-                isDark,
-                onEvent = { onEvent(HomeEvent.GoToMemories) },
-                picked_screen = "Activities"
-            )
-        }
-
-
-        Box(modifier = Modifier, contentAlignment = Alignment.BottomEnd) {
-
-
-        }
-
-
-
-
-
-
-        BottomBar(
-            onTabSelected = { screen -> bottomNavEvent(screen) },
-            currentScreen = Home
         )
 
 
-    }
+
+
 }
 
+@Composable
+fun HomeScreenContent(padding:PaddingValues,isDark:Boolean,onEvent: (HomeEvent) -> Unit){
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Spacer(modifier = Modifier.height(56.dp))
+            ActivityItem(
+                "Adamo",
+                "URl",
+                "Starts in 12 minutes",
+                "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
+                "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
+                "DATE",
+                "15:15 - 15:15",
+                "location"
+            )
+            ActivityItem(
+                "Adsamo",
+                "UsRl",
+                "Starts isn 12 minutes",
+                "LONG TITLEVERY LONG TIsTLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
+                "LONG TITLsEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
+                "DATE",
+                "15:15 - 15:15",
+                "location"
+            )
+            ActivityItem(
+                "Adamo",
+                "URl",
+                "Starts in 12 minutes",
+                "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
+                "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
+                "DATE",
+                "15:15 - 15:15",
+                "location"
+            )
+            Spacer(modifier = Modifier.height(56.dp))
+
+
+        }
+
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(56.dp)
+            .padding(vertical = 12.dp), contentAlignment = Alignment.TopCenter
+    ) {
+        topBar(
+            isDark,
+            onEvent = { onEvent(HomeEvent.GoToMemories) },
+            picked_screen = "Activities"
+        )
+    }
+
+
+    Box(modifier = Modifier, contentAlignment = Alignment.BottomEnd) {
+
+
+    }
+
+
+}
 
 @Composable
 fun topBar(
