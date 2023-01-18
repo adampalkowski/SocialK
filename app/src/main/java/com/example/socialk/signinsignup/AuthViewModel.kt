@@ -37,10 +37,10 @@ class AuthViewModel @Inject constructor(
 
     val isUserAuthenticated get() =repo.isUserAuthenticatedInFirebase
 
-    var oneTapSignInResponse by mutableStateOf<OneTapSignInResponse>(Response.Success(null))
-        private set
-    var signInWithGoogleResponse by mutableStateOf<SignInWithGoogleResponse>(Response.Success(false))
-        private set
+   // var oneTapSignInResponse by mutableStateOf<OneTapSignInResponse>(Response.Success(null))
+    //    private set
+   // var signInWithGoogleResponse by mutableStateOf<SignInWithGoogleResponse>(Response.Success(false))
+        //private set
     private val _loginFlow= MutableStateFlow<Response<FirebaseUser>?>(null)
     val loginFlow: StateFlow<Response<FirebaseUser>?> = _loginFlow
 
@@ -66,13 +66,13 @@ class AuthViewModel @Inject constructor(
     }
 
     fun oneTapSignIn() = viewModelScope.launch {
-        oneTapSignInResponse = Response.Loading
-        oneTapSignInResponse = repo.oneTapSignInWithGoogle()
+        //oneTapSignInResponse = Response.Loading
+    //    oneTapSignInResponse = repo.oneTapSignInWithGoogle()
 
 
     }
     fun signInWithGoogle(googleCredential: AuthCredential) = viewModelScope.launch {
-        oneTapSignInResponse = Response.Loading
-        signInWithGoogleResponse = repo.firebaseSignInWithGoogle(googleCredential)
+      //  oneTapSignInResponse = Response.Loading
+      //  signInWithGoogleResponse = repo.firebaseSignInWithGoogle(googleCredential)
     }
 }

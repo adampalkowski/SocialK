@@ -4,6 +4,7 @@ import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.IconButton
 import androidx.compose.material.ScaffoldState
@@ -13,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.*
@@ -29,6 +31,8 @@ import com.example.socialk.R
 import com.example.socialk.components.ActivityItem
 import com.example.socialk.components.BottomBar
 import com.example.socialk.components.BottomBarRow
+import com.example.socialk.di.ActivityViewModel
+import com.example.socialk.model.Response
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.Ocean1
@@ -44,10 +48,12 @@ sealed class HomeEvent {
 
 @Composable
 fun HomeScreen(
+    activityViewModel:ActivityViewModel?,
     viewModel: AuthViewModel?,
     onEvent: (HomeEvent) -> Unit,
     bottomNavEvent: (Destinations) -> Unit
 ) {
+
     val isDark = isSystemInDarkTheme()
     val scaffoldState= rememberScaffoldState()
 
@@ -65,57 +71,52 @@ fun HomeScreen(
                         .fillMaxSize()
                         .background(SocialTheme.colors.uiBackground), color = SocialTheme.colors.uiBackground
                 ) {
-                HomeScreenContent(it,isDark=isDark,onEvent={homeEvent ->onEvent(homeEvent)  })
+                HomeScreenContent(viewModel,activityViewModel,it,isDark=isDark,onEvent={homeEvent ->onEvent(homeEvent)  })
                 }
 
-            }
-        )
-
+            })
 
 
 
 }
 
 @Composable
-fun HomeScreenContent(padding:PaddingValues,isDark:Boolean,onEvent: (HomeEvent) -> Unit){
+fun HomeScreenContent(viewModel: AuthViewModel?,activityViewModel: ActivityViewModel?,padding:PaddingValues,isDark:Boolean,onEvent: (HomeEvent) -> Unit){
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            Spacer(modifier = Modifier.height(56.dp))
-            ActivityItem(
-                "Adamo",
-                "URl",
-                "Starts in 12 minutes",
-                "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-                "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-                "DATE",
-                "15:15 - 15:15",
-                "location"
-            )
-            ActivityItem(
-                "Adsamo",
-                "UsRl",
-                "Starts isn 12 minutes",
-                "LONG TITLEVERY LONG TIsTLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-                "LONG TITLsEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-                "DATE",
-                "15:15 - 15:15",
-                "location"
-            )
-            ActivityItem(
-                "Adamo",
-                "URl",
-                "Starts in 12 minutes",
-                "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-                "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-                "DATE",
-                "15:15 - 15:15",
-                "location"
-            )
-            Spacer(modifier = Modifier.height(56.dp))
+            activityViewModel?.activitiesListState?.value.let {
+                when(it){
+                    is Response.Success->{
+                        LazyColumn(modifier = Modifier.clipToBounds().wrapContentSize(unbounded = false)){
+                            item {
+                                Spacer(modifier = Modifier.height(56.dp))
+
+                            }
+                            items(it.data){
+                                item->
+                                ActivityItem(
+                                    username = item.title,
+                                    profilePictureUrl ="" ,
+                                    timeLeft = "",
+                                    title = item.title,
+                                    description = "",
+                                    date = item.date,
+                                    timePeriod = item.title,
+                                    location =item.title
+                                )
+
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(56.dp))
+
+                            }
+                        }
+
+                    }
+                }
+            }
 
 
-        }
 
     }
     Box(
@@ -229,7 +230,7 @@ fun cardHighlited(isDark: Boolean, text: String) {
 @Composable
 fun previewHomeScreen() {
     SocialTheme {
-        HomeScreen(null, onEvent = {}, bottomNavEvent = {})
+        HomeScreen(activityViewModel = null,null, onEvent = {}, bottomNavEvent = {})
     }
 }
 
@@ -238,7 +239,7 @@ fun previewHomeScreen() {
 @Composable
 fun previewHomeScreenDark() {
     SocialTheme {
-        HomeScreen(null, onEvent = {}, bottomNavEvent = {})
+        HomeScreen(activityViewModel = null,null, onEvent = {}, bottomNavEvent = {})
     }
 }
 

@@ -92,24 +92,24 @@ fun WelcomeScreen(onEvent: (WelcomeEvent) -> Unit, navigateToHome:() ->Unit,
             val intent = IntentSenderRequest.Builder(signInResult.pendingIntent.intentSender).build()
             launcher.launch(intent)
         }
-        OneTapSignIn(
+        /*OneTapSignIn(
             launch = {
                 launch(it)
 
             }
-        )
+        )*/
 
-        SignInWithGoogle(
+      /*  SignInWithGoogle(
             navigateToHomeScreen = { signedIn ->
                 if (signedIn) {
                     navigateToHome()
                 }
             }
-        )
+        )*/
     }
 }
 
-
+/*
 @Composable
 fun SignInWithGoogle(
     viewModel: AuthViewModel = hiltViewModel(),
@@ -127,7 +127,7 @@ fun SignInWithGoogle(
         }
     }
 }
-
+*/
 @Composable
 fun ProgressBar() {
     Box(
@@ -138,7 +138,7 @@ fun ProgressBar() {
         androidx.compose.material.CircularProgressIndicator()
 
     }
-}
+}/*
 @Composable
 fun OneTapSignIn(
     viewModel: AuthViewModel = hiltViewModel(),
@@ -156,7 +156,7 @@ fun OneTapSignIn(
             print(oneTapSignInResponse.e)
         }
     }
-}
+}*/
 
 @Composable
 private fun Branding(modifier: Modifier = Modifier) {

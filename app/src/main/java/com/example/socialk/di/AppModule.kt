@@ -99,6 +99,13 @@ class AppModule {
         db = db
     )
     @Provides
+    fun provideActivityRepository(
+        db: FirebaseFirestore,
+    ):ActivityRepository= ActivityRepositoryImpl(
+        activitiesRef =db.collection("Activities"),
+    )
+
+    @Provides
     fun provideProfileRepository(
         auth: FirebaseAuth,
         oneTapClient: SignInClient,

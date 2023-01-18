@@ -44,5 +44,8 @@ class CreateViewModel : ViewModel() {
     fun handleGoToEvent( ) {
         _navigateTo.value = Event(Screen.Event)
     }
+   fun handleCreateActivity( ) {
+        _navigateTo.value = Event(Screen.Event)
+    }
 
 }
