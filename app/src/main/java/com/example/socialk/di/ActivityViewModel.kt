@@ -4,6 +4,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.socialk.ActiveUser
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,6 +43,7 @@ class ActivityViewModel @Inject constructor(
             }
         }
     }
+
     fun getActivitiesForUser(id:String?){
         if (id==null){
             _activitiesListState.value=Response.Failure(Exception())
@@ -54,6 +56,7 @@ class ActivityViewModel @Inject constructor(
         }
 
     }
+
     fun addActivity(activity:Activity){
         viewModelScope.launch {
             repo.addActivity(activity).collect{ response ->
@@ -61,9 +64,11 @@ class ActivityViewModel @Inject constructor(
             }
         }
     }
+
     fun activityAdded(){
         _isActivityAddedState.value=null
     }
+
    fun deleteActivity(id:String){
         viewModelScope.launch {
             repo.deleteActivity(id).collect{ response ->
@@ -71,4 +76,5 @@ class ActivityViewModel @Inject constructor(
             }
         }
     }
+
 }

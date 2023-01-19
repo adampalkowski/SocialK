@@ -103,6 +103,7 @@ class AppModule {
         db: FirebaseFirestore,
     ):ActivityRepository= ActivityRepositoryImpl(
         activitiesRef =db.collection("Activities"),
+        activeUsersRef =db.collection("ActiveUsers"),
     )
 
     @Provides

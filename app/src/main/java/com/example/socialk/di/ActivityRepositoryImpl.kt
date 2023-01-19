@@ -1,5 +1,6 @@
 package com.example.socialk.di
 
+import com.example.socialk.ActiveUser
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
 import com.google.firebase.firestore.CollectionReference
@@ -22,6 +23,7 @@ import javax.inject.Singleton
 @ExperimentalCoroutinesApi
 class ActivityRepositoryImpl @Inject constructor(
     private val activitiesRef: CollectionReference,
+    private val activeUsersRef:CollectionReference
 ):ActivityRepository{
 
     override suspend fun getActivity(id:String): Flow<Response<Activity>> = callbackFlow {
@@ -74,6 +76,44 @@ class ActivityRepositoryImpl @Inject constructor(
             trySend(response).isSuccess
         }
         awaitClose {
+        }
+    }
+        //TODO CHANGE WHERE_EQUAL_TO
+    override suspend fun getActiveUsers(id: String): Flow<Response<List<ActiveUser>>> = callbackFlow {
+        val snapshotListener = activeUsersRef.whereEqualTo("creator_id",id).get().addOnSuccessListener { documents->
+            var activitiesList:List<ActiveUser> = mutableListOf()
+
+            val response = if (documents != null) {
+                activitiesList =documents.map { it.toObject<ActiveUser>() }
+                Response.Success(activitiesList)
+            } else {
+                Response.Failure( Exception())
+            }
+            trySend(response).isSuccess
+        }
+        awaitClose {
+        }
+    }
+
+    override suspend fun addActiveUser(activeUser: ActiveUser): Flow<Response<Void?>> = flow {
+        try {
+            emit(Response.Loading)
+            val activityId=activeUser.id
+            val addition = activeUsersRef.document(activityId).set(activeUser).await()
+            emit(Response.Success(addition))
+
+        }catch (e:Exception){
+            emit(Response.Failure(Exception(e.message?:e.toString())))
+        }
+    }
+
+    override suspend fun deleteActiveUser(id: String): Flow<Response<Void?>> = flow {
+        try{
+            emit(Response.Loading)
+            val deletion = activeUsersRef.document(id).delete().await()
+            emit(Response.Success(deletion))
+        }catch (e:Exception){
+            emit(Response.Failure(Exception(e.message?:e.toString())))
         }
     }
 

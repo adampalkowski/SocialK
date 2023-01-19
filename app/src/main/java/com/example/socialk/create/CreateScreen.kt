@@ -218,11 +218,6 @@ fun CreateScreen(activityViewModel: ActivityViewModel?, onEvent: (CreateEvent) -
                     )
                 )
 
-                GlobalScope.launch (Dispatchers.IO) {
-                 withContext(context = Dispatchers.Main){
-
-                 }
-                }
             }, text = "Create activity")
 
             Spacer(modifier = Modifier.height(64.dp))
