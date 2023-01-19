@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import com.example.socialk.model.Response
 
 import androidx.compose.runtime.setValue
@@ -27,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -44,17 +47,38 @@ import com.google.android.gms.auth.api.identity.BeginSignInResult
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.GoogleAuthProvider
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.socialk.ProfileEvent
+import com.example.socialk.di.UserViewModel
+import com.google.android.gms.auth.api.identity.SignInClient
 
 sealed class WelcomeEvent {
     object GoToRegister : WelcomeEvent()
     object GoToSignIn : WelcomeEvent()
     object ContinueWithGoogle : WelcomeEvent()
     object ContinueWithFacebook : WelcomeEvent()
+    object GoToHome : WelcomeEvent()
 }
 
 @Composable
-fun WelcomeScreen(onEvent: (WelcomeEvent) -> Unit, navigateToHome:() ->Unit,
+fun WelcomeScreen(userViewModel:UserViewModel?,authViewModel: AuthViewModel,onEvent: (WelcomeEvent) -> Unit, navigateToHome:() ->Unit,
                   viewModel: AuthViewModel = hiltViewModel()) {
+    val userFlow= userViewModel?.userValidation?.collectAsState()
+    if(authViewModel.isUserAuthenticated){
+        userViewModel?.validateUser(authViewModel?.currentUser!!)
+
+        userFlow?.value?.let {
+                validationResponse ->
+            when(validationResponse){
+                is Response.Success->{
+
+                    Toast.makeText(LocalContext.current,"authenticated",Toast.LENGTH_LONG).show()
+                    onEvent(WelcomeEvent.GoToHome)
+                }
+                is Response.Failure->{
+                }
+            }
+        }
+    }
     Surface(modifier = Modifier
         .fillMaxSize()
         .supportWideScreen()
@@ -329,6 +353,5 @@ fun ColorScheme.isLight() = this.background.luminance() > 0.5
 @Composable
 fun WelcomeScreenPreview() {
     SocialTheme() {
-        WelcomeScreen (viewModel = hiltViewModel(), navigateToHome = {}, onEvent = {})
     }
 }

@@ -1,6 +1,7 @@
 package com.example.socialk
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,6 +16,8 @@ import com.example.socialk.chat.ChatScreen
 import com.example.socialk.chat.ChatViewModel
 import com.example.socialk.home.HomeEvent
 import com.example.socialk.home.HomeScreen
+import com.example.socialk.model.User
+import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -31,10 +34,23 @@ class ProfileFragment :Fragment(){
                 navigate(navigateTo, Screen.Profile)
             }
         }
+        var user:User? =UserData.user
+        if (user==null){
+            user=User(id="",name="", pictureUrl = "", username = "", email = "")
+
+        }
+        Log.d("TAG",user.toString())
+
+        if (user.username==null){
+            user.username=""
+        }
+        if (user.name==null){
+            user.name=user.email
+        }
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
-                    ProfileScreen(
+                    ProfileScreen(user,
                         onEvent = { event ->
                             when (event) {
                                 is ProfileEvent.GoToProfile -> viewModel.handleGoToProfile()

@@ -1,6 +1,8 @@
 package com.example.socialk.signinsignup
 
 import android.content.res.Configuration
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,15 +15,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.socialk.R
+import com.example.socialk.di.UserViewModel
 import com.example.socialk.model.Response
 import com.example.socialk.ui.theme.SocialTheme
 import com.example.socialk.util.supportWideScreen
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 sealed class SignInEvent {
     object SignIn: SignInEvent()
@@ -32,8 +38,9 @@ sealed class SignInEvent {
 
 @OptIn(ExperimentalMaterial3Api::class) // Scaffold is experimental in m3
 @Composable
-fun SignIn(viewModel: AuthViewModel?,onNavigationEvent: (SignInEvent) -> Unit) {
+ fun SignIn(userViewModel: UserViewModel?, viewModel: AuthViewModel?, onNavigationEvent: (SignInEvent) -> Unit) {
     val loginFLow = viewModel?.loginFlow?.collectAsState()
+    val userFlow = userViewModel?.userValidation?.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -88,13 +95,30 @@ fun SignIn(viewModel: AuthViewModel?,onNavigationEvent: (SignInEvent) -> Unit) {
     loginFLow?.value?.let {
         when(it){
             is Response.Success->{
-                LaunchedEffect(Unit){
-                    onNavigationEvent(SignInEvent.SignIn)
+                userViewModel?.validateUser(it.data)
+                userFlow?.value?.let {
 
+                    validationResponse ->
+                    when(validationResponse){
+                        is Response.Success->{
+                            LaunchedEffect(Unit){
+                                onNavigationEvent(SignInEvent.SignIn)
+                            }
+                        }
+                        is Response.Failure->{
+                            val context = LocalContext.current
+                            Toast.makeText(context,"Failed to validate user code 102",Toast.LENGTH_LONG).show()
+                        }
+                    }
                 }
+
             }
             is Response.Loading ->{
                 CircularProgressIndicator()
+            }
+            is Response.Failure ->{
+                val context = LocalContext.current
+                Toast.makeText(context,"Failed to login, probably wrong email or password",Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -198,6 +222,6 @@ fun ErrorSnackbar(
 @Composable
 fun SignInPreview() {
     SocialTheme {
-        SignIn (viewModel = null){}
+        SignIn (viewModel = null, userViewModel =null){}
     }
 }

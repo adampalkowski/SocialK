@@ -105,7 +105,12 @@ class AppModule {
         activitiesRef =db.collection("Activities"),
         activeUsersRef =db.collection("ActiveUsers"),
     )
-
+    @Provides
+    fun provideUsersRepository(
+        db: FirebaseFirestore,
+    ):UserRepository= UserRepositoryImpl(
+        usersRef =db.collection("Users"),
+    )
     @Provides
     fun provideProfileRepository(
         auth: FirebaseAuth,

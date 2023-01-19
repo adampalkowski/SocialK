@@ -75,6 +75,6 @@ class ActivityViewModel @Inject constructor(
                 _isActivityDeletedState.value=response
             }
         }
-    }
+   }
 
 }

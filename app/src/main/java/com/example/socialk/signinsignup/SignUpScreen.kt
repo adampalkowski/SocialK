@@ -1,6 +1,7 @@
 package com.example.socialk.signinsignup
 
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.socialk.R
+import com.example.socialk.di.UserViewModel
 import com.example.socialk.model.Response
 import com.example.socialk.ui.theme.SocialTheme
 import com.example.socialk.util.supportWideScreen
@@ -52,8 +54,8 @@ fun SignUp(viewModel: AuthViewModel?,onNavigationEvent: (SignUpEvent) -> Unit) {
             ) {
                 Column {
                     SignUpContent(
-                        onSignUpSubmitted = { email, password,name ->
-                            viewModel?.signup(name.trim(),email,password)
+                        onSignUpSubmitted = { email,name, password ->
+                        viewModel?.signup(name=name.trim(),email=email,password=password)
                         }
                     )
                 }

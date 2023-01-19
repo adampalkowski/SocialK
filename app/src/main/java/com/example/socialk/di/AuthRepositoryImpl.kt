@@ -5,6 +5,7 @@ import com.example.socialk.model.Response
 import com.example.socialk.di.AuthRepository
 import com.example.socialk.di.OneTapSignInResponse
 import com.example.socialk.di.SignInWithGoogleResponse
+import com.example.socialk.model.Activity
 import com.example.socialk.model.User
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.SignInClient
@@ -12,8 +13,11 @@ import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.auth.ktx.userProfileChangeRequest
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Named
@@ -36,6 +40,9 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun signin(email: String, password: String): Response<FirebaseUser> {
         return try {
             val result = auth.signInWithEmailAndPassword(email, password).await()
+            Log.d("TAG","SIGNIN")
+            //retrieve user from DB-> check if id's and email's match ->set userdata to current user
+
             Response.Success(result.user!!)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -56,9 +63,9 @@ class AuthRepositoryImpl @Inject constructor(
             val isNewUser = result.additionalUserInfo?.isNewUser ?: false
             if (isNewUser) {
                 addUserToFirestore(name)
+                Response.Success(auth.currentUser)
             }
-
-            Response.Success(result.user!!)
+            Response.Success(auth.currentUser!!)
         } catch (e: Exception) {
             e.printStackTrace()
             Response.Failure(e)
@@ -115,5 +122,6 @@ class AuthRepositoryImpl @Inject constructor(
             db.collection("Users").document(uid).set(user).await()
         }
     }
+
 }
 

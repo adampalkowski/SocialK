@@ -10,6 +10,7 @@ import androidx.fragment.app.viewModels
 import com.example.socialk.R
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
+import com.example.socialk.di.UserViewModel
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -26,6 +27,7 @@ class SignUpFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        //state needs to be null otherwise automatically start navigate event
         viewModel.navigateTo.observe(viewLifecycleOwner) { navigateToEvent ->
             navigateToEvent.getContentIfNotHandled()?.let { navigateTo ->
                 navigate(navigateTo, Screen.SignUp)

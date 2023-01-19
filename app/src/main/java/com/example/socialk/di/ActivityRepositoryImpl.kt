@@ -27,6 +27,7 @@ class ActivityRepositoryImpl @Inject constructor(
 ):ActivityRepository{
 
     override suspend fun getActivity(id:String): Flow<Response<Activity>> = callbackFlow {
+
        activitiesRef.document(activitiesRef.document().id).get().addOnSuccessListener {  documentSnapshot ->
             val response = if (documentSnapshot != null) {
                 val activity = documentSnapshot.toObject<Activity>()

@@ -3,6 +3,7 @@ package com.example.socialk.signinsignup
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,7 +12,10 @@ import com.example.socialk.Main.Screen
 import com.example.socialk.di.AuthRepository
 import com.example.socialk.di.OneTapSignInResponse
 import com.example.socialk.di.SignInWithGoogleResponse
+import com.example.socialk.di.UserViewModel
 import com.example.socialk.model.Response
+import com.example.socialk.model.User
+import com.example.socialk.model.UserData
 import com.example.socialk.util.Event
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -55,7 +59,7 @@ class AuthViewModel @Inject constructor(
     }
     fun signup(name:String,email:String,password:String)=viewModelScope.launch {
         _signupFlow.value=Response.Loading
-        val result=repo.signup(name,email, password )
+        val result=repo.signup(name=name, email = email,password= password )
         _signupFlow.value=result
     }
 
@@ -63,6 +67,7 @@ class AuthViewModel @Inject constructor(
         repo.logout()
         _loginFlow.value=null
         _signupFlow.value=null
+        UserData.user=null
     }
 
     fun oneTapSignIn() = viewModelScope.launch {

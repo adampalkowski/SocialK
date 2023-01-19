@@ -11,6 +11,7 @@ import androidx.fragment.app.viewModels
 import com.example.socialk.R
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
+import com.example.socialk.di.UserViewModel
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -18,6 +19,8 @@ import dagger.hilt.android.AndroidEntryPoint
 class SignInFragment : Fragment() {
     private val viewModel by viewModels<SignInViewModel>()
     private val authViewModel by viewModels<AuthViewModel>()
+    private val userViewModel by viewModels<UserViewModel>()
+
 
 
     override fun onCreateView(
@@ -41,7 +44,7 @@ class SignInFragment : Fragment() {
             )
             setContent {
                 SocialTheme {
-                    SignIn(authViewModel,
+                    SignIn(userViewModel,authViewModel,
                         onNavigationEvent = { event ->
                             when (event) {
                                 is SignInEvent.SignIn -> {

@@ -31,6 +31,8 @@ import com.example.socialk.components.ScreenHeading
 import com.example.socialk.home.HomeEvent
 import com.example.socialk.home.cardHighlited
 import com.example.socialk.home.cardnotHighlited
+import com.example.socialk.model.User
+import com.example.socialk.model.UserData
 import com.example.socialk.settings.SettingsEvent
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.Ocean1
@@ -249,7 +251,7 @@ fun ProfileScreenHeading(onClickBack: () -> Unit, title: String, onClickSettings
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun ProfileScreen(onEvent: (ProfileEvent) -> Unit, bottomNavEvent: (Destinations) -> Unit) {
+fun ProfileScreen(user:User,onEvent: (ProfileEvent) -> Unit, bottomNavEvent: (Destinations) -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxSize(), color = SocialTheme.colors.uiBackground
@@ -272,8 +274,8 @@ fun ProfileScreen(onEvent: (ProfileEvent) -> Unit, bottomNavEvent: (Destinations
             //PROFILE BOX
             profileInfo(
                 profileUrl = "https://firebasestorage.googleapis.com/v0/b/socialv2-340711.appspot.com/o/uploads%2F1662065348037.null?alt=media&token=40cebce4-0c53-470c-867f-d9d34cba63ab",
-                username = "adadmo_12",
-                name = "Adam Pałkowski"
+                username =user.username!!,
+                name =user.name!!
             )
             Spacer(modifier = Modifier.height(12.dp))
             //BIBLIOGRAPHY
@@ -350,6 +352,6 @@ fun ProfileScreen(onEvent: (ProfileEvent) -> Unit, bottomNavEvent: (Destinations
 @Composable
 fun previewProfileScreen() {
     SocialTheme() {
-        ProfileScreen(onEvent = {}, bottomNavEvent = {})
+        ProfileScreen(onEvent = {}, bottomNavEvent = {}, user = User(name = "", username = "", id = "m", email = "", pictureUrl = ""))
     }
 }
