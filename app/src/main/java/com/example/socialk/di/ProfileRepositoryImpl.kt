@@ -1,6 +1,7 @@
 package com.example.socialk.di
 
 import com.example.socialk.model.Response
+import com.example.socialk.model.SocialException
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.firebase.auth.FirebaseAuth
@@ -26,7 +27,7 @@ class ProfileRepositoryImpl @Inject constructor(
             auth.signOut()
             Response.Success(true)
         } catch (e: Exception) {
-            Response.Failure(e)
+            Response.Failure(SocialException("Sign out error",e) )
         }
     }
 
@@ -37,7 +38,7 @@ class ProfileRepositoryImpl @Inject constructor(
             }
             Response.Success(true)
         } catch (e: Exception) {
-            Response.Failure(e)
+            Response.Failure(SocialException("revoke access error",e) )
         }
     }
 }

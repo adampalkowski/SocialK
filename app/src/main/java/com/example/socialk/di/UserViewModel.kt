@@ -5,19 +5,17 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.socialk.model.Activity
-import com.example.socialk.model.Response
-import com.example.socialk.model.User
-import com.example.socialk.model.UserData
+import com.example.socialk.model.*
 import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.lang.Exception
 import javax.inject.Inject
+import kotlin.Exception
 
 
 @HiltViewModel
@@ -50,6 +48,14 @@ class UserViewModel @Inject constructor(
             }
         }
     }
+    //eror prone ? uses _userState same as get user above
+    fun getUserByUsername(username: String) {
+        viewModelScope.launch {
+            repo.getUserByUsername(username).collect { response ->
+                _userState.value = response
+            }
+        }
+    }
 
     fun addUser(user: User) {
         viewModelScope.launch {
@@ -72,9 +78,21 @@ class UserViewModel @Inject constructor(
     }
     fun addUsernameToUser( id:String, username :String) {
         viewModelScope.launch {
-            repo.addUsernameToUser(id=id,username=username).collect { response ->
-                _isUsernameAddedFlow.value = response
+            repo.getUserByUsername(username).collect{ response->
+                when(response){
+                    is Response.Success->{
+                        _isUsernameAddedFlow.value =
+                            Response.Failure(e=SocialException("addUsernameToUser erro user with same username has been found",
+                                Exception()))
+                    }
+                    is Response.Failure->{
+                        repo.addUsernameToUser(id=id,username=username).collect { response ->
+                            _isUsernameAddedFlow.value = response
+                        }
+                    }
+                }
             }
+
         }
     }
     fun validateUser(firebaseUser: FirebaseUser) {
@@ -88,7 +106,7 @@ class UserViewModel @Inject constructor(
                         //emails don't match
                         //TODO SHOW CORRECT EXCEPTION
                         if (user.email != firebaseUser.email) {
-                            _userValidation.value = Response.Failure(e = Exception())
+                            _userValidation.value = Response.Failure(SocialException(message = "validate user error emails dont match",Exception()))
                         }
                         if (user.username==null){
                             UserData.user = user
@@ -104,7 +122,7 @@ class UserViewModel @Inject constructor(
                     }
                     is Response.Failure -> {
                         //issue with retreiving user from database
-                        _userValidation.value = Response.Failure(e = Exception())
+                        _userValidation.value = Response.Failure(SocialException("validate error issue with retreiving user from database",Exception()))
                     }
                 }
 

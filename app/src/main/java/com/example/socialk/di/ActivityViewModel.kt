@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.socialk.ActiveUser
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
+import com.example.socialk.model.SocialException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -46,7 +47,7 @@ class ActivityViewModel @Inject constructor(
 
     fun getActivitiesForUser(id:String?){
         if (id==null){
-            _activitiesListState.value=Response.Failure(Exception())
+            _activitiesListState.value=Response.Failure(SocialException("getActivitiesForUser error id is null",Exception()))
         }else{
             viewModelScope.launch {
                 repo.getActivitiesForUser(id).collect{ response->

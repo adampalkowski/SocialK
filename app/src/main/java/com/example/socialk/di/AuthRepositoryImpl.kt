@@ -6,6 +6,7 @@ import com.example.socialk.di.AuthRepository
 import com.example.socialk.di.OneTapSignInResponse
 import com.example.socialk.di.SignInWithGoogleResponse
 import com.example.socialk.model.Activity
+import com.example.socialk.model.SocialException
 import com.example.socialk.model.User
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.SignInClient
@@ -46,7 +47,7 @@ class AuthRepositoryImpl @Inject constructor(
             Response.Success(result.user!!)
         } catch (e: Exception) {
             e.printStackTrace()
-            Response.Failure(e)
+            Response.Failure(SocialException("signIn error",e))
         }
     }
 
@@ -68,7 +69,7 @@ class AuthRepositoryImpl @Inject constructor(
             Response.Success(auth.currentUser!!)
         } catch (e: Exception) {
             e.printStackTrace()
-            Response.Failure(e)
+            Response.Failure(SocialException("signup error",e))
         }
 
     }
@@ -90,7 +91,7 @@ class AuthRepositoryImpl @Inject constructor(
                 Response.Success(signUpResult)
             } catch (e: Exception) {
                 Log.d("looooo,", "exep" + e.toString())
-                Response.Failure(e)
+                Response.Failure(SocialException("oneTapSignInWithGoogle error",e))
             }
         }
     }
@@ -106,7 +107,7 @@ class AuthRepositoryImpl @Inject constructor(
             }
             Response.Success(true)
         } catch (e: Exception) {
-            Response.Failure(e)
+            Response.Failure(SocialException("firebaseSignInWithGoogle error",e))
         }
     }
 

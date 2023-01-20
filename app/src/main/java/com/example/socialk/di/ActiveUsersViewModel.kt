@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.socialk.ActiveUser
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
+import com.example.socialk.model.SocialException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -29,7 +30,7 @@ class ActiveUsersViewModel @Inject constructor(
 
     fun getActiveUsersForUser(id: String?) {
         if (id == null) {
-            _activeUsersListState.value = Response.Failure(Exception())
+            _activeUsersListState.value = Response.Failure(SocialException("getActiveUserForUser id passed is null",Exception()))
         } else {
             viewModelScope.launch {
                 repo.getActiveUsers(id).collect { response ->

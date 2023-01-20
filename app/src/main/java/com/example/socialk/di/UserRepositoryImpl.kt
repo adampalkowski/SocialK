@@ -3,6 +3,7 @@ package com.example.socialk.di
 import com.example.socialk.ActiveUser
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
+import com.example.socialk.model.SocialException
 import com.example.socialk.model.User
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.ktx.toObject
@@ -34,7 +35,8 @@ class UserRepositoryImpl @Inject constructor(
                        trySend(Response.Success(user))
                    }
                } else {
-                   trySend(Response.Failure(e=Exception()))
+                   trySend(Response.Failure(e= SocialException("get user snaphot doesn't exist",Exception())))
+
                }
             }
 
@@ -45,28 +47,32 @@ class UserRepositoryImpl @Inject constructor(
     }
     override suspend fun getUserByUsername(username: String): Flow<Response<User>> = callbackFlow {
         val registration= usersRef.whereEqualTo("username",username).get().addOnSuccessListener  { documents->
-
             var userList:List<User> = mutableListOf()
-            if (userList.size>1){
-                trySend(Response.Failure(e=Exception()))
-            }
-            //list should always be the size of 1
-            val response = if (documents != null) {
-                activitiesList =documents.map { it.toObject<User>() }
 
-                trySend(Response.Success(user))
+            //list should always be the size of 1
+            if (userList.size>1){
+                trySend(Response.Failure(e= SocialException("more than one of the usernames exist",Exception())))
+            }
+
+            val response = if (documents != null) {
+
+                userList =documents.map { it.toObject<User>() }
+                if (userList.size==1){
+                    trySend(Response.Success(userList[0]))
+                }else{
+                    trySend(Response.Failure(e= SocialException("user found and is not 1",Exception())))
+                }
             } else {
-                trySend(Response.Failure(e=Exception()))
+                trySend(Response.Failure(e= SocialException("getUser by name document null",Exception())))
             }
 
         }.addOnFailureListener{
                 exception ->
             channel.close(exception)
-            trySend(Response.Failure(e=Exception()))
+            trySend(Response.Failure(e= SocialException("get user by name document doesnt exist",Exception())))
         }
 
         awaitClose(){
-            registration.remove()
         }
 
     }
@@ -79,7 +85,7 @@ class UserRepositoryImpl @Inject constructor(
             emit(Response.Success(addition))
 
         }catch (e:Exception){
-            emit(Response.Failure(Exception(e.message?:e.toString())))
+            emit(Response.Failure(e= SocialException("addUser exception",Exception())))
         }
     }
     override suspend fun deleteUser(id: String): Flow<Response<Void?>> = flow {
@@ -88,18 +94,20 @@ class UserRepositoryImpl @Inject constructor(
             val deletion = usersRef.document(id).delete().await()
             emit(Response.Success(deletion))
         }catch (e:Exception){
-            emit(Response.Failure(Exception(e.message?:e.toString())))
+            emit(Response.Failure(e= SocialException("deleteUser exception",Exception())))
         }
     }
 
     override suspend fun addUsernameToUser(id:String,username: String): Flow<Response<Void?>>  = flow {
         try {
             emit(Response.Loading)
+
+
             val addition = usersRef.document(id).update("username",username).await()
             emit(Response.Success(addition))
 
         }catch (e:Exception){
-            emit(Response.Failure(Exception(e.message?:e.toString())))
+            emit(Response.Failure(e= SocialException("addUsernameToUser exception",Exception())))
         }
     }
 }

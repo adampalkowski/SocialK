@@ -112,6 +112,8 @@ fun PickUsernameScreen(userViewModel: UserViewModel?,authViewModel:AuthViewModel
                 onEvent(PickUserEvent.GoToHome)
             }
             is Response.Failure->{
+
+                Toast.makeText(LocalContext.current,    databaseResponse.e.message.toString(), Toast.LENGTH_LONG).show()
             }
         }
     }

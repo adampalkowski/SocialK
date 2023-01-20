@@ -3,6 +3,7 @@ package com.example.socialk.di
 import com.example.socialk.ActiveUser
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
+import com.example.socialk.model.SocialException
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -33,7 +34,7 @@ class ActivityRepositoryImpl @Inject constructor(
                 val activity = documentSnapshot.toObject<Activity>()
                 Response.Success(activity)
             } else {
-                Response.Failure(e = Exception() )
+                Response.Failure(e= SocialException("getActivty document null",Exception()))
             }
             trySend(response as Response<Activity>).isSuccess
         }
@@ -47,7 +48,7 @@ class ActivityRepositoryImpl @Inject constructor(
             emit(Response.Success(addition))
 
         }catch (e:Exception){
-            emit(Response.Failure(Exception(e.message?:e.toString())))
+            emit(Response.Failure(e= SocialException("AddActivity exception",Exception())))
         }
     }
 
@@ -57,7 +58,7 @@ class ActivityRepositoryImpl @Inject constructor(
             val deletion = activitiesRef.document(id).delete().await()
             emit(Response.Success(deletion))
         }catch (e:Exception){
-            emit(Response.Failure(Exception(e.message?:e.toString())))
+            emit(Response.Failure(e= SocialException("deleteActivity exception",Exception())))
         }
     }
 
@@ -72,7 +73,7 @@ class ActivityRepositoryImpl @Inject constructor(
                 val id= id
                 Response.Success(activitiesList)
             } else {
-                Response.Failure( Exception())
+                Response.Failure(e= SocialException("",Exception()))
             }
             trySend(response).isSuccess
         }
@@ -88,7 +89,7 @@ class ActivityRepositoryImpl @Inject constructor(
                 activitiesList =documents.map { it.toObject<ActiveUser>() }
                 Response.Success(activitiesList)
             } else {
-                Response.Failure( Exception())
+                Response.Failure(e= SocialException("getActiveUsers",Exception()))
             }
             trySend(response).isSuccess
         }
@@ -104,7 +105,7 @@ class ActivityRepositoryImpl @Inject constructor(
             emit(Response.Success(addition))
 
         }catch (e:Exception){
-            emit(Response.Failure(Exception(e.message?:e.toString())))
+            emit(Response.Failure(e= SocialException("addActiveUser",Exception())))
         }
     }
 
@@ -114,7 +115,7 @@ class ActivityRepositoryImpl @Inject constructor(
             val deletion = activeUsersRef.document(id).delete().await()
             emit(Response.Success(deletion))
         }catch (e:Exception){
-            emit(Response.Failure(Exception(e.message?:e.toString())))
+            emit(Response.Failure(e= SocialException("deleteActiveUser",Exception())))
         }
     }
 
