@@ -90,4 +90,9 @@
         android:name="com.example.socialk.SearchFragment"
         android:label="Search">
     </fragment>
+    <fragment
+        android:id="@+id/pick_username_fragment"
+        android:name="com.example.socialk.PickUsername.PickUsernameFragment"
+        android:label="PickUsername">
+    </fragment>
 </navigation>

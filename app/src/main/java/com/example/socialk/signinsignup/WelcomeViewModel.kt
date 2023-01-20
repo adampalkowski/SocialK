@@ -21,5 +21,8 @@ class WelcomeViewModel() : ViewModel() {
     fun handleGoToHome( ) {
         _navigateTo.value = Event(Screen.Home)
     }
+    fun handleGoToPickUsername( ) {
+        _navigateTo.value = Event(Screen.PickUsername)
+    }
 }
 

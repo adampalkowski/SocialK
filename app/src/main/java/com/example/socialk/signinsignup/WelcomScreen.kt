@@ -57,6 +57,7 @@ sealed class WelcomeEvent {
     object ContinueWithGoogle : WelcomeEvent()
     object ContinueWithFacebook : WelcomeEvent()
     object GoToHome : WelcomeEvent()
+    object PickUsername : WelcomeEvent()
 }
 
 @Composable
@@ -70,9 +71,20 @@ fun WelcomeScreen(userViewModel:UserViewModel?,authViewModel: AuthViewModel,onEv
                 validationResponse ->
             when(validationResponse){
                 is Response.Success->{
+                    if(validationResponse.data){
+                        LaunchedEffect(Unit){
+                            onEvent(WelcomeEvent.GoToHome)
 
-                    Toast.makeText(LocalContext.current,"authenticated",Toast.LENGTH_LONG).show()
-                    onEvent(WelcomeEvent.GoToHome)
+                        }
+                        Toast.makeText(LocalContext.current,"authenticated",Toast.LENGTH_LONG).show()
+
+                    }else{
+                        LaunchedEffect(Unit){
+                            onEvent(WelcomeEvent.PickUsername)
+
+                        }
+                    }
+
                 }
                 is Response.Failure->{
                 }

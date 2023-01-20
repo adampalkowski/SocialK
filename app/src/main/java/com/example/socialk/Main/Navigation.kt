@@ -6,7 +6,9 @@ import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import com.example.socialk.R
 import java.security.InvalidParameterException
-enum class Screen { Welcome, SignUp, SignIn, Home,Profile,Settings,Map,Chats,Memories,Create,Live,Event,EditProfile,Search}
+enum class Screen { Welcome, SignUp, SignIn,
+    Home,Profile,Settings,Map,Chats,
+    Memories,Create,Live,Event,EditProfile,Search,PickUsername}
 
 fun Fragment.navigate(to: Screen, from: Screen) {
     if (to == from) {
@@ -54,6 +56,9 @@ fun Fragment.navigate(to: Screen, from: Screen) {
         }
         Screen.Search -> {
             findNavController().navigate(R.id.search_fragment)
+        }
+        Screen.PickUsername -> {
+            findNavController().navigate(R.id.pick_username_fragment)
         }
     }
 

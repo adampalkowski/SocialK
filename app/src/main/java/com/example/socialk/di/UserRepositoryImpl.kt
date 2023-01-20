@@ -22,7 +22,6 @@ class UserRepositoryImpl @Inject constructor(
 ):UserRepository {
 
     override suspend fun getUser(id: String): Flow<Response<User>> = callbackFlow {
-
            val registration= usersRef.document(id).addSnapshotListener  {  snapshot, exception ->
 
                if (exception != null) {
@@ -43,8 +42,35 @@ class UserRepositoryImpl @Inject constructor(
             registration.remove()
         }
 
+    }
+    override suspend fun getUserByUsername(username: String): Flow<Response<User>> = callbackFlow {
+        val registration= usersRef.whereEqualTo("username",username).get().addOnSuccessListener  { documents->
+
+            var userList:List<User> = mutableListOf()
+            if (userList.size>1){
+                trySend(Response.Failure(e=Exception()))
+            }
+            //list should always be the size of 1
+            val response = if (documents != null) {
+                activitiesList =documents.map { it.toObject<User>() }
+
+                trySend(Response.Success(user))
+            } else {
+                trySend(Response.Failure(e=Exception()))
+            }
+
+        }.addOnFailureListener{
+                exception ->
+            channel.close(exception)
+            trySend(Response.Failure(e=Exception()))
+        }
+
+        awaitClose(){
+            registration.remove()
+        }
 
     }
+
     override suspend fun addUser(user: User): Flow<Response<Void?>> = flow {
         try {
             emit(Response.Loading)
@@ -61,6 +87,17 @@ class UserRepositoryImpl @Inject constructor(
             emit(Response.Loading)
             val deletion = usersRef.document(id).delete().await()
             emit(Response.Success(deletion))
+        }catch (e:Exception){
+            emit(Response.Failure(Exception(e.message?:e.toString())))
+        }
+    }
+
+    override suspend fun addUsernameToUser(id:String,username: String): Flow<Response<Void?>>  = flow {
+        try {
+            emit(Response.Loading)
+            val addition = usersRef.document(id).update("username",username).await()
+            emit(Response.Success(addition))
+
         }catch (e:Exception){
             emit(Response.Failure(Exception(e.message?:e.toString())))
         }

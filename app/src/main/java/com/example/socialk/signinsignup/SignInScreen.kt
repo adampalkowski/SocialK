@@ -34,6 +34,7 @@ sealed class SignInEvent {
     object SignUp : SignInEvent()
     object SignInAsGuest : SignInEvent()
     object NavigateBack : SignInEvent()
+    object PickUsername : SignInEvent()
 }
 
 @OptIn(ExperimentalMaterial3Api::class) // Scaffold is experimental in m3
@@ -43,7 +44,6 @@ sealed class SignInEvent {
     val userFlow = userViewModel?.userValidation?.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-
     val snackbarErrorText = stringResource(id = R.string.feature_not_available)
     val snackbarActionLabel = stringResource(id = R.string.dismiss)
 
@@ -97,13 +97,19 @@ sealed class SignInEvent {
             is Response.Success->{
                 userViewModel?.validateUser(it.data)
                 userFlow?.value?.let {
-
                     validationResponse ->
                     when(validationResponse){
                         is Response.Success->{
-                            LaunchedEffect(Unit){
-                                onNavigationEvent(SignInEvent.SignIn)
+                            if(validationResponse.data){
+                                LaunchedEffect(Unit){
+                                    onNavigationEvent(SignInEvent.SignIn)
+                                }
+                            }else{
+                                LaunchedEffect(Unit){
+                                    onNavigationEvent(SignInEvent.PickUsername)
+                                }
                             }
+
                         }
                         is Response.Failure->{
                             val context = LocalContext.current
@@ -139,7 +145,7 @@ fun SignInContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         val passwordState = remember { PasswordState() }
-        val enabled=            emailState.isValid && passwordState.isValid
+        val enabled=    emailState.isValid && passwordState.isValid
         val onSubmit = {
             if (emailState.isValid && passwordState.isValid) {
                 onSignInSubmitted(emailState.text, passwordState.text)

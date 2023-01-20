@@ -9,6 +9,7 @@
     <string name="forgot_password">Forgot password?</string>
     <string name="user_continue">Continue</string>
     <string name="create_account">Create account</string>
+    <string name="set_username">Set username</string>
     <string name="terms_and_conditions">By continuing, you agree to our Terms of Service. We’ll
         handle your data according to our Privacy Policy.</string>
     <string name="feature_not_available">Feature not available</string>

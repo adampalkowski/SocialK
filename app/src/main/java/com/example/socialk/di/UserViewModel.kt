@@ -25,72 +25,92 @@ class UserViewModel @Inject constructor(
     private val repo: UserRepository
 ) : ViewModel() {
 
-    private val _userValidation= MutableStateFlow<Response<Boolean>>(Response.Loading)
-    val userValidation : StateFlow<Response<Boolean>> =_userValidation
+    private val _userValidation = MutableStateFlow<Response<Boolean>>(Response.Loading)
+    val userValidation: StateFlow<Response<Boolean>> = _userValidation
 
-    private val _userState= mutableStateOf<Response<User>>(Response.Loading)
-    val userState : State<Response<User>> =_userState
+    private val _userState = mutableStateOf<Response<User>>(Response.Loading)
+    val userState: State<Response<User>> = _userState
 
     private val _isUserAddedState = mutableStateOf<Response<Void?>?>(Response.Success(null))
     val isUserAddedState: State<Response<Void?>?> = _isUserAddedState
 
+    private val _isUsernameAddedFlow = MutableStateFlow<Response<Void?>>(Response.Loading)
+    val isUsernameAddedFlow: StateFlow<Response<Void?>> = _isUsernameAddedFlow
+
+    private val _loginFlow= MutableStateFlow<Response<FirebaseUser>?>(null)
+    val loginFlow: StateFlow<Response<FirebaseUser>?> = _loginFlow
+
     private val _isUserDeletedState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isUserDeletedState: State<Response<Void?>> = _isUserDeletedState
 
-    fun getUser(id:String){
+    fun getUser(id: String) {
         viewModelScope.launch {
-            repo.getUser(id).collect{ response->
-                _userState.value=response
+            repo.getUser(id).collect { response ->
+                _userState.value = response
             }
         }
     }
 
-    fun addUser(user: User){
+    fun addUser(user: User) {
         viewModelScope.launch {
-            repo.addUser(user).collect{ response ->
-                _isUserAddedState.value=response
+            repo.addUser(user).collect { response ->
+                _isUserAddedState.value = response
             }
         }
     }
 
-    fun userAdded(){
-        _isUserAddedState.value=null
+    fun userAdded() {
+        _isUserAddedState.value = null
     }
 
-    fun deleteUser(id:String){
+    fun deleteUser(id: String) {
         viewModelScope.launch {
-            repo.deleteUser(id).collect{ response ->
-                _isUserDeletedState.value=response
+            repo.deleteUser(id).collect { response ->
+                _isUserDeletedState.value = response
             }
         }
     }
+    fun addUsernameToUser( id:String, username :String) {
+        viewModelScope.launch {
+            repo.addUsernameToUser(id=id,username=username).collect { response ->
+                _isUsernameAddedFlow.value = response
+            }
+        }
+    }
+    fun validateUser(firebaseUser: FirebaseUser) {
+        val id: String = firebaseUser.uid
+        viewModelScope.launch {
+            repo.getUser(id).collect { response ->
+                when (response) {
+                    is Response.Success -> {
+                        val user: User = response.data
 
-     fun validateUser(firebaseUser: FirebaseUser){
-            val id:String=firebaseUser.uid
-         viewModelScope.launch {
-             repo.getUser(id).collect{ response->
-                 when(response){
-                     is Response.Success->{
-                         val user:User=response.data
-                         //emails don't match
-                         //TODO SHOW CORRECT EXCEPTION
-                         if (user.email!=firebaseUser.email){
-                             _userValidation.value=Response.Failure(e = Exception())
-                         }
-                         //SET THE GLOBAL USER
-                         UserData.user=user
-                         Log.d("TAG","succes")
-                         _userValidation.value=Response.Success(true)
-                     }
-                     is Response.Failure->{
-                         //issue with retreiving user from database
-                         _userValidation.value=Response.Failure(e = Exception())
-                     }
-                 }
+                        //emails don't match
+                        //TODO SHOW CORRECT EXCEPTION
+                        if (user.email != firebaseUser.email) {
+                            _userValidation.value = Response.Failure(e = Exception())
+                        }
+                        if (user.username==null){
+                            UserData.user = user
+                            Log.d("TAG", "succes")
+                            _userValidation.value = Response.Success(false)
+                        }else{
+                            //SET THE GLOBAL USER
+                            UserData.user = user
+                            Log.d("TAG", "succes")
+                            _userValidation.value = Response.Success(true)
+                        }
+
+                    }
+                    is Response.Failure -> {
+                        //issue with retreiving user from database
+                        _userValidation.value = Response.Failure(e = Exception())
+                    }
+                }
 
 
-             }
-         }
+            }
+        }
 
     }
 
