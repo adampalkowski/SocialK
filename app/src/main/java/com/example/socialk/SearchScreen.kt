@@ -9,10 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,7 +44,7 @@ sealed class SearchEvent {
     object GoToSettings : SearchEvent()
     object GoToChat : SearchEvent()
     object GoBack : SearchEvent()
-    class GoToUserProfile (user: User): SearchEvent()
+    class GoToUserProfile (user: User): SearchEvent(){val user=user}
 
 }
 
@@ -317,6 +314,7 @@ fun searchEditText(userViewModel: UserViewModel?,onEvent: (SearchEvent) -> Unit)
     val usernameTextSaver by rememberSaveable(stateSaver = ActivityTextStateSaver) {
         mutableStateOf(ActivityTextFieldState())
     }
+    val userFlow=userViewModel?.userState?.collectAsState()
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -376,27 +374,22 @@ fun searchEditText(userViewModel: UserViewModel?,onEvent: (SearchEvent) -> Unit)
             Spacer(modifier = Modifier.width(12.dp))
             SendButton(onEvent = {
                 if (usernameTextSaver.text.isNotEmpty()) {
-
-                    userViewModel?.getUserByUsername(usernameTextSaver.text)
-
-
+                    userViewModel?.getUserByUsername(usernameTextSaver.text.trim())
                 }
 
             }, icon = R.drawable.ic_search)
         }
-        userViewModel?.userState?.value.let {
+        userFlow?.value.let {
             when(it){
-                is Response.Loading-> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
-                    CircularProgressIndicator()
-                }
                 is Response.Success->  {
-                    onEvent(SearchEvent.GoToUserProfile(it.data))}
+                    onEvent(SearchEvent.GoToUserProfile(it.data))
+                    userViewModel?.resetUserValue()
+                }
                 is Response.Failure->{
                     Toast.makeText(LocalContext.current,
                         "Failed to find user with given username",Toast.LENGTH_LONG).show()
 
                 }
-
 
             }
         }

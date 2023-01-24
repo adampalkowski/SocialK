@@ -6,9 +6,12 @@ import com.example.socialk.model.Response
 import com.example.socialk.model.SocialException
 import com.example.socialk.model.User
 import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ktx.toObject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
@@ -108,6 +111,110 @@ class UserRepositoryImpl @Inject constructor(
 
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("addUsernameToUser exception",Exception())))
+        }
+    }
+
+    override suspend fun addInvitedIDs(
+        my_id: String,
+        invited_id: String
+    ): Flow<Response<Void?>> =flow{
+        try {
+            emit(Response.Loading)
+            val addition = usersRef.document(my_id).update("friends_ids",FieldValue.arrayUnion(invited_id)).await()
+            emit(Response.Success(addition))
+
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("addInvitedIDs exception",Exception())))
+        }
+    }
+
+    override suspend fun removeInvitedIDs(
+        my_id: String,
+        invited_id: String
+    ): Flow<Response<Void?>> =flow{
+        try {
+            emit(Response.Loading)
+            val deletion = usersRef.document(my_id).update("friends_ids",FieldValue.arrayRemove(invited_id)).await()
+            emit(Response.Success(deletion))
+
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("removeInvitedIDs exception",Exception())))
+        }
+    }
+
+    override suspend fun addBlockedIDs(
+        my_id: String,
+        blocked_id: String
+    ): Flow<Response<Void?>> =flow{
+        try {
+            emit(Response.Loading)
+            val addition = usersRef.document(my_id).update("blocked_ids",FieldValue.arrayUnion(blocked_id)).await()
+            emit(Response.Success(addition))
+
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("addBlockedIDs exception",Exception())))
+        }
+    }
+
+    override suspend fun removeBlockedIDs(
+        my_id: String,
+        blocked_id: String
+    ): Flow<Response<Void?>>  =flow{
+        try {
+            emit(Response.Loading)
+            val deletion = usersRef.document(my_id).update("blocked_ids",FieldValue.arrayRemove(blocked_id)).await()
+            emit(Response.Success(deletion))
+
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("removeBlockedIDs exception",Exception())))
+        }
+    }
+
+
+
+    override suspend fun addFriendsIDs(my_id: String, friend_id: String): Flow<Response<Void?>>  =flow{
+        try {
+            emit(Response.Loading)
+            val addition = usersRef.document(my_id).update("friends_ids",FieldValue.arrayUnion(friend_id)).await()
+            emit(Response.Success(addition))
+
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("addFriendsIDs exception",Exception())))
+        }
+    }
+    override suspend fun removeFriendsIDs(my_id: String, friend_id: String): Flow<Response<Void?>>  =flow{
+        try {
+            emit(Response.Loading)
+            val deletion = usersRef.document(my_id).update("friends_ids",FieldValue.arrayRemove(friend_id)).await()
+            emit(Response.Success(deletion))
+
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("removeFriendsIDs exception",Exception())))
+        }
+    }
+
+    override suspend fun addFriendToBothUsers(my_id: String, friend_id: String): Flow<Response<Void?>>  =flow{
+        try {
+            emit(Response.Loading)
+              val one =  usersRef.document(my_id).update("friends_ids",FieldValue.arrayUnion(friend_id)).await()
+              val two=  usersRef.document(friend_id).update("friends_ids",FieldValue.arrayUnion(my_id)).await()
+              emit(Response.Success(two))
+
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("addFriendToBothUsers exception",Exception())))
+        }
+    }
+
+
+    override suspend fun removeFriendFromBothUsers(my_id: String, friend_id: String): Flow<Response<Void?>>  =flow{
+        try {
+            emit(Response.Loading)
+            val one =  usersRef.document(my_id).update("friends_ids",FieldValue.arrayRemove(friend_id)).await()
+            val two=  usersRef.document(friend_id).update("friends_ids",FieldValue.arrayRemove(my_id)).await()
+            emit(Response.Success(two))
+
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("removeFriendFromBothUsers exception",Exception())))
         }
     }
 }

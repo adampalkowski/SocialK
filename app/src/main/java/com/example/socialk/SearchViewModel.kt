@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.socialk.Main.Screen
+import com.example.socialk.model.User
 import com.example.socialk.util.Event
 
 class SearchViewModel : ViewModel(){

@@ -3,6 +3,7 @@ package com.example.socialk.di
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.socialk.model.*
@@ -22,12 +23,14 @@ import kotlin.Exception
 class UserViewModel @Inject constructor(
     private val repo: UserRepository
 ) : ViewModel() {
-
+    val userProfileId = MutableLiveData<String>()
+    val _userProfile = MutableStateFlow<User>(User())
+    val userProfile: StateFlow<User> = _userProfile
     private val _userValidation = MutableStateFlow<Response<Boolean>>(Response.Loading)
     val userValidation: StateFlow<Response<Boolean>> = _userValidation
 
-    private val _userState = mutableStateOf<Response<User>>(Response.Loading)
-    val userState: State<Response<User>> = _userState
+    private val _userState = MutableStateFlow<Response<User>>(Response.Loading)
+    val userState: StateFlow<Response<User>> = _userState
 
     private val _isUserAddedState = mutableStateOf<Response<Void?>?>(Response.Success(null))
     val isUserAddedState: State<Response<Void?>?> = _isUserAddedState
@@ -41,6 +44,110 @@ class UserViewModel @Inject constructor(
     private val _isUserDeletedState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isUserDeletedState: State<Response<Void?>> = _isUserDeletedState
 
+
+    private val _isInviteAddedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isInviteAddedState: State<Response<Void?>> = _isInviteAddedState
+
+    private val _isInviteRemovedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isInviteRemovedState: State<Response<Void?>> = _isInviteRemovedState
+
+    private val _isBlockedRemovedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isBlockedRemovedState: State<Response<Void?>> = _isBlockedRemovedState
+
+    private val _isBlockedAddedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isBlockedAddedState: State<Response<Void?>> = _isBlockedAddedState
+
+    private val _isFriendAddedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isFriendAddedState: State<Response<Void?>> = _isFriendAddedState
+
+    private val _isFriendRemovedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isFriendRemovedState: State<Response<Void?>> = _isFriendRemovedState
+
+    private val _isFriendAddedToBothUsersState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isFriendAddedToBothUsersState: State<Response<Void?>> = _isFriendAddedToBothUsersState
+
+    private val _isFriendRemovedFromBothUsersState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isFriendRemovedFromBothUsersState: State<Response<Void?>> = _isFriendRemovedFromBothUsersState
+
+
+
+    fun addFriendToBothUsers(my_id:String,friend_id:String){
+        viewModelScope.launch {
+            repo.addFriendToBothUsers(my_id,friend_id).collect { response ->
+                _isFriendAddedToBothUsersState.value = response
+            }
+        }
+    }
+    fun removeFriendFromBothUsers(my_id:String,friend_id:String){
+        viewModelScope.launch {
+            repo.removeFriendFromBothUsers(my_id,friend_id).collect { response ->
+                _isFriendRemovedFromBothUsersState.value = response
+            }
+        }
+    }
+
+    fun addFriendIdToUser(my_id:String,friend_id:String){
+        viewModelScope.launch {
+            repo.addInvitedIDs(my_id,friend_id).collect { response ->
+                _isFriendAddedState.value = response
+            }
+        }
+    }
+    fun removeFriendIdFromUser(my_id:String,friend_id:String){
+        viewModelScope.launch {
+            repo.removeInvitedIDs(my_id,friend_id).collect { response ->
+                _isFriendRemovedState.value = response
+            }
+        }
+    }
+
+    fun addBlockedIdToUser(my_id:String,blocked_id:String){
+        viewModelScope.launch {
+            repo.addInvitedIDs(my_id,blocked_id).collect { response ->
+                _isBlockedAddedState.value = response
+            }
+        }
+    }
+    fun removeBlockedIdFromUser(my_id:String,blocked_id:String){
+        viewModelScope.launch {
+            repo.removeInvitedIDs(my_id,blocked_id).collect { response ->
+                _isBlockedRemovedState.value = response
+            }
+        }
+    }
+
+    fun removeInvitedIdFromUser(my_id:String,invited_id:String){
+        viewModelScope.launch {
+            repo.removeInvitedIDs(my_id,invited_id).collect { response ->
+                _isInviteRemovedState.value = response
+            }
+        }
+    }
+
+    fun addInvitedIdToUser(my_id:String,invited_id:String){
+        viewModelScope.launch {
+            repo.addInvitedIDs(my_id,invited_id).collect { response ->
+                _isInviteAddedState.value = response
+            }
+        }
+    }
+
+
+
+
+
+    fun setUserProfileId(id:String)
+    {
+        userProfileId.value=id
+    }
+    fun resetUserValue()
+    {
+        _userState.value = Response.Loading
+    }
+    fun setUserProfile(user:User)
+    {
+        _userProfile.value=user
+    }
     fun getUser(id: String) {
         viewModelScope.launch {
             repo.getUser(id).collect { response ->
@@ -48,6 +155,7 @@ class UserViewModel @Inject constructor(
             }
         }
     }
+
     //eror prone ? uses _userState same as get user above
     fun getUserByUsername(username: String) {
         viewModelScope.launch {
@@ -102,7 +210,6 @@ class UserViewModel @Inject constructor(
                 when (response) {
                     is Response.Success -> {
                         val user: User = response.data
-
                         //emails don't match
                         //TODO SHOW CORRECT EXCEPTION
                         if (user.email != firebaseUser.email) {

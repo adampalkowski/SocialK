@@ -9,6 +9,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
@@ -16,14 +17,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 import com.example.socialk.*
 import com.example.socialk.R
+import com.example.socialk.di.UserViewModel
+import com.example.socialk.model.Response
 import com.example.socialk.model.User
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 sealed class UserProfileEvent {
@@ -33,12 +38,14 @@ sealed class UserProfileEvent {
     object GoToEditProfile : UserProfileEvent()
     object GoToHome : UserProfileEvent()
     object GoToSearch : UserProfileEvent()
-    class InviteUser (user:User): UserProfileEvent()
+    object GoBack : UserProfileEvent()
+    class InviteUser (user:User) : UserProfileEvent(){val user :User =user}
 }
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun UserProfileScreen(user: User, onEvent: (UserProfileEvent) -> Unit) {
+fun UserProfileScreen(user: User,userViewModel:UserViewModel?, onEvent: (UserProfileEvent) -> Unit) {
+
     Surface(
         modifier = Modifier
             .fillMaxSize(), color = SocialTheme.colors.uiBackground
@@ -125,5 +132,7 @@ fun UserProfileScreen(user: User, onEvent: (UserProfileEvent) -> Unit) {
                 tabRowItems[pagerState.currentPage].screen()
             }
         }
+
     }
+
 }

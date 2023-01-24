@@ -1,6 +1,8 @@
 package com.example.socialk.Main
 
+import android.os.Bundle
 import androidx.core.app.ActivityOptionsCompat
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
@@ -69,3 +71,4 @@ fun Fragment.navigate(to: Screen, from: Screen) {
     }
 
 }
+
