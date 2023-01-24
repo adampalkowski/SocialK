@@ -10,12 +10,14 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
+import com.example.socialk.di.UserViewModel
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class SearchFragment: Fragment() {
     private val viewModel by viewModels<SearchViewModel>()
+    private val userViewModel by viewModels<UserViewModel>()
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -29,12 +31,16 @@ class SearchFragment: Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
-                    SearchScreen(
+                    SearchScreen(userViewModel,
                         onEvent = { event ->
                             when (event) {
                                 is SearchEvent.GoToProfile -> viewModel.handleGoToChats()
                                 is SearchEvent.GoToProfile -> viewModel.handleGoToProfile()
                                 is SearchEvent.GoBack ->    activity?.onBackPressedDispatcher?.onBackPressed()
+                                is SearchEvent.GoToUserProfile ->{
+
+                                    viewModel.handleGoToUserProfile()
+                                }
                             }
                         }
                     )

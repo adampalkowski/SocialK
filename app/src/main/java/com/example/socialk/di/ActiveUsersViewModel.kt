@@ -20,7 +20,6 @@ class ActiveUsersViewModel @Inject constructor(
     private val _activeUsersListState = mutableStateOf<Response<List<ActiveUser>>>(Response.Loading)
     val activeUsersListState: State<Response<List<ActiveUser>>> = _activeUsersListState
 
-
     private val _isActiveUsersAddedState = mutableStateOf<Response<Void?>?>(Response.Success(null))
     val isActiveUsersAddedState: State<Response<Void?>?> = _isActiveUsersAddedState
 

@@ -16,4 +16,5 @@
     <item name="search_fragment" type="id" />
     <item name="pick_username_fragment" type="id" />
     <item name="chat_fragment" type="id" />
+    <item name="user_profile_fragment" type="id" />
 </resources>

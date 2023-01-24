@@ -29,15 +29,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.example.socialk.*
 import com.example.socialk.R
 import com.example.socialk.components.BottomBar
 import com.example.socialk.di.ActivityViewModel
-import com.example.socialk.home.cardHighlited
-import com.example.socialk.home.cardnotHighlited
-import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
 import com.example.socialk.signinsignup.EmailState
 import com.example.socialk.signinsignup.SignUpEvent

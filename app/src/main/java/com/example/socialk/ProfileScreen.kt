@@ -1,7 +1,6 @@
 package com.example.socialk
 
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,8 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -24,23 +21,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
-import com.example.socialk.chat.ChatEvent
 import com.example.socialk.components.BottomBar
-import com.example.socialk.components.BottomBarRow
-import com.example.socialk.components.ScreenHeading
-import com.example.socialk.home.HomeEvent
-import com.example.socialk.home.cardHighlited
-import com.example.socialk.home.cardnotHighlited
 import com.example.socialk.model.User
-import com.example.socialk.model.UserData
-import com.example.socialk.settings.SettingsEvent
 import com.example.socialk.ui.theme.Inter
-import com.example.socialk.ui.theme.Ocean1
 import com.example.socialk.ui.theme.SocialTheme
 import com.example.socialk.ui.theme.Typography
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
 

@@ -100,4 +100,9 @@
         android:name="com.example.socialk.chat.ChatFragment"
         android:label="Chat">
     </fragment>
+    <fragment
+        android:id="@+id/user_profile_fragment"
+        android:name="com.example.socialk.UserProfile.UserProfileFragment"
+        android:label="UserProfile">
+    </fragment>
 </navigation>
