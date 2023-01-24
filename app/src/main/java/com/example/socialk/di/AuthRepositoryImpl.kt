@@ -118,7 +118,10 @@ class AuthRepositoryImpl @Inject constructor(
                 email = this.email,
                 id = uid,
                 pictureUrl = null,
-                username = null
+                username = null,
+                friends_ids = ArrayList(),
+                blocked_ids =  ArrayList(),
+                invited_ids =  ArrayList(),
             )
             db.collection("Users").document(uid).set(user).await()
         }

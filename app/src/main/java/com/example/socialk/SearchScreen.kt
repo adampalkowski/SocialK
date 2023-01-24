@@ -4,6 +4,9 @@ import android.widget.Space
 import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -35,6 +38,7 @@ import com.example.socialk.create.CreateEvent
 import com.example.socialk.di.UserViewModel
 import com.example.socialk.model.Response
 import com.example.socialk.model.User
+import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.*
 import kotlin.text.Typography
 
@@ -44,12 +48,14 @@ sealed class SearchEvent {
     object GoToSettings : SearchEvent()
     object GoToChat : SearchEvent()
     object GoBack : SearchEvent()
+    class OnInviteAccepted (user_id:String): SearchEvent(){val user_id=user_id}
     class GoToUserProfile (user: User): SearchEvent(){val user=user}
 
 }
 
 @Composable
 fun SearchScreen(userViewModel:UserViewModel?,onEvent: (SearchEvent) -> Unit) {
+
     Surface(
         modifier = Modifier
             .fillMaxSize()
@@ -95,46 +101,36 @@ fun SearchScreen(userViewModel:UserViewModel?,onEvent: (SearchEvent) -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
             //INVITES ROW
-            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-                InviteCard(profileUrl = "https://firebasestorage.googleapis.com/v0/b/socialv2-340711.appspot.com/o/uploads%2F1662065348037.null?alt=media&token=40cebce4-0c53-470c-867f-d9d34cba63ab",
-                    name = "AdamPałkowłkowskiPa",
-                    username = "AdawskiPa",
-                    onClick = {})
-                Spacer(modifier = Modifier.width(16.dp))
-                Box(
-                    modifier = Modifier
-                        .height(120.dp)
-                        .width(1.dp)
-                        .background(color = SocialTheme.colors.uiFloated)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                InviteCard(profileUrl = "https://firebasestorage.googleapis.com/v0/b/socialv2-340711.appspot.com/o/uploads%2F1662065348037.null?alt=media&token=40cebce4-0c53-470c-867f-d9d34cba63ab",
-                    name = "Adam Pałkowski",
-                    username = "adamo12321",
-                    onClick = {})
-                Spacer(modifier = Modifier.width(16.dp))
-                Box(
-                    modifier = Modifier
-                        .height(120.dp)
-                        .width(1.dp)
-                        .background(color = SocialTheme.colors.uiFloated)
-                )
+            LazyRow{
+                userViewModel?.invitesStateFlow?.value.let { it->
+                    when(it){
+                                is Response.Success->{
+                                    items(it.data) { item ->
+                                        InviteCard(profileUrl = if (item.pictureUrl==null){"PIC"}else{item.pictureUrl!!},
+                                            name =if (item.name==null){"NAME"}else{item.name!!},
+                                            username =if (item.username==null){""}else{item.username!!} ,
+                                            onClick = {onEvent(SearchEvent.OnInviteAccepted(item.id))})
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                    }
+                                }
+                                is Response.Loading-> {
+                                    item {
+                                        Box(modifier =Modifier) {
+                                            CircularProgressIndicator()
 
-                Spacer(modifier = Modifier.width(16.dp))
-                InviteCard(profileUrl = "https://firebasestorage.googleapis.com/v0/b/socialv2-340711.appspot.com/o/uploads%2F1662065348037.null?alt=media&token=40cebce4-0c53-470c-867f-d9d34cba63ab",
-                    name = "Adam Pałkowski",
-                    username = "adamo12321",
-                    onClick = {})
-                Spacer(modifier = Modifier.width(16.dp))
-                Box(
-                    modifier = Modifier
-                        .height(120.dp)
-                        .width(1.dp)
-                        .background(color = SocialTheme.colors.uiFloated)
-                )
+                                        }
+                                    }
+                                }
+                                is Response.Failure->{
 
-                Spacer(modifier = Modifier.width(16.dp))
+                                }
+                    }
+                }
+
             }
+
+
+
             Spacer(modifier = Modifier.height(12.dp))
             //TEXT YOU MAY WANT TO KNOW
             Box(
@@ -188,6 +184,9 @@ fun SearchScreen(userViewModel:UserViewModel?,onEvent: (SearchEvent) -> Unit) {
             //TODO HARDCODED NAME
             ButtonLink(onClick = {}, username = "name")
         }
+    }
+    userViewModel?.invitesStateFlow?.value.let {
+
     }
 
 }
@@ -279,9 +278,10 @@ fun InviteCard(profileUrl: String, name: String, username: String, onClick: () -
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun searchActionButton(label: String, onClick: () -> Unit) {
-    Card(
+    Card(onClick=onClick,
         shape = RoundedCornerShape(8.dp), elevation = 0.dp, border = BorderStroke(
             1.dp,
             color = if (label.equals("Accept")) {

@@ -1,17 +1,14 @@
 package com.example.socialk.di
 
-import com.example.socialk.ActiveUser
-import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
 import com.example.socialk.model.SocialException
 import com.example.socialk.model.User
 import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ktx.toObject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
@@ -120,7 +117,7 @@ class UserRepositoryImpl @Inject constructor(
     ): Flow<Response<Void?>> =flow{
         try {
             emit(Response.Loading)
-            val addition = usersRef.document(my_id).update("friends_ids",FieldValue.arrayUnion(invited_id)).await()
+            val addition = usersRef.document(my_id).update("invited_ids",FieldValue.arrayUnion(invited_id)).await()
             emit(Response.Success(addition))
 
         }catch (e:Exception){
@@ -134,7 +131,7 @@ class UserRepositoryImpl @Inject constructor(
     ): Flow<Response<Void?>> =flow{
         try {
             emit(Response.Loading)
-            val deletion = usersRef.document(my_id).update("friends_ids",FieldValue.arrayRemove(invited_id)).await()
+            val deletion = usersRef.document(my_id).update("invited_ids",FieldValue.arrayRemove(invited_id)).await()
             emit(Response.Success(deletion))
 
         }catch (e:Exception){
@@ -216,5 +213,33 @@ class UserRepositoryImpl @Inject constructor(
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("removeFriendFromBothUsers exception",Exception())))
         }
+    }
+//todo paginate the daataaaaa
+    override suspend fun getInvites(id: String): Flow<Response<ArrayList<User>>> = callbackFlow {
+        val registration= usersRef.whereArrayContains("invited_ids",id).limit(5).addSnapshotListener()  {  snapshots , exception ->
+
+            if (exception != null) {
+                channel.close(exception)
+                return@addSnapshotListener
+            }
+            var invites_list = ArrayList<User>()
+            for (dc in snapshots!!.documentChanges) {
+                when (dc.type) {
+                    DocumentChange.Type.ADDED ->  { val user = dc.document.toObject(User::class.java)
+                        invites_list.add(user)}
+                    DocumentChange.Type.MODIFIED -> {val user = dc.document.toObject(User::class.java)
+                        invites_list.add(user)}
+                    DocumentChange.Type.REMOVED ->{val user = dc.document.toObject(User::class.java)
+                        invites_list.remove(user)}
+                }
+
+            }
+            trySend(Response.Success(invites_list))
+        }
+
+        awaitClose(){
+            registration.remove()
+        }
+
     }
 }

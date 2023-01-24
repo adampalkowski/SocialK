@@ -6,7 +6,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -46,7 +48,7 @@ class UserProfileFragment : Fragment(){
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
-                    UserProfileScreen(
+                    UserProfileScreen(viewModel,
                         user,userViewModel,
                         onEvent = { event ->
                             when (event) {
@@ -56,8 +58,16 @@ class UserProfileFragment : Fragment(){
                                 is UserProfileEvent.GoToEditProfile -> viewModel.handleGoToEditProfile()
                                 is UserProfileEvent.GoToSearch -> viewModel.handleGoToSearch()
                                 is UserProfileEvent.InviteUser -> {
-                                    event.user
-                                    viewModel.handleInviteUser()
+                                    //TODO !! here should always be null ???
+                                    userViewModel.addInvitedIdToUser(UserData.user!!.id,event.user.id)
+                                    Toast.makeText(activity?.applicationContext,
+                                        "User " + event.user.username+ " invited ",Toast.LENGTH_LONG).show()
+                                }
+                                is UserProfileEvent.RemoveInvite -> {
+                                    //TODO !! here should always be null ???
+                                    userViewModel.removeInvitedIdFromUser(UserData.user!!.id,event.user.id)
+                                    Toast.makeText(activity?.applicationContext,
+                                        "Invite to " + event.user.username+ " removed ",Toast.LENGTH_LONG).show()
                                 }
                             }
                         }

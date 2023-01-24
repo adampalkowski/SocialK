@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
@@ -16,6 +17,8 @@ import androidx.navigation.fragment.findNavController
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
 import com.example.socialk.di.UserViewModel
+import com.example.socialk.model.Response
+import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -34,6 +37,7 @@ class SearchFragment: Fragment() {
 
             }
         }
+        userViewModel.getInvites(UserData.user!!.id)
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
@@ -43,8 +47,37 @@ class SearchFragment: Fragment() {
                                 is SearchEvent.GoToProfile -> viewModel.handleGoToChats()
                                 is SearchEvent.GoToProfile -> viewModel.handleGoToProfile()
                                 is SearchEvent.GoBack ->    activity?.onBackPressedDispatcher?.onBackPressed()
-                                is SearchEvent.GoToUserProfile ->{
+                                is SearchEvent.OnInviteAccepted -> {
+                                    userViewModel.addFriendToBothUsers(UserData.user!!.id,event.user_id)
+                                    userViewModel.removeInvitedIdFromUser(event.user_id,UserData.user!!.id)
+                                    userViewModel.isInviteRemovedState.value.let {
+                                        when(it){
+                                            is Response.Loading->{
 
+                                            }
+                                            is Response.Failure->{
+                                                Toast.makeText(activity?.applicationContext,"failed to remove invite",Toast.LENGTH_LONG).show()
+                                            }
+                                            is Response.Success->{
+
+                                            }
+                                        }
+                                    }
+                                    userViewModel.isFriendAddedToBothUsersState.value.let {
+                                        when(it){
+                                            is Response.Loading->{
+
+                                            }
+                                            is Response.Failure->{
+                                                Toast.makeText(activity?.applicationContext,"failed to accept request",Toast.LENGTH_LONG).show()
+                                            }
+                                            is Response.Success->{
+
+                                            }
+                                        }
+                                    }
+                                }
+                                is SearchEvent.GoToUserProfile ->{
                                     userViewModel.setUserProfileId(event.user.id)
                                     userViewModel.setUserProfile(event.user)
                                     viewModel.handleGoToUserProfile()

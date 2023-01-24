@@ -23,6 +23,7 @@ import com.example.socialk.R
 import com.example.socialk.di.UserViewModel
 import com.example.socialk.model.Response
 import com.example.socialk.model.User
+import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -40,11 +41,13 @@ sealed class UserProfileEvent {
     object GoToSearch : UserProfileEvent()
     object GoBack : UserProfileEvent()
     class InviteUser (user:User) : UserProfileEvent(){val user :User =user}
+    class RemoveInvite (user:User) : UserProfileEvent(){val user :User =user}
 }
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun UserProfileScreen(user: User,userViewModel:UserViewModel?, onEvent: (UserProfileEvent) -> Unit) {
+fun UserProfileScreen(viewModel:UserProfileViewModel,user: User,userViewModel:UserViewModel?, onEvent: (UserProfileEvent) -> Unit) {
+
 
     Surface(
         modifier = Modifier
@@ -55,7 +58,8 @@ fun UserProfileScreen(user: User,userViewModel:UserViewModel?, onEvent: (UserPro
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp).verticalScroll(rememberScrollState())
+                .padding(12.dp)
+                .verticalScroll(rememberScrollState())
         ) {
 
             ProfileScreenHeading(
@@ -95,10 +99,31 @@ fun UserProfileScreen(user: User,userViewModel:UserViewModel?, onEvent: (UserPro
             }
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-                profileButton(
-                    label = "Invite",
-                    iconDrawable = R.drawable.ic_add,
-                    onClick = {onEvent(UserProfileEvent.InviteUser(user))})
+
+            //   if(UserData.user!!.friends_ids.contains(user.id)){
+
+              // }else{
+                viewModel.inviteEventState.value.let {
+                    if (it) {
+                        profileButton(
+                            label = "Remove",
+                            iconDrawable = R.drawable.ic_remove,
+                            onClick = {
+                                onEvent(UserProfileEvent.RemoveInvite(user))
+                                viewModel.inviteRemoved()
+                            })
+
+                    }else{
+                        profileButton(
+                            label = "Invite",
+                            iconDrawable = R.drawable.ic_add,
+                            onClick = {
+                                onEvent(UserProfileEvent.InviteUser(user))
+                                viewModel.inviteSent()
+                            })
+                    //}
+                }
+               }
             }
 
             Spacer(modifier = Modifier.height(24.dp))

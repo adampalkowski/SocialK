@@ -47,5 +47,8 @@ interface UserRepository {
         my_id: String,
         friend_id: String
     ): Flow<Response<Void?>>
+    suspend fun getInvites(
+        id: String,
+    ): Flow<Response<ArrayList<User>>>
 
 }

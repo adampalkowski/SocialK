@@ -70,6 +70,9 @@ class UserViewModel @Inject constructor(
     val isFriendRemovedFromBothUsersState: State<Response<Void?>> = _isFriendRemovedFromBothUsersState
 
 
+    private val _invitesStateFlow = mutableStateOf<Response<ArrayList<User>>>(Response.Loading)
+    val invitesStateFlow: State<Response<ArrayList<User>>> = _invitesStateFlow
+
 
     fun addFriendToBothUsers(my_id:String,friend_id:String){
         viewModelScope.launch {
@@ -78,6 +81,7 @@ class UserViewModel @Inject constructor(
             }
         }
     }
+
     fun removeFriendFromBothUsers(my_id:String,friend_id:String){
         viewModelScope.launch {
             repo.removeFriendFromBothUsers(my_id,friend_id).collect { response ->
@@ -133,7 +137,13 @@ class UserViewModel @Inject constructor(
     }
 
 
-
+    fun getInvites(id:String){
+        viewModelScope.launch {
+            repo.getInvites(id).collect { response ->
+                _invitesStateFlow.value = response
+            }
+        }
+    }
 
 
     fun setUserProfileId(id:String)
