@@ -26,7 +26,7 @@ class ProfileViewModel : ViewModel() {
         _navigateTo.value = Event(Screen.Map)
     }
     fun handleGoToChats( ) {
-        _navigateTo.value = Event(Screen.Chats)
+        _navigateTo.value = Event(Screen.ChatCollection)
     }
     fun handleGoToCreate( ) {
         _navigateTo.value = Event(Screen.Create)

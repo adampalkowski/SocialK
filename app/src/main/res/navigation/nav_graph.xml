@@ -50,8 +50,8 @@
         android:label="Settings">
     </fragment>
     <fragment
-        android:id="@+id/chats_fragment"
-        android:name="com.example.socialk.chat.ChatFragment"
+        android:id="@+id/chats_collection_fragment"
+        android:name="com.example.socialk.chat.ChatCollectionFragment"
         android:label="Chats">
     </fragment>
     <fragment
@@ -94,5 +94,10 @@
         android:id="@+id/pick_username_fragment"
         android:name="com.example.socialk.PickUsername.PickUsernameFragment"
         android:label="PickUsername">
+    </fragment>
+    <fragment
+        android:id="@+id/chat_fragment"
+        android:name="com.example.socialk.chat.ChatFragment"
+        android:label="Chat">
     </fragment>
 </navigation>

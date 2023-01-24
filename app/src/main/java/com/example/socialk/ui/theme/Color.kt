@@ -29,7 +29,7 @@ val Shadow4 = Color(0xff7057f5)
 val Shadow3 = Color(0xff9b86fa)
 val Shadow2 = Color(0xffc8bbfd)
 val Shadow1 = Color(0xffE6E1E5)
-val Shadow0 = Color(0xffE0E0E0)
+val Shadow0 = Color(0xffEAEAEA)
 val Shadow00 = Color(0xffEDEDED)
 val DarkBlue = Color(0xff291E49)
 

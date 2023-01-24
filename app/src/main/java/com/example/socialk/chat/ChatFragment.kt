@@ -11,15 +11,13 @@ import com.example.socialk.*
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
 import com.example.socialk.Map
-import com.example.socialk.home.HomeEvent
-import com.example.socialk.home.HomeScreen
-import com.example.socialk.map.MapViewModel
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
 
+
 @AndroidEntryPoint
-class ChatFragment:Fragment() {
-    private val viewModel by viewModels<ChatViewModel>()
+class ChatFragment: Fragment() {
+    private val viewModel by viewModels<ChatCollectionViewModel>()
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -27,7 +25,7 @@ class ChatFragment:Fragment() {
     ): View? {
         viewModel.navigateTo.observe(viewLifecycleOwner) { navigateToEvent ->
             navigateToEvent.getContentIfNotHandled()?.let { navigateTo ->
-                navigate(navigateTo, Screen.Create)
+                navigate(navigateTo, Screen.Chat)
             }
         }
         return ComposeView(requireContext()).apply {
@@ -36,19 +34,8 @@ class ChatFragment:Fragment() {
                     ChatScreen(
                         onEvent = { event ->
                             when (event) {
-                                is ChatEvent.GoToProfile -> viewModel.handleGoToProfile()
-                                is ChatEvent.LogOut -> viewModel.handleLogOut()
-                                is ChatEvent.GoToSettings -> viewModel.handleGoToSettings()
-                                is ChatEvent.GoToSearch -> viewModel.handleGoToSearch()
-                            }
-                        },
-                        bottomNavEvent  ={screen->
-                            when (screen) {
-                                is Home -> viewModel.handleGoToHome()
-                                is com.example.socialk.Map -> viewModel.handleGoToMap()
-                                is Chats -> viewModel.handleGoToChats()
-                                is Profile ->viewModel.handleGoToProfile()
-                                is Create -> viewModel.handleGoToCreate()
+                                is ChatEvent.GoBack -> viewModel.handleGoBack()
+
                             }
                         }
                     )

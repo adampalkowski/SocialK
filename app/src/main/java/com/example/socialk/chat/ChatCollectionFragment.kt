@@ -1,23 +1,21 @@
-package com.example.socialk
+package com.example.socialk.chat
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.example.socialk.*
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
-import com.example.socialk.model.User
-import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class ProfileFragment :Fragment(){
-    private val viewModel by viewModels<ProfileViewModel>()
+class ChatCollectionFragment:Fragment() {
+    private val viewModel by viewModels<ChatCollectionViewModel>()
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -25,43 +23,29 @@ class ProfileFragment :Fragment(){
     ): View? {
         viewModel.navigateTo.observe(viewLifecycleOwner) { navigateToEvent ->
             navigateToEvent.getContentIfNotHandled()?.let { navigateTo ->
-                navigate(navigateTo, Screen.Profile)
+                navigate(navigateTo, Screen.ChatCollection)
             }
-        }
-        var user:User? =UserData.user
-        if (user==null){
-            user=User(id="",name="", pictureUrl = "", username = "", email = "")
-
-        }
-        Log.d("TAG",user.toString())
-
-        if (user.username==null){
-            user.username=""
-        }
-        if (user.name==null){
-            user.name=user.email
         }
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
-                    ProfileScreen(user,
+                    ChatCollectionScreen(
                         onEvent = { event ->
                             when (event) {
-                                is ProfileEvent.GoToProfile -> viewModel.handleGoToProfile()
-                                is ProfileEvent.LogOut -> viewModel.handleLogOut()
-                                is ProfileEvent.GoToSettings -> viewModel.handleGoToSettings()
-                                is ProfileEvent.GoToHome -> viewModel.handleGoToHome()
-                                is ProfileEvent.GoToEditProfile -> viewModel.handleGoToEditProfile()
-                                is ProfileEvent.GoToSearch -> viewModel.handleGoToSearch()
+                                is ChatCollectionEvent.GoToProfile -> viewModel.handleGoToProfile()
+                                is ChatCollectionEvent.LogOut -> viewModel.handleLogOut()
+                                is ChatCollectionEvent.GoToSettings -> viewModel.handleGoToSettings()
+                                is ChatCollectionEvent.GoToSearch -> viewModel.handleGoToSearch()
+                                is ChatCollectionEvent.GoToChat -> viewModel.handleGoToChat()
                             }
                         },
                         bottomNavEvent  ={screen->
                             when (screen) {
                                 is Home -> viewModel.handleGoToHome()
-                                is Map -> viewModel.handleGoToMap()
+                                is com.example.socialk.Map -> viewModel.handleGoToMap()
                                 is Chats -> viewModel.handleGoToChats()
+                                is Profile ->viewModel.handleGoToProfile()
                                 is Create -> viewModel.handleGoToCreate()
-
                             }
                         }
                     )

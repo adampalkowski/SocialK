@@ -19,7 +19,7 @@ class SearchViewModel : ViewModel(){
         _navigateTo.value = Event(Screen.Home)
     }
     fun handleGoToChats( ) {
-        _navigateTo.value = Event(Screen.Chats)
+        _navigateTo.value = Event(Screen.ChatCollection)
     }
 
 

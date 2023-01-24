@@ -7,7 +7,7 @@
     <item name="home_fragment" type="id" />
     <item name="profile_fragment" type="id" />
     <item name="settings_fragment" type="id" />
-    <item name="chats_fragment" type="id" />
+    <item name="chats_collection_fragment" type="id" />
     <item name="map_fragment" type="id" />
     <item name="memories_fragment" type="id" />
     <item name="live_fragment" type="id" />
@@ -15,4 +15,5 @@
     <item name="edit_profile_fragment" type="id" />
     <item name="search_fragment" type="id" />
     <item name="pick_username_fragment" type="id" />
+    <item name="chat_fragment" type="id" />
 </resources>
