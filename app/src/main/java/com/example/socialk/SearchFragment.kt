@@ -52,27 +52,17 @@ class SearchFragment: Fragment() {
                                     userViewModel.removeInvitedIdFromUser(event.user_id,UserData.user!!.id)
                                     userViewModel.isInviteRemovedState.value.let {
                                         when(it){
-                                            is Response.Loading->{
-
-                                            }
                                             is Response.Failure->{
                                                 Toast.makeText(activity?.applicationContext,"failed to remove invite",Toast.LENGTH_LONG).show()
                                             }
-                                            is Response.Success->{
 
-                                            }
                                         }
                                     }
                                     userViewModel.isFriendAddedToBothUsersState.value.let {
                                         when(it){
-                                            is Response.Loading->{
 
-                                            }
                                             is Response.Failure->{
                                                 Toast.makeText(activity?.applicationContext,"failed to accept request",Toast.LENGTH_LONG).show()
-                                            }
-                                            is Response.Success->{
-
                                             }
                                         }
                                     }

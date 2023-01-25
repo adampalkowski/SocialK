@@ -21,6 +21,9 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.socialk.R
 import com.example.socialk.create.ActivityTextFieldState
+import com.example.socialk.di.ChatViewModel
+import com.example.socialk.model.Chat
+import com.example.socialk.model.User
 import com.example.socialk.signinsignup.TextFieldState
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
@@ -35,9 +38,58 @@ sealed class ChatEvent {
 }
 
 @Composable
-fun ChatScreen(onEvent: (ChatEvent) -> Unit) {
+fun ChatScreen(chat: Chat, chatViewModel:ChatViewModel, onEvent: (ChatEvent) -> Unit) {
     Column(modifier = Modifier.fillMaxSize()) {
-        ChatScreenTopBar(onEvent = onEvent)
+        ChatScreenTopBar(chat,onEvent = onEvent)
+        Divider()
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 12.dp),
+            reverseLayout = true
+        ) {
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+            item {
+                Spacer(modifier = Modifier.height(12.dp))
+                ChatItemRight()
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            item {
+                Spacer(modifier = Modifier.height(6.dp))
+                ChatItemLeft()
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+            item {
+                Spacer(modifier = Modifier.height(6.dp))
+                ChatItemLeft()
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+            item {
+                Spacer(modifier = Modifier.height(6.dp))
+                ChatItemLeft()
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+            item {
+                Spacer(modifier = Modifier.height(6.dp))
+                ChatItemLeft()
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+        Divider()
+        ChatScreenBottomInputs()
+    }
+}
+
+@Composable
+fun ChatScreen(user: User,chatViewModel:ChatViewModel, onEvent: (ChatEvent) -> Unit) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        ChatScreenTopBar(user,onEvent = onEvent)
         Divider()
         LazyColumn(
             modifier = Modifier
@@ -153,9 +205,48 @@ fun Divider() {
             .background(color = SocialTheme.colors.uiFloated)
     )
 }
-
 @Composable
-fun ChatScreenTopBar(onEvent: (ChatEvent) -> Unit) {
+fun ChatScreenTopBar(chat:Chat,onEvent: (ChatEvent) -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp), contentAlignment = Alignment.Center
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Spacer(modifier = Modifier.width(24.dp))
+            IconButton(onClick = { onEvent(ChatEvent.GoBack) }) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_back),
+                    tint = SocialTheme.colors.textPrimary,
+                    contentDescription = null
+                )
+            }
+
+            Spacer(modifier = Modifier.width(24.dp))
+
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = chat.chat_name!!,
+                style = TextStyle(
+                    fontFamily = Inter,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            IconButton(onClick = { onEvent(ChatEvent.GoToChatUserSettings) }) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_more),
+                    tint = SocialTheme.colors.textPrimary,
+                    contentDescription = null
+                )
+            }
+            Spacer(modifier = Modifier.width(24.dp))
+        }
+    }
+}
+@Composable
+fun ChatScreenTopBar(user:User,onEvent: (ChatEvent) -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -174,14 +265,14 @@ fun ChatScreenTopBar(onEvent: (ChatEvent) -> Unit) {
             Spacer(modifier = Modifier.width(24.dp))
 
             Image(
-                painter = rememberAsyncImagePainter("https://firebasestorage.googleapis.com/v0/b/socialv2-340711.appspot.com/o/uploads%2F1662065348037.null?alt=media&token=40cebce4-0c53-470c-867f-d9d34cba63ab"),
+                painter = rememberAsyncImagePainter(user.pictureUrl),
                 contentDescription = "profile image", modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "Adam",
+                text = user.username!!,
                 style = TextStyle(
                     fontFamily = Inter,
                     fontSize = 18.sp,

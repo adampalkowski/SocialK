@@ -40,6 +40,7 @@ sealed class UserProfileEvent {
     object GoToHome : UserProfileEvent()
     object GoToSearch : UserProfileEvent()
     object GoBack : UserProfileEvent()
+    class GoToChat (user:User) : UserProfileEvent(){val user :User =user}
     class InviteUser (user:User) : UserProfileEvent(){val user :User =user}
     class RemoveInvite (user:User) : UserProfileEvent(){val user :User =user}
 }
@@ -124,6 +125,8 @@ fun UserProfileScreen(viewModel:UserProfileViewModel,user: User,userViewModel:Us
                     //}
                 }
                }
+
+                profileButton(onClick = { onEvent(UserProfileEvent.GoToChat(user)) }, label = "Message", iconDrawable =R.drawable.ic_chat )
             }
 
             Spacer(modifier = Modifier.height(24.dp))

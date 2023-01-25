@@ -1,8 +1,6 @@
 package com.example.socialk.di
 
-import com.example.socialk.model.Response
-import com.example.socialk.model.SocialException
-import com.example.socialk.model.User
+import com.example.socialk.model.*
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FieldValue
@@ -172,7 +170,7 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun addFriendsIDs(my_id: String, friend_id: String): Flow<Response<Void?>>  =flow{
         try {
             emit(Response.Loading)
-            val addition = usersRef.document(my_id).update("friends_ids",FieldValue.arrayUnion(friend_id)).await()
+            val addition = usersRef.document(my_id).update("friends_ids"+"."+friend_id,"").await()
             emit(Response.Success(addition))
 
         }catch (e:Exception){
@@ -182,7 +180,7 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun removeFriendsIDs(my_id: String, friend_id: String): Flow<Response<Void?>>  =flow{
         try {
             emit(Response.Loading)
-            val deletion = usersRef.document(my_id).update("friends_ids",FieldValue.arrayRemove(friend_id)).await()
+            val deletion = usersRef.document(my_id).update("friends_ids"+"."+friend_id,FieldValue.delete()).await()
             emit(Response.Success(deletion))
 
         }catch (e:Exception){
@@ -193,8 +191,8 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun addFriendToBothUsers(my_id: String, friend_id: String): Flow<Response<Void?>>  =flow{
         try {
             emit(Response.Loading)
-              val one =  usersRef.document(my_id).update("friends_ids",FieldValue.arrayUnion(friend_id)).await()
-              val two=  usersRef.document(friend_id).update("friends_ids",FieldValue.arrayUnion(my_id)).await()
+              val one =  usersRef.document(my_id).update("friends_ids"+"."+friend_id,"").await()
+              val two=  usersRef.document(friend_id).update("friends_ids"+"."+my_id,"").await()
               emit(Response.Success(two))
 
         }catch (e:Exception){
@@ -206,15 +204,32 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun removeFriendFromBothUsers(my_id: String, friend_id: String): Flow<Response<Void?>>  =flow{
         try {
             emit(Response.Loading)
-            val one =  usersRef.document(my_id).update("friends_ids",FieldValue.arrayRemove(friend_id)).await()
-            val two=  usersRef.document(friend_id).update("friends_ids",FieldValue.arrayRemove(my_id)).await()
+            val one =  usersRef.document(my_id).update("friends_ids"+"."+friend_id,FieldValue.delete()).await()
+            val two=  usersRef.document(friend_id).update("friends_ids"+"."+my_id,FieldValue.delete()).await()
             emit(Response.Success(two))
 
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("removeFriendFromBothUsers exception",Exception())))
         }
     }
-//todo paginate the daataaaaa
+
+    override suspend fun addChatCollectionToUsers(
+        id: String,
+        friend_id: String,
+        chat_id:String
+    ): Flow<Response<Void?>> =flow{
+        try {
+            emit(Response.Loading)
+            val one =  usersRef.document(id).update("friends_ids"+"."+friend_id,chat_id).await()
+            val two=  usersRef.document(friend_id).update("friends_ids"+"."+id,chat_id).await()
+            emit(Response.Success(two))
+
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("removeFriendFromBothUsers exception",Exception())))
+        }
+    }
+
+    //todo paginate the daataaaaa
     override suspend fun getInvites(id: String): Flow<Response<ArrayList<User>>> = callbackFlow {
         val registration= usersRef.whereArrayContains("invited_ids",id).limit(5).addSnapshotListener()  {  snapshots , exception ->
 
@@ -242,4 +257,29 @@ class UserRepositoryImpl @Inject constructor(
         }
 
     }
+    override suspend fun checkIfChatCollectionExists(
+        id: String,
+        chatter_id: String
+    ): Flow<Response<User>> = callbackFlow {
+        usersRef.document(id).get().addOnSuccessListener { documentSnapshot->
+                val response = if (documentSnapshot != null) {
+                    val activity = documentSnapshot.toObject<User>()
+                    activity?.friends_ids?.forEach {(key, value) ->
+
+                        if (key==chatter_id){
+
+                        }
+
+                    }
+
+
+                    Response.Success(activity)
+                } else {
+                    Response.Failure(e= SocialException("getMessage document null",Exception()))
+                }
+                trySend(response as Response<User>).isSuccess
+            }
+
+    }
+
 }

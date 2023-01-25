@@ -1,11 +1,13 @@
 package com.example.socialk.di
 
 import android.os.Message
+import android.util.Log
 import com.example.socialk.await
 import com.example.socialk.model.*
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.ktx.toObject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
@@ -13,6 +15,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 
+@Suppress("IMPLICIT_CAST_TO_ANY")
 @Singleton
 @ExperimentalCoroutinesApi
 class ChatRepositoryImpl @Inject constructor(
@@ -29,13 +32,16 @@ class ChatRepositoryImpl @Inject constructor(
             }
             trySend(response as Response<Chat>).isSuccess
         }
+        awaitClose(){
+
+        }
     }
 
     override suspend fun addChatCollection(chatCollection: Chat): Flow<Response<Void?>> =flow{
         try {
             emit(Response.Loading)
             val chatCollectionId=chatCollection.id
-            val addition = chatCollectionsRef.document(chatCollectionId).set(chatCollection).await()
+            val addition = chatCollectionsRef.document(chatCollectionId!!).set(chatCollection).await()
             emit(Response.Success(addition))
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("addChatCollection exception",Exception())))
@@ -119,7 +125,7 @@ class ChatRepositoryImpl @Inject constructor(
         try {
             emit(Response.Loading)
             val addition = messagesRef.document(chat_collection_id).collection("messages")
-                .document(message.id).set(message).await()
+                .document(message.id!!).set(message).await()
             emit(Response.Success(addition))
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("addMessage exception",Exception())))
@@ -139,5 +145,8 @@ class ChatRepositoryImpl @Inject constructor(
             emit(Response.Failure(e= SocialException("deleteMessage exception",Exception())))
         }
     }
+
+
+
 
 }

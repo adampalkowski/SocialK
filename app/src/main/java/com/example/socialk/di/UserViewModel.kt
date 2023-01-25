@@ -69,10 +69,21 @@ class UserViewModel @Inject constructor(
     private val _isFriendRemovedFromBothUsersState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isFriendRemovedFromBothUsersState: State<Response<Void?>> = _isFriendRemovedFromBothUsersState
 
+    private val _isChatCollectionAddedToUsersState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isChatCollectionAddedToUsersState: State<Response<Void?>> = _isChatCollectionAddedToUsersState
+
 
     private val _invitesStateFlow = mutableStateOf<Response<ArrayList<User>>>(Response.Loading)
     val invitesStateFlow: State<Response<ArrayList<User>>> = _invitesStateFlow
 
+
+    fun addChatCollectionToUsers(id:String,friend_id:String,chat_id:String){
+        viewModelScope.launch {
+            repo.addChatCollectionToUsers(id,friend_id,chat_id).collect { response ->
+                _isChatCollectionAddedToUsersState.value = response
+            }
+        }
+    }
 
     fun addFriendToBothUsers(my_id:String,friend_id:String){
         viewModelScope.launch {
@@ -213,6 +224,10 @@ class UserViewModel @Inject constructor(
 
         }
     }
+
+
+
+
     fun validateUser(firebaseUser: FirebaseUser) {
         val id: String = firebaseUser.uid
         viewModelScope.launch {

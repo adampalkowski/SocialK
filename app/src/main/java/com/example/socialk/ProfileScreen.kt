@@ -339,6 +339,7 @@ fun ProfileScreen(user:User,onEvent: (ProfileEvent) -> Unit, bottomNavEvent: (De
 @Composable
 fun previewProfileScreen() {
     SocialTheme() {
-        ProfileScreen(onEvent = {}, bottomNavEvent = {}, user = User(name = "", username = "", id = "m", email = "", pictureUrl = "", blocked_ids = ArrayList(), friends_ids = ArrayList(), invited_ids = ArrayList() ))
+        ProfileScreen(onEvent = {}, bottomNavEvent = {}, user = User(name = "", username = "",
+            id = "m", email = "", pictureUrl = "", blocked_ids = ArrayList(), friends_ids = HashMap(), invited_ids = ArrayList() ))
     }
 }

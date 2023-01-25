@@ -26,8 +26,7 @@ fun Fragment.navigate(to: Screen, from: Screen) {
             findNavController().navigate(R.id.sign_in_fragment)
         }
         Screen.Home -> {
-            val navController = findNavController()
-            navController.navigate(R.id.home_fragment)
+                findNavController().navigate(R.id.home_fragment)
         }
         Screen.Profile -> {
             findNavController().navigate(R.id.profile_fragment)

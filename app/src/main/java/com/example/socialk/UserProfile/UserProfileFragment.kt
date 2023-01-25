@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.load.model.DataUrlLoader
 import com.example.socialk.*
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
@@ -57,6 +58,9 @@ class UserProfileFragment : Fragment(){
                                 is UserProfileEvent.GoToHome -> viewModel.handleGoToHome()
                                 is UserProfileEvent.GoToEditProfile -> viewModel.handleGoToEditProfile()
                                 is UserProfileEvent.GoToSearch -> viewModel.handleGoToSearch()
+                                is UserProfileEvent.GoToChat -> {
+                                    viewModel.handleGoToChat()
+                                }
                                 is UserProfileEvent.InviteUser -> {
                                     //TODO !! here should always be null ???
                                     userViewModel.addInvitedIdToUser(UserData.user!!.id,event.user.id)
@@ -66,6 +70,7 @@ class UserProfileFragment : Fragment(){
                                 is UserProfileEvent.RemoveInvite -> {
                                     //TODO !! here should always be null ???
                                     userViewModel.removeInvitedIdFromUser(UserData.user!!.id,event.user.id)
+                                    userViewModel.removeFriendFromBothUsers(UserData.user!!.id,event.user.id)
                                     Toast.makeText(activity?.applicationContext,
                                         "Invite to " + event.user.username+ " removed ",Toast.LENGTH_LONG).show()
                                 }

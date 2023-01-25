@@ -39,7 +39,9 @@ class UserProfileViewModel:ViewModel() {
     fun handleGoToChats( ) {
         _navigateTo.value = Event(Screen.ChatCollection)
     }
-
+    fun handleGoToChat( ) {
+        _navigateTo.value = Event(Screen.Chat)
+    }
     fun handleGoToEditProfile( ) {
         _navigateTo.value = Event(Screen.EditProfile)
     }

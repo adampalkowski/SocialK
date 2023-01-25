@@ -3,15 +3,20 @@ package com.example.socialk.di
 import android.os.Message
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.socialk.ActiveUser
 import com.example.socialk.model.Chat
 import com.example.socialk.model.ChatMessage
 import com.example.socialk.model.Response
+import com.example.socialk.model.User
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import javax.inject.Inject
 
@@ -19,6 +24,8 @@ import javax.inject.Inject
 class ChatViewModel @Inject constructor(
     val repo: ChatRepository
 ) : ViewModel() {
+
+    val _chatCollectionStateFlow = MutableStateFlow<Chat>(Chat())
 
     private val _chatCollectionState = mutableStateOf<Response<Chat>>(Response.Loading)
     val chatCollectionState: State<Response<Chat>> = _chatCollectionState
@@ -45,6 +52,8 @@ class ChatViewModel @Inject constructor(
     val addMessageState: State<Response<Void?>> = _addMessageState
     private val _deleteMessageState = mutableStateOf<Response<Void?>>(Response.Loading)
     val deleteMessageState: State<Response<Void?>> = _deleteMessageState
+    private val _checkIfChatExistsState = mutableStateOf<Response<Chat>>(Response.Loading)
+    val checkIfChatExistsState: State<Response<Chat>> = _checkIfChatExistsState
 
     fun getChatCollection(id: String) {
         viewModelScope.launch {
@@ -58,7 +67,13 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             val uuid: UUID = UUID.randomUUID()
             val id:String = uuid.toString()
-            chatCollection.id=id
+            if (chatCollection.id!!.isEmpty()){
+                chatCollection.id=id
+            }
+            val current = LocalDateTime.now()
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            val formatted = current.format(formatter)
+            chatCollection.create_date=formatted
             repo.addChatCollection(chatCollection).collect{
                     response->
                 _addChatCollectionState.value=response
@@ -151,4 +166,5 @@ class ChatViewModel @Inject constructor(
             }
         }
     }
+
 }

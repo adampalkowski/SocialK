@@ -102,8 +102,8 @@ class AppModule {
     fun provideChatRepository(
         db: FirebaseFirestore,
     ): ChatRepository = ChatRepositoryImpl(
-        chatCollectionsRef =db.collection("Chats"),
-        messagesRef = db.collection("groups"),
+        chatCollectionsRef =db.collection("groups"),
+        messagesRef = db.collection("Chats"),
     )
     @Provides
     fun provideActivityRepository(

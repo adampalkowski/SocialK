@@ -1,8 +1,9 @@
 package com.example.socialk.di
 
-import com.example.socialk.model.Response
-import com.example.socialk.model.User
+import com.example.socialk.model.*
+import com.google.firebase.firestore.ktx.toObject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 
 interface UserRepository {
     suspend fun getUser(id:String):Flow<Response<User>>
@@ -47,8 +48,14 @@ interface UserRepository {
         my_id: String,
         friend_id: String
     ): Flow<Response<Void?>>
+    suspend fun addChatCollectionToUsers(
+        id: String,
+        friend_id: String,
+        chat_id:String
+    ): Flow<Response<Void?>>
     suspend fun getInvites(
         id: String,
     ): Flow<Response<ArrayList<User>>>
+    suspend fun checkIfChatCollectionExists(id: String,chatter_id: String): Flow<Response<User>>
 
 }
