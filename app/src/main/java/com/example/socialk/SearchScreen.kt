@@ -48,7 +48,7 @@ sealed class SearchEvent {
     object GoToSettings : SearchEvent()
     object GoToChat : SearchEvent()
     object GoBack : SearchEvent()
-    class OnInviteAccepted (user_id:String): SearchEvent(){val user_id=user_id}
+    class OnInviteAccepted (user:User): SearchEvent(){val user=user}
     class GoToUserProfile (user: User): SearchEvent(){val user=user}
 
 }
@@ -109,7 +109,7 @@ fun SearchScreen(userViewModel:UserViewModel?,onEvent: (SearchEvent) -> Unit) {
                                         InviteCard(profileUrl = if (item.pictureUrl==null){"PIC"}else{item.pictureUrl!!},
                                             name =if (item.name==null){"NAME"}else{item.name!!},
                                             username =if (item.username==null){""}else{item.username!!} ,
-                                            onClick = {onEvent(SearchEvent.OnInviteAccepted(item.id))})
+                                            onClick = {onEvent(SearchEvent.OnInviteAccepted(item))})
                                         Spacer(modifier = Modifier.width(16.dp))
                                     }
                                 }
@@ -185,8 +185,18 @@ fun SearchScreen(userViewModel:UserViewModel?,onEvent: (SearchEvent) -> Unit) {
             ButtonLink(onClick = {}, username = "name")
         }
     }
-    userViewModel?.invitesStateFlow?.value.let {
+    userViewModel?.isInviteAcceptedState?.value.let {
+        when(it){
+            is Response.Failure ->{
 
+            }
+            is Response.Loading ->{
+
+            }
+            is Response.Success ->{
+
+            }
+        }
     }
 
 }
@@ -314,6 +324,7 @@ fun searchEditText(userViewModel: UserViewModel?,onEvent: (SearchEvent) -> Unit)
     val usernameTextSaver by rememberSaveable(stateSaver = ActivityTextStateSaver) {
         mutableStateOf(ActivityTextFieldState())
     }
+    var textSendAvailable by remember { mutableStateOf(false) }
     val userFlow=userViewModel?.userState?.collectAsState()
     Box(
         modifier = Modifier
@@ -359,10 +370,13 @@ fun searchEditText(userViewModel: UserViewModel?,onEvent: (SearchEvent) -> Unit)
                                 unfocusedIndicatorColor = Color.Transparent
                             ),
                             onValueChange = {
+                                textSendAvailable = it.length > 0
 
                                 if (it.length < 30) {
                                     usernameTextSaver.text = it
                                 }
+
+
                             },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                             maxLines = 2,
@@ -373,11 +387,13 @@ fun searchEditText(userViewModel: UserViewModel?,onEvent: (SearchEvent) -> Unit)
             }
             Spacer(modifier = Modifier.width(12.dp))
             SendButton(onEvent = {
+                if(textSendAvailable){
                 if (usernameTextSaver.text.isNotEmpty()) {
                     userViewModel?.getUserByUsername(usernameTextSaver.text.trim())
                 }
+                }
 
-            }, icon = R.drawable.ic_search)
+            }, icon = R.drawable.ic_search, available =textSendAvailable )
         }
         userFlow?.value.let {
             when(it){

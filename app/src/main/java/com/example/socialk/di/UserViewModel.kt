@@ -5,6 +5,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.socialk.model.*
 import com.google.firebase.auth.FirebaseUser
@@ -15,8 +16,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.*
 import javax.inject.Inject
 import kotlin.Exception
+import kotlin.collections.ArrayList
 
 
 @HiltViewModel
@@ -71,11 +74,14 @@ class UserViewModel @Inject constructor(
 
     private val _isChatCollectionAddedToUsersState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isChatCollectionAddedToUsersState: State<Response<Void?>> = _isChatCollectionAddedToUsersState
-
+    private val _isChatAddedToUsersState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isChatAddedToUsersState: State<Response<Void?>> = _isChatAddedToUsersState
 
     private val _invitesStateFlow = mutableStateOf<Response<ArrayList<User>>>(Response.Loading)
     val invitesStateFlow: State<Response<ArrayList<User>>> = _invitesStateFlow
 
+    private val _isInviteAcceptedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isInviteAcceptedState: State<Response<Void?>> = _isInviteAcceptedState
 
     fun addChatCollectionToUsers(id:String,friend_id:String,chat_id:String){
         viewModelScope.launch {
@@ -84,6 +90,15 @@ class UserViewModel @Inject constructor(
             }
         }
     }
+
+    fun acceptInvite(current_user:User,user:User,chat:Chat){
+        viewModelScope.launch {
+            repo.acceptInvite(current_user,user,chat).collect { response ->
+                _isInviteAcceptedState.value = response
+            }
+        }
+    }
+
 
     fun addFriendToBothUsers(my_id:String,friend_id:String){
         viewModelScope.launch {

@@ -117,6 +117,7 @@ class AppModule {
         db: FirebaseFirestore,
     ):UserRepository= UserRepositoryImpl(
         usersRef =db.collection("Users"),
+        chatCollectionsRef =db.collection("groups"),
     )
     @Provides
     fun provideProfileRepository(

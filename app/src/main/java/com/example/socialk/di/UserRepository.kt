@@ -16,6 +16,9 @@ interface UserRepository {
         my_id: String,
         invited_id: String
     ): Flow<Response<Void?>>
+    suspend fun acceptInvite(
+        current_user:User,user:User, chat:Chat
+    ): Flow<Response<Void?>>
 
     suspend fun addBlockedIDs(
         my_id: String,

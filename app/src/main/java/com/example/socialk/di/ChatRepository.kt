@@ -1,6 +1,5 @@
 package com.example.socialk.di
 
-import com.example.socialk.model.Activity
 import com.example.socialk.model.Chat
 import com.example.socialk.model.ChatMessage
 import com.example.socialk.model.Response
@@ -32,7 +31,7 @@ interface ChatRepository {
         message_id: String
     ): Flow<Response<ChatMessage>>
 
-    suspend fun getMessages(chat_collection_id: String): Flow<Response<List<ChatMessage>>>
-    suspend fun addMessage(chat_collection_id: String, message: Chat): Flow<Response<Void?>>
+    suspend fun getMessages(chat_collection_id: String): Flow<Response<ArrayList<ChatMessage>>>
+    suspend fun addMessage(chat_collection_id: String, message: ChatMessage): Flow<Response<Void?>>
     suspend fun deleteMessage(chat_collection_id: String,message_id: String): Flow<Response<Void?>>
 }

@@ -1,5 +1,6 @@
 package com.example.socialk.di
 
+import com.example.socialk.await1
 import com.example.socialk.model.*
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentChange
@@ -13,11 +14,13 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.example.socialk.await1
 
 @Singleton
 @ExperimentalCoroutinesApi
 class UserRepositoryImpl @Inject constructor(
     private val usersRef: CollectionReference,
+    private val chatCollectionsRef: CollectionReference,
 ):UserRepository {
 
     override suspend fun getUser(id: String): Flow<Response<User>> = callbackFlow {
@@ -79,7 +82,7 @@ class UserRepositoryImpl @Inject constructor(
         try {
             emit(Response.Loading)
             val userId=user.id
-            val addition = usersRef.document(userId).set(user).await()
+            val addition = usersRef.document(userId).set(user).await1()
             emit(Response.Success(addition))
 
         }catch (e:Exception){
@@ -89,7 +92,7 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun deleteUser(id: String): Flow<Response<Void?>> = flow {
         try{
             emit(Response.Loading)
-            val deletion = usersRef.document(id).delete().await()
+            val deletion = usersRef.document(id).delete().await1()
             emit(Response.Success(deletion))
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("deleteUser exception",Exception())))
@@ -101,7 +104,7 @@ class UserRepositoryImpl @Inject constructor(
             emit(Response.Loading)
 
 
-            val addition = usersRef.document(id).update("username",username).await()
+            val addition = usersRef.document(id).update("username",username).await1()
             emit(Response.Success(addition))
 
         }catch (e:Exception){
@@ -115,8 +118,23 @@ class UserRepositoryImpl @Inject constructor(
     ): Flow<Response<Void?>> =flow{
         try {
             emit(Response.Loading)
-            val addition = usersRef.document(my_id).update("invited_ids",FieldValue.arrayUnion(invited_id)).await()
+            val addition = usersRef.document(my_id).update("invited_ids",FieldValue.arrayUnion(invited_id)).await1()
             emit(Response.Success(addition))
+
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("addInvitedIDs exception",Exception())))
+        }
+    }
+
+
+    override suspend fun acceptInvite(current_user: User, user: User,chat:Chat): Flow<Response<Void?>> =flow{
+        try {
+            emit(Response.Loading)
+            val one = chatCollectionsRef.document(chat.id!!).set(chat).await1()
+
+            val two=  usersRef.document(user.id).update("friends_ids"+"."+current_user.id,chat.id,"invited_ids",FieldValue.arrayRemove(current_user.id)).await1()
+            val three=  usersRef.document(current_user.id).update("friends_ids"+"."+user.id,chat.id).await1()
+            emit(Response.Success(three))
 
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("addInvitedIDs exception",Exception())))
@@ -129,7 +147,7 @@ class UserRepositoryImpl @Inject constructor(
     ): Flow<Response<Void?>> =flow{
         try {
             emit(Response.Loading)
-            val deletion = usersRef.document(my_id).update("invited_ids",FieldValue.arrayRemove(invited_id)).await()
+            val deletion = usersRef.document(my_id).update("invited_ids",FieldValue.arrayRemove(invited_id)).await1()
             emit(Response.Success(deletion))
 
         }catch (e:Exception){
@@ -143,7 +161,7 @@ class UserRepositoryImpl @Inject constructor(
     ): Flow<Response<Void?>> =flow{
         try {
             emit(Response.Loading)
-            val addition = usersRef.document(my_id).update("blocked_ids",FieldValue.arrayUnion(blocked_id)).await()
+            val addition = usersRef.document(my_id).update("blocked_ids",FieldValue.arrayUnion(blocked_id)).await1()
             emit(Response.Success(addition))
 
         }catch (e:Exception){
@@ -157,7 +175,7 @@ class UserRepositoryImpl @Inject constructor(
     ): Flow<Response<Void?>>  =flow{
         try {
             emit(Response.Loading)
-            val deletion = usersRef.document(my_id).update("blocked_ids",FieldValue.arrayRemove(blocked_id)).await()
+            val deletion = usersRef.document(my_id).update("blocked_ids",FieldValue.arrayRemove(blocked_id)).await1()
             emit(Response.Success(deletion))
 
         }catch (e:Exception){
@@ -170,7 +188,7 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun addFriendsIDs(my_id: String, friend_id: String): Flow<Response<Void?>>  =flow{
         try {
             emit(Response.Loading)
-            val addition = usersRef.document(my_id).update("friends_ids"+"."+friend_id,"").await()
+            val addition = usersRef.document(my_id).update("friends_ids"+"."+friend_id,"").await1()
             emit(Response.Success(addition))
 
         }catch (e:Exception){
@@ -180,7 +198,7 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun removeFriendsIDs(my_id: String, friend_id: String): Flow<Response<Void?>>  =flow{
         try {
             emit(Response.Loading)
-            val deletion = usersRef.document(my_id).update("friends_ids"+"."+friend_id,FieldValue.delete()).await()
+            val deletion = usersRef.document(my_id).update("friends_ids"+"."+friend_id,FieldValue.delete()).await1()
             emit(Response.Success(deletion))
 
         }catch (e:Exception){
@@ -190,10 +208,11 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun addFriendToBothUsers(my_id: String, friend_id: String): Flow<Response<Void?>>  =flow{
         try {
-            emit(Response.Loading)
-              val one =  usersRef.document(my_id).update("friends_ids"+"."+friend_id,"").await()
-              val two=  usersRef.document(friend_id).update("friends_ids"+"."+my_id,"").await()
-              emit(Response.Success(two))
+              emit(Response.Loading)
+              val one =  usersRef.document(my_id).update("friends_ids"+"."+friend_id,"").await1()
+              val two=  usersRef.document(friend_id).update("friends_ids"+"."+my_id,"").await1()
+
+            emit(Response.Success(two))
 
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("addFriendToBothUsers exception",Exception())))
@@ -204,8 +223,8 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun removeFriendFromBothUsers(my_id: String, friend_id: String): Flow<Response<Void?>>  =flow{
         try {
             emit(Response.Loading)
-            val one =  usersRef.document(my_id).update("friends_ids"+"."+friend_id,FieldValue.delete()).await()
-            val two=  usersRef.document(friend_id).update("friends_ids"+"."+my_id,FieldValue.delete()).await()
+            val one =  usersRef.document(my_id).update("friends_ids"+"."+friend_id,FieldValue.delete()).await1()
+            val two=  usersRef.document(friend_id).update("friends_ids"+"."+my_id,FieldValue.delete()).await1()
             emit(Response.Success(two))
 
         }catch (e:Exception){
@@ -220,8 +239,8 @@ class UserRepositoryImpl @Inject constructor(
     ): Flow<Response<Void?>> =flow{
         try {
             emit(Response.Loading)
-            val one =  usersRef.document(id).update("friends_ids"+"."+friend_id,chat_id).await()
-            val two=  usersRef.document(friend_id).update("friends_ids"+"."+id,chat_id).await()
+            val one =  usersRef.document(id).update("friends_ids"+"."+friend_id,chat_id).await1()
+            val two=  usersRef.document(friend_id).update("friends_ids"+"."+id,chat_id).await1()
             emit(Response.Success(two))
 
         }catch (e:Exception){

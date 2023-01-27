@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.runtime.currentRecomposeScope
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -16,12 +17,11 @@ import com.example.socialk.Main.navigate
 import com.example.socialk.Map
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.di.UserViewModel
-import com.example.socialk.model.Chat
-import com.example.socialk.model.Response
-import com.example.socialk.model.User
-import com.example.socialk.model.UserData
+import com.example.socialk.model.*
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import java.util.*
 
 
@@ -71,42 +71,14 @@ class ChatFragment : Fragment() {
                 navigate(navigateTo, Screen.Chat)
             }
         }
-        var chat_collection_id:String =""
+
         if(chatViewModel._chatCollectionStateFlow.value.id!!.isEmpty())
         {
-            val currentUser= UserData.user
             val user: User = userViewModel.userProfile.value
-            // user friendsids hashmap holds values to the chat_ids with our id as key
-            user.friends_ids.forEach{ (key,value ) ->
-                //in user find our id
-                if (key==currentUser!!.id){
-                    //if value if not empty then there is a key to chat
-                    if (value.isNotEmpty()){
-                        chat_collection_id=value.toString()
-                    }else{
-                        //value empty, create chat_collection, save the id here
-                        val uuid: UUID = UUID.randomUUID()
-                        val id:String = uuid.toString()
-                        chat_collection_id=id
-                        chatViewModel.addChatCollection(    Chat(null,
-                            owner_id =currentUser!!.id,
-                            id =chat_collection_id,
-                            chat_name =null,
-                            chat_picture =null,
-                            recent_message =null,
-                            recent_message_time =null,
-                            type ="duo",
-                            members = arrayListOf(UserData.user!!.id,user.id),
-                            user_one_username = user.username,
-                            user_two_username = currentUser!!.username,
-                            user_one_profile_pic =user.pictureUrl,
-                            user_two_profile_pic = currentUser!!.pictureUrl
-                        ))
-                        userViewModel.addChatCollectionToUsers(currentUser!!.id,user.id,chat_collection_id)
-                    }
-                }else{
+            if (user.friends_ids[UserData.user!!.id]==null){
 
-                }
+            }else{
+                chatViewModel.getMessages(user.friends_ids[UserData.user!!.id]!!)
             }
             return ComposeView(requireContext()).apply {
                 setContent {
@@ -115,6 +87,13 @@ class ChatFragment : Fragment() {
                             onEvent = { event ->
                                 when (event) {
                                     is ChatEvent.GoBack -> viewModel.handleGoBack()
+                                    is ChatEvent.SendMessage -> {
+                                        Log.d("TAGGG","MESs")
+                                        chatViewModel.addMessage(user.friends_ids[UserData.user!!.id]!!,
+                                            //todo set sender picture_url
+                                            ChatMessage(text = event.message, sender_picture_url ="", sent_time ="" , sender_id =UserData.user!!.id, message_type ="text" ,id="") )
+                                    }
+
                                 }
                             }
                         )
@@ -123,12 +102,16 @@ class ChatFragment : Fragment() {
             }
 
         }else{
-            if (chat_collection_id.isNotEmpty()) {
+            val chat:Chat=chatViewModel._chatCollectionStateFlow.value
+            if (chatViewModel._chatCollectionStateFlow.value.id.toString().isNotEmpty()) {
                 chatViewModel.getMessages(chatViewModel._chatCollectionStateFlow.value.id!!)
             } else {
 
             }
-            val chat:Chat=chatViewModel._chatCollectionStateFlow.value
+//            chatViewModel.resetChatCollectionStateFlow()
+
+
+
             return ComposeView(requireContext()).apply {
                 setContent {
 

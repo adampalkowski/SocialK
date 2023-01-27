@@ -1,16 +1,15 @@
 package com.example.socialk.di
 
-import android.os.Message
 import android.util.Log
-import com.example.socialk.await
 import com.example.socialk.model.*
-import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.*
 import com.google.firebase.firestore.ktx.toObject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -22,6 +21,7 @@ class ChatRepositoryImpl @Inject constructor(
     private val messagesRef: CollectionReference,
     private val chatCollectionsRef: CollectionReference,
 ):ChatRepository{
+    private var lastVisibleData: DocumentSnapshot? = null
     override suspend fun getChatCollection(id: String): Flow<Response<Chat>>  = callbackFlow {
         chatCollectionsRef.document(id).get().addOnSuccessListener { documentSnapshot->
             val response = if (documentSnapshot != null) {
@@ -113,14 +113,63 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
+    //todo ::PAGINATION
+    override suspend fun getMessages(chat_collection_id: String): Flow<Response<ArrayList<ChatMessage>>> = callbackFlow {
 
-    override suspend fun getMessages(chat_collection_id: String): Flow<Response<List<ChatMessage>>> {
-        TODO("PAGINATIONNN HEREEEE")
+        var messages : ArrayList<ChatMessage> = ArrayList()
+
+        lastVisibleData=null
+        val registration=   messagesRef.document(chat_collection_id).collection("messages")
+            .orderBy("sent_time",Query.Direction.DESCENDING).limit(15)
+            .addSnapshotListener{  snapshots , exception ->
+            if (exception != null) {
+                channel.close(exception)
+                return@addSnapshotListener
+            }
+            var new_messages =  ArrayList<ChatMessage>()
+             new_messages.addAll(messages)
+            if(snapshots==null ||snapshots.isEmpty()) {
+                lastVisibleData = null
+            } else {
+                lastVisibleData = snapshots.getDocuments()
+                    .get(snapshots.size() - 1)
+            }
+            for (dc in snapshots!!.documentChanges) {
+                when (dc.type) {
+                    DocumentChange.Type.ADDED -> {
+                        val message = dc.document.toObject(ChatMessage::class.java)
+                        new_messages.reverse()
+                        new_messages.add(message)
+                        new_messages.reverse()
+                        Log.d("TAGGG", messages.toString())
+                    }
+                    DocumentChange.Type.MODIFIED -> {
+                        val message = dc.document.toObject(ChatMessage::class.java)
+                        new_messages.add(message)
+                    }
+                    DocumentChange.Type.REMOVED -> {
+                        val message = dc.document.toObject(ChatMessage::class.java)
+                        new_messages.remove(message)
+                        messages.remove(message)
+                    }
+                }
+
+            }
+            messages.clear()
+            messages.addAll(new_messages)
+            trySend(Response.Success(new_messages))
+
+        }
+        awaitClose(){
+         registration.remove()
+        }
+
     }
+
 
     override suspend fun addMessage(
         chat_collection_id: String,
-        message: Chat
+        message: ChatMessage
     ): Flow<Response<Void?>> =flow{
         try {
             emit(Response.Loading)

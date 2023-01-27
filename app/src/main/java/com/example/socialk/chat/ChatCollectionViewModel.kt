@@ -43,4 +43,6 @@ class ChatCollectionViewModel :ViewModel(){
         _navigateTo.value = Event(Screen.ChatCollection)
     }
 
+
+
 }

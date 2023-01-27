@@ -1,59 +1,67 @@
 package com.example.socialk.di
 
-import android.os.Message
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.socialk.ActiveUser
 import com.example.socialk.model.Chat
 import com.example.socialk.model.ChatMessage
 import com.example.socialk.model.Response
-import com.example.socialk.model.User
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import javax.inject.Inject
+import kotlin.collections.ArrayList
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     val repo: ChatRepository
 ) : ViewModel() {
+    private var alreadyRead:Boolean= false
 
     val _chatCollectionStateFlow = MutableStateFlow<Chat>(Chat())
 
     private val _chatCollectionState = mutableStateOf<Response<Chat>>(Response.Loading)
     val chatCollectionState: State<Response<Chat>> = _chatCollectionState
 
-    private val _addChatCollectionState = mutableStateOf<Response<Void?>>(Response.Loading)
+    private val _messagesState = mutableStateOf<Response<ArrayList<ChatMessage>>>(Response.Loading)
+    val messagesState: State<Response<ArrayList<ChatMessage>>> = _messagesState
+    private val _addedMessagesState = mutableStateOf<Response<ArrayList<ChatMessage>>>(Response.Loading)
+    val addedMessagesState: State<Response<ArrayList<ChatMessage>>> = _addedMessagesState
+
+    private val _addChatCollectionState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val addChatCollectionState: State<Response<Void?>> = _addChatCollectionState
 
-    private val _deleteChatCollectionState = mutableStateOf<Response<Void?>>(Response.Loading)
+    private val _deleteChatCollectionState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val deleteChatCollectionState: State<Response<Void?>> = _deleteChatCollectionState
 
-    private val _updateChatCollectionRecentMessageState = mutableStateOf<Response<Void?>>(Response.Loading)
+    private val _updateChatCollectionRecentMessageState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val updateChatCollectionRecentMessageState: State<Response<Void?>> = _updateChatCollectionRecentMessageState
 
-    private val _updateChatCollectionMembersState = mutableStateOf<Response<Void?>>(Response.Loading)
+    private val _updateChatCollectionMembersState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val updateChatCollectionMembersState: State<Response<Void?>> = _updateChatCollectionMembersState
 
-    private val _updateChatCollectionNameState = mutableStateOf<Response<Void?>>(Response.Loading)
+    private val _updateChatCollectionNameState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val updateChatCollectionNameState: State<Response<Void?>> = _updateChatCollectionNameState
-
 
     private val _messageState = mutableStateOf<Response<ChatMessage>>(Response.Loading)
     val messageState: State<Response<ChatMessage>> = _messageState
-    private val _addMessageState = mutableStateOf<Response<Void?>>(Response.Loading)
+
+    private val _addMessageState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val addMessageState: State<Response<Void?>> = _addMessageState
-    private val _deleteMessageState = mutableStateOf<Response<Void?>>(Response.Loading)
+
+    private val _deleteMessageState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val deleteMessageState: State<Response<Void?>> = _deleteMessageState
+
     private val _checkIfChatExistsState = mutableStateOf<Response<Chat>>(Response.Loading)
     val checkIfChatExistsState: State<Response<Chat>> = _checkIfChatExistsState
+
+
+
 
     fun getChatCollection(id: String) {
         viewModelScope.launch {
@@ -67,9 +75,10 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             val uuid: UUID = UUID.randomUUID()
             val id:String = uuid.toString()
-            if (chatCollection.id!!.isEmpty()){
+            if (chatCollection.id!!.isEmpty()||chatCollection.id==null){
                 chatCollection.id=id
             }
+
             val current = LocalDateTime.now()
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
             val formatted = current.format(formatter)
@@ -137,16 +146,46 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    //todo ::PAGINATION
-    fun getMessages(id: String) {}
+
+    fun getMessages(id: String) {
+        viewModelScope.launch {
+            repo.getMessages(id).collect{response->
+                when(response){
+                    is Response.Success->{
+                        Log.d("TAGGG","viewmodel response"+response.data.toString())
+
+                        _messagesState.value=response
+                       /* if(alreadyRead){
+                            Log.d("TAGGG","Already read")
+
+                            _addedMessagesState.value=response
+                            _messagesState.value=Response.Loading
+                        }else{
+
+                            alreadyRead = true
+                        }*/
+                    }
+                }
+
+            }
+
+        }
+
+
+    }
     fun addMessage(
         chat_collection_id: String,
-        message: Chat
+        message: ChatMessage
     ) {
+        val uuid: UUID = UUID.randomUUID()
+        val id:String = uuid.toString()
+        message.id=id
+
+        val current = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        val formatted = current.format(formatter)
+        message.sent_time=formatted
         viewModelScope.launch {
-            val uuid: UUID = UUID.randomUUID()
-            val id:String = uuid.toString()
-            message.id=id
             repo.addMessage(chat_collection_id,message).collect{
                     response->
                 _addMessageState.value=response
