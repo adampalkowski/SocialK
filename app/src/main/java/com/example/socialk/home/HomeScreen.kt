@@ -1,6 +1,7 @@
 package com.example.socialk.home
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.util.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,12 +9,10 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.IconButton
-import androidx.compose.material.ScaffoldState
-import androidx.compose.material.Surface
-import androidx.compose.material.rememberScaffoldState
+import androidx.compose.material.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,22 +34,38 @@ import com.example.socialk.R
 import com.example.socialk.components.ActivityItem
 import com.example.socialk.components.BottomBar
 import com.example.socialk.components.BottomBarRow
+import com.example.socialk.components.BottomDialog
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
+import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.Ocean1
 import com.example.socialk.ui.theme.SocialTheme
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.marosseleng.compose.material3.datetimepickers.time.domain.noSeconds
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.LocalTime
 import java.util.*
+import java.util.concurrent.TimeUnit
+
+sealed class ActivityEvent() {
+    class OpenActivitySettings(activity: Activity) : ActivityEvent(){val activity=activity}
+    class OpenActivityChat (activity: Activity): ActivityEvent(){val activity=activity}
+}
 
 sealed class HomeEvent {
     object GoToProfile : HomeEvent()
     object LogOut : HomeEvent()
     object GoToMemories : HomeEvent()
     object GoToSettings : HomeEvent()
+
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun HomeScreen(
     activeUsersViewModel: ActiveUsersViewModel?,
@@ -59,9 +74,14 @@ fun HomeScreen(
     onEvent: (HomeEvent) -> Unit,
     bottomNavEvent: (Destinations) -> Unit
 ) {
-
+    var bottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+    val scope = rememberCoroutineScope()
+    var bottomSheetType by remember {
+        mutableStateOf("settings")
+    }
     val isDark = isSystemInDarkTheme()
     val scaffoldState = rememberScaffoldState()
+    var bottomSheetActivity by remember { mutableStateOf(Activity()) }
 
     androidx.compose.material.Scaffold(
         scaffoldState = scaffoldState,
@@ -78,20 +98,42 @@ fun HomeScreen(
                     .background(SocialTheme.colors.uiBackground),
                 color = SocialTheme.colors.uiBackground
             ) {
-                HomeScreenContent(activeUsersViewModel, viewModel,
-                    activityViewModel,
-                    it,
+                HomeScreenContent(activeUsersViewModel = activeUsersViewModel,
+                    viewModel = viewModel,
+                   activityViewModel= activityViewModel,
+                    padding = it,
                     isDark = isDark,
-                    onEvent = { homeEvent -> onEvent(homeEvent) })
+                    activityEvent = {
+                       when(it) {
+                           is ActivityEvent.OpenActivityChat->{
+                               bottomSheetType="chat"
+                               bottomSheetActivity=it.activity
+                           }
+                           is ActivityEvent.OpenActivitySettings->{
+                               bottomSheetType="settings"
+                               bottomSheetActivity=it.activity
+
+                           }
+                       }
+                        scope.launch {
+                            bottomSheetState.show()
+                        }
+                    },
+                    onEvent = { homeEvent ->
+
+                        onEvent(homeEvent)
+                    })
             }
 
         })
-
+    BottomDialog(state = bottomSheetState,activity=bottomSheetActivity, type = bottomSheetType)
 
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun HomeScreenContent(    activeUsersViewModel: ActiveUsersViewModel?,
+fun HomeScreenContent(
+    activityEvent: (ActivityEvent) -> Unit, activeUsersViewModel: ActiveUsersViewModel?,
     viewModel: AuthViewModel?,
     activityViewModel: ActivityViewModel?,
     padding: PaddingValues,
@@ -141,14 +183,16 @@ fun HomeScreenContent(    activeUsersViewModel: ActiveUsersViewModel?,
                     is Response.Success -> {
                         //display activities
                         items(it.data) { item ->
-                            ActivityItem(
-                                username = item.title,
-                                profilePictureUrl = "",
-                                timeLeft = "",
+                            ActivityItem(activity=item,
+                                onEvent = activityEvent,
+                                username = item.creator_username,
+                                profilePictureUrl = item.creator_profile_picture,
+                                timeLeft = item.time_left,
                                 title = item.title,
                                 description = "",
                                 date = item.date,
-                                timePeriod = item.title,
+                                //todo add the time end
+                                timePeriod = item.start_time + " - " + item.end_time,
                                 location = item.title
                             )
 
@@ -269,22 +313,5 @@ fun cardHighlited(isDark: Boolean, text: String) {
 
 }
 
-
-@Preview
-@Composable
-fun previewHomeScreen() {
-    SocialTheme {
-        HomeScreen(activityViewModel = null, viewModel = null, activeUsersViewModel = null, onEvent = {}, bottomNavEvent = {})
-    }
-}
-
-
-@Preview(uiMode = UI_MODE_NIGHT_YES)
-@Composable
-fun previewHomeScreenDark() {
-    SocialTheme {
-        HomeScreen(activityViewModel = null, viewModel = null, activeUsersViewModel = null, onEvent = {}, bottomNavEvent = {})
-    }
-}
 
 

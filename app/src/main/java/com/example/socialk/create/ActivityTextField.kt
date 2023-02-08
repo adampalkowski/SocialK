@@ -19,7 +19,7 @@ import com.example.socialk.signinsignup.TextFieldState
 
 
 @Composable
-fun ActivityTextField(
+fun ActivityTextField(hint:String,
     textState: TextFieldState= remember { ActivityTextFieldState()},
     focusManager: FocusManager,
     imeAction: ImeAction = ImeAction.Done,
@@ -47,7 +47,7 @@ fun ActivityTextField(
         placeholder = {
             Text(
                 color = Color(0xff757575),
-                text = "What are you planning?"
+                text = hint
             )
 
         },

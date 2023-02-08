@@ -2,13 +2,16 @@ package com.example.socialk.components
 
 import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.socialk.ui.theme.SocialTheme
 import kotlinx.coroutines.launch
 
 
@@ -62,25 +65,30 @@ fun BottomSheetLayout() {
             }
         }
     ) {
-        Scaffold {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Button(
-                    onClick = {
-                        coroutineScope.launch {
-                            if (modalSheetState.isVisible)
-                                modalSheetState.hide()
-                            else
-                                modalSheetState.animateTo(ModalBottomSheetValue.Expanded)
-                        }
-                    },
+        SocialTheme() {
+            Scaffold {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize().background(color= Color(0xfffffffff)),
+                    contentAlignment = Alignment.Center,
+
                 ) {
-                    Text(text = "Open Sheet")
+                    Button(
+                        onClick = {
+                            coroutineScope.launch {
+                                if (modalSheetState.isVisible)
+                                    modalSheetState.hide()
+                                else
+                                    modalSheetState.animateTo(ModalBottomSheetValue.Expanded)
+                            }
+                        },
+                    ) {
+                        Text(text = "Open Sheet")
+                    }
                 }
             }
+
         }
+
     }
 }

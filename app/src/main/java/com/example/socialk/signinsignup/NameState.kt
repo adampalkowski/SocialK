@@ -1,5 +1,11 @@
 package com.example.socialk.signinsignup
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.setValue
+
+
 class NameState : TextFieldState(validator = ::isNameValid, errorFor = ::nameValidationError)
 
 /**
@@ -12,5 +18,8 @@ private fun nameValidationError(name: String): String {
 }
 private fun isNameValid(name: String): Boolean {
     return name.isNotEmpty()
+}
+private fun setInitialText(text: String): String {
+    return text
 }
 val NameStateSaver = textFieldStateSaver(NameState())

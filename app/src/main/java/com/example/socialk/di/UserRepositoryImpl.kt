@@ -1,5 +1,7 @@
 package com.example.socialk.di
 
+import android.net.Uri
+import android.util.Log
 import com.example.socialk.await1
 import com.example.socialk.model.*
 import com.google.firebase.firestore.CollectionReference
@@ -15,12 +17,19 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 import com.example.socialk.await1
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnSuccessListener
+import com.google.firebase.storage.StorageReference
+import com.google.firebase.storage.UploadTask
+import java.util.*
+import kotlin.collections.ArrayList
 
 @Singleton
 @ExperimentalCoroutinesApi
 class UserRepositoryImpl @Inject constructor(
     private val usersRef: CollectionReference,
     private val chatCollectionsRef: CollectionReference,
+    private val storageRef: StorageReference,
 ):UserRepository {
 
     override suspend fun getUser(id: String): Flow<Response<User>> = callbackFlow {
@@ -112,6 +121,59 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun changeUserProfilePicture(user_id:String,picture_url: String): Flow<Response<Void?>> = flow {
+        try {
+            Log.d("ImagePicker","changeUserProfilePicture called")
+            emit(Response.Loading)
+            val addition =
+                usersRef.document(user_id).update("pictureUrl",picture_url)
+                    .await1()
+            emit(Response.Success(addition))
+
+        } catch (e: Exception) {
+            emit(Response.Failure(e = SocialException("changeUserProfilePicture exception", Exception())))
+        }
+    }
+
+    override suspend fun addProfilePictureToStorage(
+        user_id: String,
+        imageUri: Uri
+    ): Flow<Response<String>> =flow{
+      try{
+          Log.d("ImagePicker"," storeage called")
+          emit(Response.Loading)
+          Log.d("ImagePicker","123 called")
+
+          if (imageUri!=null){
+              Log.d("ImagePicker","try called")
+              val fileName = user_id
+              Log.d("ImagePicker","123 called")
+                val imageRef=storageRef.child("images/$fileName")
+              imageRef.putFile(imageUri).await1()
+              val url=storageRef.child("images/$fileName"+"_180x180").downloadUrl.await1()
+              emit(Response.Success(url.toString()))
+          }
+      }
+      catch (e: Exception){
+          Log.d("ImagePicker","try eerrr")
+          emit(Response.Failure(e = SocialException("addProfilePictureToStorage exception", Exception())))
+      }
+    }
+
+    override suspend fun deleteProfilePictureFromStorage(
+        user_id: String,
+        picture_url: String
+    ): Flow<Response<Void?>> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getProfilePictureFromStorage(
+        user_id: String,
+        picture_url: String
+    ): Flow<Response<String>> {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun addInvitedIDs(
         my_id: String,
         invited_id: String
@@ -131,7 +193,6 @@ class UserRepositoryImpl @Inject constructor(
         try {
             emit(Response.Loading)
             val one = chatCollectionsRef.document(chat.id!!).set(chat).await1()
-
             val two=  usersRef.document(user.id).update("friends_ids"+"."+current_user.id,chat.id,"invited_ids",FieldValue.arrayRemove(current_user.id)).await1()
             val three=  usersRef.document(current_user.id).update("friends_ids"+"."+user.id,chat.id).await1()
             emit(Response.Success(three))

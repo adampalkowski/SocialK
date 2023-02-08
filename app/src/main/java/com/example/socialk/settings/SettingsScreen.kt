@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.IconButton
@@ -14,6 +15,8 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,14 +24,21 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.socialk.R
 import com.example.socialk.components.ScreenHeading
+import com.example.socialk.components.SocialDialog
 import com.example.socialk.signinsignup.AuthViewModel
+import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.Ocean1
 import com.example.socialk.ui.theme.SocialTheme
 
@@ -42,6 +52,8 @@ sealed class SettingsEvent {
 
 @Composable
 fun SettingsScreen(viewModel: AuthViewModel?, onEvent: (SettingsEvent) -> Unit) {
+    val openDialog = remember { mutableStateOf(false)  }
+
     Surface(
         modifier = Modifier
             .fillMaxSize()
@@ -67,9 +79,19 @@ fun SettingsScreen(viewModel: AuthViewModel?, onEvent: (SettingsEvent) -> Unit) 
             settingsItem(
                 text = "Delete account",
                 icon = R.drawable.ic_delete_forever,
-                onClick = { })
+                onClick = {openDialog.value=true })
         }
-
+        if(openDialog.value){
+            SocialDialog(
+                onDismiss = { openDialog.value=false },
+                onConfirm = { /*TODO*/ },
+                onCancel = { openDialog.value=false },
+                title = "Delete account?",
+                info ="Confirm deleting the account, this will permanently remove he account and all the information connected with it" ,
+                icon =R.drawable.ic_delete,
+                actionButtonText = "Delete"
+            )
+        }
 
     }
 }
@@ -117,6 +139,7 @@ fun settingsDivider(text: String) {
         modifier = Modifier
             .fillMaxWidth()
             .height(40.dp)
+
             .background(color = SocialTheme.colors.uiBorder), contentAlignment = Alignment.Center
     ) {
         Row(

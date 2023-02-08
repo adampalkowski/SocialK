@@ -1,5 +1,6 @@
 package com.example.socialk.di
 
+import android.net.Uri
 import com.example.socialk.model.*
 import com.google.firebase.firestore.ktx.toObject
 import kotlinx.coroutines.flow.Flow
@@ -11,6 +12,11 @@ interface UserRepository {
     suspend fun addUser(user: User): Flow<Response<Void?>>
     suspend fun deleteUser(id:String): Flow<Response<Void?>>
     suspend fun addUsernameToUser(id:String,username:String): Flow<Response<Void?>>
+    suspend fun changeUserProfilePicture(user_id:String,picture_url:String): Flow<Response<Void?>>
+    suspend fun addProfilePictureToStorage(user_id:String,imageUri: Uri): Flow<Response<String>>
+    suspend fun deleteProfilePictureFromStorage(user_id:String,picture_url:String): Flow<Response<Void?>>
+    suspend fun getProfilePictureFromStorage(user_id:String,picture_url:String): Flow<Response<String>>
+
 
     suspend fun addInvitedIDs(
         my_id: String,

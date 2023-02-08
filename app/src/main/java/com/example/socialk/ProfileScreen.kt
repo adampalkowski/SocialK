@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -58,7 +59,7 @@ val tabRowItems = listOf(
 
 // PROFILE PICTURE, NAME, USERNAME BOX
 @Composable
-fun profileInfo(profileUrl: String, username: String, name: String) {
+fun profileInfo(profileUrl: String?, username: String, name: String) {
 
     Box(
         modifier = Modifier
@@ -70,7 +71,7 @@ fun profileInfo(profileUrl: String, username: String, name: String) {
 
             Image(
                 painter = rememberAsyncImagePainter(profileUrl),
-                contentDescription = "profile image", modifier = Modifier
+                contentDescription = "profile image" , contentScale = ContentScale.Crop, modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
             )
@@ -260,7 +261,8 @@ fun ProfileScreen(user:User,onEvent: (ProfileEvent) -> Unit, bottomNavEvent: (De
             //TODO:HARDCODED URL
             //PROFILE BOX
             profileInfo(
-                profileUrl = "https://firebasestorage.googleapis.com/v0/b/socialv2-340711.appspot.com/o/uploads%2F1662065348037.null?alt=media&token=40cebce4-0c53-470c-867f-d9d34cba63ab",
+                profileUrl = user
+                    .pictureUrl,
                 username =user.username!!,
                 name =user.name!!
             )
@@ -339,7 +341,7 @@ fun ProfileScreen(user:User,onEvent: (ProfileEvent) -> Unit, bottomNavEvent: (De
 @Composable
 fun previewProfileScreen() {
     SocialTheme() {
-        ProfileScreen(onEvent = {}, bottomNavEvent = {}, user = User(name = "", username = "",
+        ProfileScreen(onEvent = {}, bottomNavEvent = {}, user = User(description = "",name = "", username = "",
             id = "m", email = "", pictureUrl = "", blocked_ids = ArrayList(), friends_ids = HashMap(), invited_ids = ArrayList() ))
     }
 }

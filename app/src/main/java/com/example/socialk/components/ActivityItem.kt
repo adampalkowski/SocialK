@@ -26,20 +26,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import com.example.socialk.R
+import com.example.socialk.chat.ChatButton
+import com.example.socialk.home.ActivityEvent
+import com.example.socialk.home.HomeEvent
+import com.example.socialk.model.Activity
 import com.example.socialk.ui.theme.*
 import kotlin.text.Typography
 
 @Composable
-fun ActivityItem(
-    username: String,
-    profilePictureUrl: String,
-    timeLeft: String,
-    title: String,
-    description: String,
-    date: String,
-    timePeriod: String,
-    location: String
+fun ActivityItem(activity: Activity,
+                 username: String,
+                 profilePictureUrl: String,
+                 timeLeft: String,
+                 title: String,
+                 description: String,
+                 date: String,
+                 timePeriod: String,
+                 location: String,
+                 onEvent:(ActivityEvent)->Unit
 ) {
     Box(
         modifier = Modifier
@@ -48,37 +54,40 @@ fun ActivityItem(
             .padding(vertical = 12.dp)
     ) {
         Column() {
-
+            //ACtivity top content
             Row(modifier = Modifier, verticalAlignment = Alignment.CenterVertically) {
                 Image(
-                    painter = painterResource(id = R.drawable.ic_person),
+                    painter = rememberAsyncImagePainter(profilePictureUrl),
+                    contentScale = ContentScale.Crop,
                     contentDescription = null,
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
                 )
-
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier) {
                     Text(
                         text = username,
-                        style = com.example.socialk.ui.theme.Typography.h4, fontWeight = FontWeight.Light,color= SocialTheme.colors.textPrimary
+                        style = com.example.socialk.ui.theme.Typography.h5, fontWeight = FontWeight.Light,color= SocialTheme.colors.textPrimary
                     )
                     Text(
                         text = timeLeft, style = com.example.socialk.ui.theme.Typography.subtitle1, textAlign = TextAlign.Center,color= SocialTheme.colors.textPrimary
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                Icon(painter = painterResource(id = R.drawable.ic_more), contentDescription = null,tint =SocialTheme.colors.iconPrimary)
+                IconButton(onClick = {onEvent(ActivityEvent.OpenActivitySettings(activity))}) {
+                    Icon(painter = painterResource(id = R.drawable.ic_more), contentDescription = null,tint =SocialTheme.colors.iconPrimary)
+
+                }
                 Spacer(modifier = Modifier.width(12.dp))
             }
             Spacer(modifier = Modifier.height(12.dp))
+            //TEXT AND CONTROLS ROW
             Row (modifier = Modifier, verticalAlignment = Alignment.CenterVertically){
                 Column(modifier = Modifier
                     .weight(1f)
-                    .padding(end = 8.dp)) {
-                    Text(
-                        modifier = Modifier, text = title, style = com.example.socialk.ui.theme.Typography.h3, fontWeight = FontWeight.Normal
+                    .padding(end = 8.dp), verticalArrangement = Arrangement.Top) {
+                    Text( text = title, style = com.example.socialk.ui.theme.Typography.h3, fontWeight = FontWeight.Normal
                         ,color=SocialTheme.colors.textPrimary, textAlign = TextAlign.Left
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -88,16 +97,18 @@ fun ActivityItem(
                         textAlign = TextAlign.Left
                     )
                 }
-                controls()
+                controls(onEvent=onEvent,activity)
             }
+
+            //DETAILS
             Spacer(modifier = Modifier.height(12.dp))
-            ActivityDetailsBar()
+            ActivityDetailsBar(location="",date=date,timePeriod=timePeriod)
             Spacer(modifier = Modifier.height(8.dp))
             Box(modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 32.dp)
                 .height(1.dp)
-                .background(color =SocialTheme.colors.uiFloated))
+                .background(color = SocialTheme.colors.uiFloated))
 
 
         }
@@ -105,8 +116,7 @@ fun ActivityItem(
 }
 
 @Composable
-fun ActivityDetailsBar() {
-
+fun ActivityDetailsBar(location:String,date:String,timePeriod:String) {
         Box(modifier = Modifier
             .fillMaxWidth()
             .height(36.dp)
@@ -118,17 +128,17 @@ fun ActivityDetailsBar() {
 , verticalAlignment = CenterVertically){
                 Icon(painter = painterResource(id = R.drawable.ic_location), contentDescription = null, tint =SocialTheme.colors.iconPrimary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text ="Basen" , style = TextStyle(fontFamily = Inter, fontWeight = FontWeight.ExtraLight, fontSize = 12.sp)
+                Text(text =location , style = TextStyle(fontFamily = Inter, fontWeight = FontWeight.ExtraLight, fontSize = 12.sp)
                     , color = SocialTheme.colors.textPrimary )
                 Spacer(modifier = Modifier.width(24.dp))
                 Icon(painter = painterResource(id = R.drawable.ic_date), contentDescription = null,tint =SocialTheme.colors.iconPrimary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text ="12/12/2022", style = TextStyle(fontFamily = Inter, fontWeight = FontWeight.ExtraLight, fontSize = 12.sp)
+                Text(text =date, style = TextStyle(fontFamily = Inter, fontWeight = FontWeight.ExtraLight, fontSize = 12.sp)
                     , color = SocialTheme.colors.textPrimary)
                 Spacer(modifier = Modifier.width(24.dp))
                 Icon(painter = painterResource(id = R.drawable.ic_timer), contentDescription = null, tint =SocialTheme.colors.iconPrimary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text ="15:15 - 15:15", style = TextStyle(fontFamily = Inter, fontWeight = FontWeight.ExtraLight, fontSize = 12.sp)
+                Text(text =timePeriod, style = TextStyle(fontFamily = Inter, fontWeight = FontWeight.ExtraLight, fontSize = 12.sp)
                     , color = SocialTheme.colors.textPrimary )
                 Spacer(modifier = Modifier.width(24.dp))
             }
@@ -136,72 +146,16 @@ fun ActivityDetailsBar() {
 
 }
 
-@Composable
-fun controls(){
-    androidx.compose.material3.Card(
-        modifier = Modifier
-            .height(140.dp)
-            .width(56.dp),
-        shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp, color = Color(0xFFEFEAFF))
-    ) {
 
-        val isDark = isSystemInDarkTheme()
-        Box(
-            modifier = Modifier
-                .background(color = if (isDark) Color(0xFF25232A) else Color.White)
-                .fillMaxSize()
+@Composable
+fun controls(onEvent: (ActivityEvent) -> Unit,activity: Activity){
+    Column(      modifier = Modifier
         ) {
-
-            Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = CenterHorizontally, verticalArrangement = Arrangement.SpaceEvenly) {
-                IconButton(onClick = { /*TODO*/ }) {
-                    Icon(painter = painterResource(id =R.drawable.ic_heart ), contentDescription = null, tint =SocialTheme.colors.iconPrimary)
-                }
-
-                IconButton(onClick = { /*TODO*/ }) {
-                    Icon(painter = painterResource(id =R.drawable.ic_chat ), contentDescription = null, tint =SocialTheme.colors.iconPrimary)
-                }
-                IconButton(onClick = { /*TODO*/ }) {
-                    Icon(painter = painterResource(id =R.drawable.ic_bookmark ), contentDescription = null,tint =SocialTheme.colors.iconPrimary)
-                }
-            }
-        }
-
+        ChatButton(onEvent = { /*TODO*/ }, icon =R.drawable.ic_heart )
+        Spacer(modifier = Modifier.height(6.dp))
+        ChatButton(onEvent = { onEvent(ActivityEvent.OpenActivityChat(activity)) }, icon =R.drawable.ic_chat )
+        Spacer(modifier = Modifier.height(6.dp))
+        ChatButton(onEvent = { /*TODO*/ }, icon =R.drawable.ic_bookmark )
     }
 
-
-}
-
-@Preview(showBackground = true)
-@Composable
-fun previewActivityItem() {
-    SocialTheme {
-        ActivityItem(
-            "Adamo",
-            "URl",
-            "Starts in 12 minutes",
-                    "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-                    "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-            "DATE",
-            "15:15 - 15:15",
-            "location"
-        )
-    }
-}
-
-
-@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES)
-@Composable
-fun previewActivityItemDark() {
-    SocialTheme {
-        ActivityItem(
-            "Adamo",
-            "URl",
-            "Starts in 12 minutes",
-            "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-            "LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLEVERY LONG TITLE",
-            "DATE",
-            "15:15 - 15:15",
-            "location"
-        )
-    }
 }

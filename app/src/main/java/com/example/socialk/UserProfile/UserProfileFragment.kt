@@ -21,16 +21,27 @@ import com.example.socialk.di.UserViewModel
 import com.example.socialk.model.Response
 import com.example.socialk.model.User
 import com.example.socialk.model.UserData
+import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.net.UnknownServiceException
 
-
+/*
+* User profile fragment
+* display current users profile
+* his activities and memories
+*
+*
+* DB READS 1 for user
+* THIS CAN BE OPTIMIZED , NO NEED TO DOWNLOAD USER since we have USERDATA SAVED
+* */
 @AndroidEntryPoint
 class UserProfileFragment : Fragment(){
     private val viewModel by viewModels<UserProfileViewModel>()
     private val userViewModel by activityViewModels<UserViewModel>()
+    private val authViewModel by viewModels<AuthViewModel>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -42,15 +53,12 @@ class UserProfileFragment : Fragment(){
                 navigate(navigateTo, Screen.UserProfile)
             }
         }
-
-
-        Log.d("TAGGG",userViewModel.userProfile.value.toString()+"SD")
-        val user:User =   userViewModel.userProfile.value
+        val user:User?= UserData.user
+        userViewModel.getUser(authViewModel.currentUser!!.uid)
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
-                    UserProfileScreen(viewModel,
-                        user,userViewModel,
+                    UserProfileScreen(viewModel,user,userViewModel,
                         onEvent = { event ->
                             when (event) {
                                 is UserProfileEvent.GoToProfile -> viewModel.handleGoToProfile()

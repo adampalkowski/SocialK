@@ -351,8 +351,6 @@ fun ChatScreen(
         ChatScreenTopBar(user, onEvent = onEvent)
         Divider()
 
-
-
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
@@ -367,7 +365,6 @@ fun ChatScreen(
         ) {
 
             items(data.value) {
-
                 if (it.sender_id==UserData.user!!.id){
                     Spacer(modifier = Modifier.height(4.dp))
                     ChatItemRight(textMessage =it.text, date=it.sent_time, onLongPress = {messageOptionsVisibility=true})
@@ -383,10 +380,8 @@ fun ChatScreen(
 
         }
         Divider()
-        if (messageOptionsVisibility){
-            BottomSheetLayout()
 
-        }else{
+
             ChatScreenBottomInputs(keyboardController,onEvent = {
                 if (textState.text.length>0){
                     onEvent(ChatEvent.SendMessage(message = textState.text.trim()))
@@ -394,7 +389,6 @@ fun ChatScreen(
                 }
                 textState.text = ""
             }, textState)
-        }
 
 
     }

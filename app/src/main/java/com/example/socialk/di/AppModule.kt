@@ -14,6 +14,8 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.ktx.storage
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,7 +33,8 @@ const val SIGN_UP_REQUEST = "signUpRequest"
 class AppModule {
     @Provides
     fun provideFirebaseAuth() = Firebase.auth
-
+    @Provides
+    fun provideFirebaseStorage() = Firebase.storage
     @Provides
     fun provideFirebaseFirestore() = Firebase.firestore
 
@@ -115,9 +118,11 @@ class AppModule {
     @Provides
     fun provideUsersRepository(
         db: FirebaseFirestore,
+        storage: FirebaseStorage,
     ):UserRepository= UserRepositoryImpl(
         usersRef =db.collection("Users"),
         chatCollectionsRef =db.collection("groups"),
+        storageRef =storage.reference,
     )
     @Provides
     fun provideProfileRepository(

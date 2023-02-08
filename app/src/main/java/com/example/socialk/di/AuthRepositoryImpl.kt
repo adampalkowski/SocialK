@@ -119,6 +119,7 @@ class AuthRepositoryImpl @Inject constructor(
                 id = uid,
                 pictureUrl = null,
                 username = null,
+                description = "",
                 friends_ids = HashMap(),
                 blocked_ids =  ArrayList(),
                 invited_ids =  ArrayList(),

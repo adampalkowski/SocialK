@@ -47,9 +47,7 @@ sealed class UserProfileEvent {
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun UserProfileScreen(viewModel:UserProfileViewModel,user: User,userViewModel:UserViewModel?, onEvent: (UserProfileEvent) -> Unit) {
-
-
+fun UserProfileScreen(viewModel:UserProfileViewModel,user:User?,userViewModel:UserViewModel?, onEvent: (UserProfileEvent) -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxSize(), color = SocialTheme.colors.uiBackground
@@ -72,7 +70,7 @@ fun UserProfileScreen(viewModel:UserProfileViewModel,user: User,userViewModel:Us
             //TODO:HARDCODED URL
             //PROFILE BOX
             profileInfo(
-                profileUrl = "https://firebasestorage.googleapis.com/v0/b/socialv2-340711.appspot.com/o/uploads%2F1662065348037.null?alt=media&token=40cebce4-0c53-470c-867f-d9d34cba63ab",
+                profileUrl = user!!.pictureUrl,
                 username =user.username!!,
                 name =user.name!!
             )

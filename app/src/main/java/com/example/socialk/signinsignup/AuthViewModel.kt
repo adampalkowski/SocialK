@@ -44,7 +44,7 @@ class AuthViewModel @Inject constructor(
    // var oneTapSignInResponse by mutableStateOf<OneTapSignInResponse>(Response.Success(null))
     //    private set
    // var signInWithGoogleResponse by mutableStateOf<SignInWithGoogleResponse>(Response.Success(false))
-        //private set
+            //private set
     private val _loginFlow= MutableStateFlow<Response<FirebaseUser>?>(null)
     val loginFlow: StateFlow<Response<FirebaseUser>?> = _loginFlow
 

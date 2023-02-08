@@ -37,7 +37,7 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun addChatCollection(chatCollection: Chat): Flow<Response<Void?>> =flow{
+    override suspend fun addChatCollection(chatCollection: Chat): Flow<Response<Void?>>  = flow {
         try {
             emit(Response.Loading)
             val chatCollectionId=chatCollection.id

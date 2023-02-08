@@ -36,4 +36,5 @@ class HomeViewModel : ViewModel() {
     fun handleGoToCreate( ) {
         _navigateTo.value = Event(Screen.Create)
     }
+
 }

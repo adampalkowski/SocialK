@@ -10,6 +10,9 @@ class ProfileViewModel : ViewModel() {
     private val _navigateTo = MutableLiveData<Event<Screen>>()
     val navigateTo: LiveData<Event<Screen>> = _navigateTo
 
+    fun handleImagePicker(){
+
+    }
     fun handleGoToProfile( ) {
         _navigateTo.value = Event(Screen.Profile)
     }

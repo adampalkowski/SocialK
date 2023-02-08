@@ -1,6 +1,8 @@
 package com.example.socialk.di
 
+import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.MutableLiveData
@@ -29,6 +31,8 @@ class UserViewModel @Inject constructor(
     val userProfileId = MutableLiveData<String>()
     val _userProfile = MutableStateFlow<User>(User())
     val userProfile: StateFlow<User> = _userProfile
+    val _currentUserProfile = MutableStateFlow<User>(User())
+    val currentUserProfile: StateFlow<User> = _currentUserProfile
     private val _userValidation = MutableStateFlow<Response<Boolean>>(Response.Loading)
     val userValidation: StateFlow<Response<Boolean>> = _userValidation
 
@@ -82,7 +86,8 @@ class UserViewModel @Inject constructor(
 
     private val _isInviteAcceptedState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isInviteAcceptedState: State<Response<Void?>> = _isInviteAcceptedState
-
+    private val _isUserProfilePictureChangedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isUserProfilePictureChangedState: State<Response<Void?>> = _isUserProfilePictureChangedState
     fun addChatCollectionToUsers(id:String,friend_id:String,chat_id:String){
         viewModelScope.launch {
             repo.addChatCollectionToUsers(id,friend_id,chat_id).collect { response ->
@@ -96,6 +101,35 @@ class UserViewModel @Inject constructor(
             repo.acceptInvite(current_user,user,chat).collect { response ->
                 _isInviteAcceptedState.value = response
             }
+        }
+    }
+    fun changeUserProfilePicture(user_id:String,picture_uri: Uri){
+        viewModelScope.launch {
+            Log.d("ImagePicker","changeUserProfilePicture called")
+            Log.d("ImagePicker","changeUserProfilePicture "+picture_uri.toString()+user_id)
+            Log.d("ImagePicker","changeUserProfilePicture "+user_id)
+            Log.d("ImagePicker","changeUserProfilePicture "+picture_uri.toString())
+            repo.addProfilePictureToStorage(user_id, picture_uri).collect{ response ->
+                when(response){
+                    is Response.Success->{
+
+                        repo.changeUserProfilePicture(user_id,response.data).collect { response ->
+                            when(response){
+                                is Response.Success->{
+                                    userProfile.value.pictureUrl=response.data.toString()
+                                }
+                                is Response.Failure->{  Log.d("ImagePicker",response.e.message)
+                                }
+                            }
+
+                        }
+                    }
+                    is Response.Failure->{  Log.d("ImagePicker",response.e.message)
+                    }
+                }
+
+            }
+
         }
     }
 
@@ -183,6 +217,10 @@ class UserViewModel @Inject constructor(
     fun setUserProfile(user:User)
     {
         _userProfile.value=user
+    }
+    fun setCurrentUser(user:User)
+    {
+        _currentUserProfile.value=user
     }
     fun getUser(id: String) {
         viewModelScope.launch {
