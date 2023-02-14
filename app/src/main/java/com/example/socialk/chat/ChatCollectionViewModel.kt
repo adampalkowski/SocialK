@@ -5,11 +5,16 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.socialk.Main.Screen
+import com.example.socialk.model.Chat
+import com.example.socialk.model.User
 import com.example.socialk.util.Event
 
 class ChatCollectionViewModel :ViewModel(){
     private val _navigateTo = MutableLiveData<Event<Screen>>()
     val navigateTo: LiveData<Event<Screen>> = _navigateTo
+
+    private val _chat = MutableLiveData<Chat>()
+    val chat: LiveData<Chat> = _chat
 
     fun handleGoToProfile( ) {
         _navigateTo.value = Event(Screen.Profile)
@@ -35,11 +40,12 @@ class ChatCollectionViewModel :ViewModel(){
     fun handleGoToCreate( ) {
         _navigateTo.value = Event(Screen.Create)
     }
-    fun handleGoToChat( ) {
-        Log.d("TAG","CJAT")
+    fun handleGoToChat(chat: Chat) {
+        _chat.value=chat
         _navigateTo.value = Event(Screen.Chat)
     }
     fun handleGoBack( ) {
+
         _navigateTo.value = Event(Screen.ChatCollection)
     }
 

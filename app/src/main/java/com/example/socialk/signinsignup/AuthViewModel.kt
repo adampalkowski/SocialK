@@ -69,7 +69,19 @@ class AuthViewModel @Inject constructor(
         _signupFlow.value=null
         UserData.user=null
     }
+    fun deleteAuth(){
+        repo.deleteAuth()
+        _loginFlow.value=null
+        _signupFlow.value=null
+        UserData.user=null
+    }
+     fun deleteAccount(id:String){
+         viewModelScope.launch {
+             repo.deleteAccount(id)
+         }
 
+
+    }
     fun oneTapSignIn() = viewModelScope.launch {
         //oneTapSignInResponse = Response.Loading
     //    oneTapSignInResponse = repo.oneTapSignInWithGoogle()

@@ -136,5 +136,4 @@ class AppModule {
         signInClient = signInClient,
         db = db
     )
-
 }

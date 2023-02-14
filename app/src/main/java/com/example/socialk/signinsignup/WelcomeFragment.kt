@@ -24,7 +24,6 @@ class WelcomeFragment:Fragment() {
     private val authViewModel by viewModels<AuthViewModel>()
     private val userViewModel by viewModels<UserViewModel>()
 
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

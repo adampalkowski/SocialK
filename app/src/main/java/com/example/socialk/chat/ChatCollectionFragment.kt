@@ -1,6 +1,7 @@
 package com.example.socialk.chat
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,12 +11,15 @@ import androidx.fragment.app.viewModels
 import com.example.socialk.*
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
+import com.example.socialk.di.ChatViewModel
+import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class ChatCollectionFragment:Fragment() {
     private val viewModel by viewModels<ChatCollectionViewModel>()
+    private val chatViewModel by viewModels<ChatViewModel>()
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -23,9 +27,16 @@ class ChatCollectionFragment:Fragment() {
     ): View? {
         viewModel.navigateTo.observe(viewLifecycleOwner) { navigateToEvent ->
             navigateToEvent.getContentIfNotHandled()?.let { navigateTo ->
-                navigate(navigateTo, Screen.ChatCollection)
+                if(navigateTo==Screen.Chat){
+                    val bundle = Bundle()
+                    bundle.putSerializable("chat",viewModel.chat.value)
+                    navigate(navigateTo, Screen.ChatCollection,bundle)
+                }else{
+                    navigate(navigateTo, Screen.ChatCollection)
+                }
             }
         }
+        chatViewModel.getChatCollections(UserData.user!!.id)
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
@@ -36,7 +47,7 @@ class ChatCollectionFragment:Fragment() {
                                 is ChatCollectionEvent.LogOut -> viewModel.handleLogOut()
                                 is ChatCollectionEvent.GoToSettings -> viewModel.handleGoToSettings()
                                 is ChatCollectionEvent.GoToSearch -> viewModel.handleGoToSearch()
-                                is ChatCollectionEvent.GoToChat -> viewModel.handleGoToChat()
+                                is ChatCollectionEvent.GoToChat -> viewModel.handleGoToChat(event.chat)
                             }
                         },
                         bottomNavEvent  ={screen->
@@ -47,7 +58,7 @@ class ChatCollectionFragment:Fragment() {
                                 is Profile ->viewModel.handleGoToProfile()
                                 is Create -> viewModel.handleGoToCreate()
                             }
-                        }
+                        },chatViewModel=chatViewModel
                     )
                 }
             }

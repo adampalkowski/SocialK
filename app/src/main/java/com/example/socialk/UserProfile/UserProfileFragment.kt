@@ -50,11 +50,20 @@ class UserProfileFragment : Fragment(){
     ): View? {
         viewModel.navigateTo.observe(viewLifecycleOwner) { navigateToEvent ->
             navigateToEvent.getContentIfNotHandled()?.let { navigateTo ->
-                navigate(navigateTo, Screen.UserProfile)
+                if (navigateTo==Screen.Chat){
+                    val bundle = Bundle()
+                    bundle.putSerializable("user",viewModel.clicked_user.value)
+                    navigate(navigateTo, Screen.UserProfile,bundle)
+
+                }else{
+                    navigate(navigateTo, Screen.UserProfile)
+
+                }
             }
         }
-        val user:User?= UserData.user
-        userViewModel.getUser(authViewModel.currentUser!!.uid)
+        //get the searched user from bundle
+        val user = arguments?.getSerializable("user") as User
+
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
@@ -67,7 +76,7 @@ class UserProfileFragment : Fragment(){
                                 is UserProfileEvent.GoToEditProfile -> viewModel.handleGoToEditProfile()
                                 is UserProfileEvent.GoToSearch -> viewModel.handleGoToSearch()
                                 is UserProfileEvent.GoToChat -> {
-                                    viewModel.handleGoToChat()
+                                    viewModel.handleGoToChat(event.user)
                                 }
                                 is UserProfileEvent.InviteUser -> {
                                     //TODO !! here should always be null ???

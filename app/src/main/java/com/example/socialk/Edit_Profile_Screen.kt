@@ -1,5 +1,6 @@
 package com.example.socialk
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -34,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.socialk.PickUsername.UsernameState
 import com.example.socialk.PickUsername.UsernameStateSaver
@@ -67,6 +69,7 @@ fun EditProfileScreen(
     onEvent: (EditProfileEvent) -> Unit,
     profileUrl: String
 ) {
+    var user_flow= userViewModel?.userState?.collectAsState()
     var user: User = UserData.user!!
     val nameFocusRequester = remember { FocusRequester() }
     val usernameFocusRequester = remember { FocusRequester() }
@@ -85,6 +88,7 @@ fun EditProfileScreen(
     }
 
 
+    Log.d("Edit_profile_screen",user.pictureUrl.toString())
     Column(modifier = Modifier.fillMaxSize()) {
         ScreenHeading(onClick = { onEvent(EditProfileEvent.GoToProfile) }, title = "Edit profile")
         Column(
@@ -96,14 +100,17 @@ fun EditProfileScreen(
             Card(
                 shape = RoundedCornerShape(1000.dp),
                 onClick = { onEvent(EditProfileEvent.PickImage) }) {
-                Image(
-                    painter = rememberAsyncImagePainter(user.pictureUrl),
-                    contentScale = ContentScale.Crop,
-                    contentDescription = "profile image", modifier = Modifier
-                        .size(128.dp)
-                        .clip(CircleShape)
-                )
-            }
+
+                        Image(
+                            painter = rememberAsyncImagePainter(user.pictureUrl),
+                            contentScale = ContentScale.Crop,
+                            contentDescription = "profile image", modifier = Modifier
+                                .size(128.dp)
+                                .clip(CircleShape)
+                        )
+
+                }
+
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -152,8 +159,18 @@ fun EditProfileScreen(
                 Text(text = "Confirm changes")
             }
         }
-
-
+        user_flow?.value.let {
+            when(it){
+                is Response.Success->{
+                    Log.d("Edit_profile_screen",it.data.toString())
+                    user=it.data
+                }
+                is Response.Loading->{
+                    CircularProgressIndicator()
+                }
+                is Response.Failure->{}
+            }
+        }
     }
 }
 
@@ -212,10 +229,3 @@ fun editField(
 }
 
 
-@Preview
-@Composable
-fun EditProfileScreenPreview() {
-    SocialTheme() {
-
-    }
-}

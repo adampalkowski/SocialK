@@ -37,6 +37,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.socialk.R
 import com.example.socialk.components.ScreenHeading
 import com.example.socialk.components.SocialDialog
+import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.Ocean1
@@ -84,7 +85,12 @@ fun SettingsScreen(viewModel: AuthViewModel?, onEvent: (SettingsEvent) -> Unit) 
         if(openDialog.value){
             SocialDialog(
                 onDismiss = { openDialog.value=false },
-                onConfirm = { /*TODO*/ },
+                onConfirm = {
+                    viewModel?.deleteAccount(UserData.user!!.id)
+                    viewModel?.deleteAuth()
+                    onEvent(SettingsEvent.LogOut)
+                            },
+
                 onCancel = { openDialog.value=false },
                 title = "Delete account?",
                 info ="Confirm deleting the account, this will permanently remove he account and all the information connected with it" ,
@@ -154,8 +160,3 @@ fun settingsDivider(text: String) {
 }
 
 
-@Preview
-@Composable
-fun previewSettingsScreen() {
-    SettingsScreen(null, onEvent = {})
-}

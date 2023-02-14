@@ -11,6 +11,9 @@ class SearchViewModel : ViewModel(){
     private val _navigateTo = MutableLiveData<Event<Screen>>()
     val navigateTo: LiveData<Event<Screen>> = _navigateTo
 
+    private val _searched_user = MutableLiveData<User>()
+    val searched_user: LiveData<User> = _searched_user
+
     fun handleGoToProfile( ) {
         _navigateTo.value = Event(Screen.Profile)
     }
@@ -22,8 +25,10 @@ class SearchViewModel : ViewModel(){
         _navigateTo.value = Event(Screen.ChatCollection)
     }
 
-    fun handleGoToUserProfile( ) {
+    fun handleGoToUserProfile(user:User) {
+        _searched_user.value = user
         _navigateTo.value = Event(Screen.UserProfile)
+
     }
 
 

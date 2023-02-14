@@ -33,7 +33,9 @@ class ProfileFragment :Fragment(){
             user=User(description = "",id="",name="", pictureUrl = "", username = "", email = "", blocked_ids = ArrayList() , invited_ids = ArrayList() , friends_ids = HashMap())
 
         }
-        Log.d("TAG",user.toString())
+
+        Log.d("UserProfileFragment",user.toString())
+        Log.d("UserProfileFragment","user.()")
 
         if (user.username==null){
             user.username=""

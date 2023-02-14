@@ -14,10 +14,10 @@ class UserProfileViewModel:ViewModel() {
    private val _navigateTo = MutableLiveData<Event<Screen>>()
     val navigateTo: LiveData<Event<Screen>> = _navigateTo
 
-
     private val _inviteEventState = mutableStateOf<Boolean>(false)
     val inviteEventState: State<Boolean> = _inviteEventState
-
+    private val _clicked_user = MutableLiveData<User>()
+    val clicked_user: LiveData<User> = _clicked_user
     fun inviteSent(){
         _inviteEventState.value=true
     }
@@ -39,8 +39,10 @@ class UserProfileViewModel:ViewModel() {
     fun handleGoToChats( ) {
         _navigateTo.value = Event(Screen.ChatCollection)
     }
-    fun handleGoToChat( ) {
+    fun handleGoToChat( user:User) {
+        _clicked_user.value = user
         _navigateTo.value = Event(Screen.Chat)
+
     }
     fun handleGoToEditProfile( ) {
         _navigateTo.value = Event(Screen.EditProfile)

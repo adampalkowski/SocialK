@@ -64,6 +64,9 @@ sealed class WelcomeEvent {
 fun WelcomeScreen(userViewModel:UserViewModel?,authViewModel: AuthViewModel,onEvent: (WelcomeEvent) -> Unit, navigateToHome:() ->Unit,
                   viewModel: AuthViewModel = hiltViewModel()) {
     val userFlow= userViewModel?.userValidation?.collectAsState()
+    if(authViewModel?.currentUser!=null){
+
+
     if(authViewModel.isUserAuthenticated){
         userViewModel?.validateUser(authViewModel?.currentUser!!)
 
@@ -90,6 +93,7 @@ fun WelcomeScreen(userViewModel:UserViewModel?,authViewModel: AuthViewModel,onEv
                 }
             }
         }
+    }
     }
     Surface(modifier = Modifier
         .fillMaxSize()
@@ -355,15 +359,5 @@ fun ContinueWithButton(icon:Int,text:String,onClick:()->Unit){
 
         }
 
-    }
-}
-@Composable
-fun ColorScheme.isLight() = this.background.luminance() > 0.5
-
-@Preview(name = "Welcome light theme", uiMode = UI_MODE_NIGHT_YES, showBackground = true)
-@Preview(name = "Welcome dark theme", uiMode = UI_MODE_NIGHT_NO, showBackground = true)
-@Composable
-fun WelcomeScreenPreview() {
-    SocialTheme() {
     }
 }

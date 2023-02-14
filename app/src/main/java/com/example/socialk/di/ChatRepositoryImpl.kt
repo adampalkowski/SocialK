@@ -71,6 +71,21 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateChatCollectionRecentMessage(
+        id: String,
+        recent_message_time: String,
+        recent_message: String
+    ): Flow<Response<Void?>>  =flow{
+        try {
+            emit(Response.Loading)
+            val update = chatCollectionsRef.document(id).update("recent_message",recent_message,
+                "recent_message_time",recent_message_time).await()
+            emit(Response.Success(update))
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("updateChatCollectionRecentMessage exception",Exception())))
+        }
+    }
+
     override suspend fun updateChatCollectionMembers(
         members_list: List<String>,
         id: String
@@ -164,6 +179,56 @@ class ChatRepositoryImpl @Inject constructor(
          registration.remove()
         }
 
+    }
+
+    override suspend fun getChatCollections(user_id: String): Flow<Response<ArrayList<Chat>>>  = callbackFlow {
+
+        var messages : ArrayList<Chat> = ArrayList()
+
+        lastVisibleData=null
+        val registration=   chatCollectionsRef.whereArrayContains("members",user_id)
+            .orderBy("recent_message_time",Query.Direction.DESCENDING).limit(10)
+            .addSnapshotListener{  snapshots , exception ->
+                if (exception != null) {
+                    channel.close(exception)
+                    return@addSnapshotListener
+                }
+                var new_messages =  ArrayList<Chat>()
+                new_messages.addAll(messages)
+                if(snapshots==null ||snapshots.isEmpty()) {
+                    lastVisibleData = null
+                } else {
+                    lastVisibleData = snapshots.getDocuments()
+                        .get(snapshots.size() - 1)
+                }
+                for (dc in snapshots!!.documentChanges) {
+                    when (dc.type) {
+                        DocumentChange.Type.ADDED -> {
+                            val message = dc.document.toObject(Chat::class.java)
+                            new_messages.reverse()
+                            new_messages.add(message)
+                            new_messages.reverse()
+                        }
+                        DocumentChange.Type.MODIFIED -> {
+                            val message = dc.document.toObject(Chat::class.java)
+                            new_messages.add(message)
+                        }
+                        DocumentChange.Type.REMOVED -> {
+                            val message = dc.document.toObject(Chat::class.java)
+                            new_messages.remove(message)
+                            messages.remove(message)
+                        }
+                    }
+
+                }
+                messages.clear()
+                messages.addAll(new_messages)
+                trySend(Response.Success(new_messages))
+
+            }
+        awaitClose(){
+            registration.remove()
+        }
     }
 
 

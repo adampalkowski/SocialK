@@ -1,5 +1,6 @@
 package com.example.socialk
 
+import android.util.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -257,7 +258,7 @@ fun ProfileScreen(user:User,onEvent: (ProfileEvent) -> Unit, bottomNavEvent: (De
                 onClickSettings = { onEvent(ProfileEvent.GoToSettings) }, title = "Profile"
             )
             Spacer(modifier = Modifier.height(12.dp))
-
+            Log.d("UserProfileFragment",user.pictureUrl.toString())
             //TODO:HARDCODED URL
             //PROFILE BOX
             profileInfo(

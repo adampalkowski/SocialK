@@ -7,12 +7,14 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import com.example.socialk.R
+import com.example.socialk.model.User
 import java.security.InvalidParameterException
 enum class Screen { Welcome, SignUp, SignIn,
     Home,Profile,Settings,Map,ChatCollection,Chat,UserProfile,
     Memories,Create,Live,Event,EditProfile,Search,PickUsername}
 
-fun Fragment.navigate(to: Screen, from: Screen) {
+fun Fragment.navigate(to: Screen, from: Screen,bundle: Bundle= Bundle.EMPTY) {
+
     if (to == from) {
     }
     when (to) {
@@ -26,7 +28,7 @@ fun Fragment.navigate(to: Screen, from: Screen) {
             findNavController().navigate(R.id.sign_in_fragment)
         }
         Screen.Home -> {
-                findNavController().navigate(R.id.home_fragment)
+            findNavController().navigate(R.id.home_fragment)
         }
         Screen.Profile -> {
             findNavController().navigate(R.id.profile_fragment)
@@ -41,6 +43,7 @@ fun Fragment.navigate(to: Screen, from: Screen) {
             findNavController().navigate(R.id.chats_collection_fragment)
         }
         Screen.Memories -> {
+
             findNavController().navigate(R.id.memories_fragment)
         }
         Screen.Create -> {
@@ -62,10 +65,10 @@ fun Fragment.navigate(to: Screen, from: Screen) {
             findNavController().navigate(R.id.pick_username_fragment)
         }
         Screen.Chat -> {
-            findNavController().navigate(R.id.chat_fragment)
+            findNavController().navigate(R.id.chat_fragment,args=bundle)
         }
         Screen.UserProfile -> {
-            findNavController().navigate(R.id.user_profile_fragment)
+            findNavController().navigate(R.id.user_profile_fragment,args=bundle)
         }
     }
 

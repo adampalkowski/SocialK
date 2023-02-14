@@ -1,6 +1,7 @@
 package com.example.socialk.di
 
 import android.util.Log
+import com.example.socialk.await1
 import com.example.socialk.model.Response
 import com.example.socialk.di.AuthRepository
 import com.example.socialk.di.OneTapSignInResponse
@@ -23,6 +24,7 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
+const val DEFAULT_PROFILE_PICTURE_URL=" https://firebasestorage.googleapis.com/v0/b/socialv2-340711.appspot.com/o/default.png?alt=media&token=2a56c977-4809-4a27-9e4b-fbd1f625283e"
 
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
@@ -37,7 +39,6 @@ class AuthRepositoryImpl @Inject constructor(
     override val isUserAuthenticatedInFirebase = auth.currentUser != null
     override val currentUser: FirebaseUser?
         get() = auth.currentUser
-
     override suspend fun signin(email: String, password: String): Response<FirebaseUser> {
         return try {
             val result = auth.signInWithEmailAndPassword(email, password).await()
@@ -76,6 +77,14 @@ class AuthRepositoryImpl @Inject constructor(
 
     override fun logout() {
         auth.signOut()
+    }
+
+    override  suspend fun deleteAccount(id:String) {
+
+            db.collection("Users").document(id).delete().await()
+    }
+    override fun deleteAuth() {
+        auth.currentUser?.delete()
     }
 
     override suspend fun oneTapSignInWithGoogle(): OneTapSignInResponse {
@@ -117,7 +126,7 @@ class AuthRepositoryImpl @Inject constructor(
                 name =name,
                 email = this.email,
                 id = uid,
-                pictureUrl = null,
+                pictureUrl =DEFAULT_PROFILE_PICTURE_URL,
                 username = null,
                 description = "",
                 friends_ids = HashMap(),

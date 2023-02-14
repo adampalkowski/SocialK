@@ -24,6 +24,9 @@ interface ChatRepository {
         chatCollectionName: String,
         id: String
     ): Flow<Response<Void?>>
+    suspend fun updateChatCollectionRecentMessage(
+        id: String,recent_message_time:String,recent_message:String
+    ): Flow<Response<Void?>>
 
     // handle  CHATS REPO
     suspend fun getMessage(
@@ -32,6 +35,7 @@ interface ChatRepository {
     ): Flow<Response<ChatMessage>>
 
     suspend fun getMessages(chat_collection_id: String): Flow<Response<ArrayList<ChatMessage>>>
+    suspend fun getChatCollections(user_id: String): Flow<Response<ArrayList<Chat>>>
     suspend fun addMessage(chat_collection_id: String, message: ChatMessage): Flow<Response<Void?>>
     suspend fun deleteMessage(chat_collection_id: String,message_id: String): Flow<Response<Void?>>
 }

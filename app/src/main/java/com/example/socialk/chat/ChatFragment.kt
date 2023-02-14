@@ -18,6 +18,7 @@ import com.example.socialk.Map
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.di.UserViewModel
 import com.example.socialk.model.*
+import com.example.socialk.model.UserData.user
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
@@ -72,14 +73,11 @@ class ChatFragment : Fragment() {
             }
         }
 
-        if(chatViewModel._chatCollectionStateFlow.value.id!!.isEmpty())
-        {
-            val user: User = userViewModel.userProfile.value
-            if (user.friends_ids[UserData.user!!.id]==null){
+        if(arguments?.getSerializable("chat") ==null){
+            val user = arguments?.getSerializable("user") as User
+            chatViewModel.getMessages(user.friends_ids[UserData.user!!.id]!!)
 
-            }else{
-                chatViewModel.getMessages(user.friends_ids[UserData.user!!.id]!!)
-            }
+
             return ComposeView(requireContext()).apply {
                 setContent {
                     SocialTheme {
@@ -88,7 +86,6 @@ class ChatFragment : Fragment() {
                                 when (event) {
                                     is ChatEvent.GoBack -> viewModel.handleGoBack()
                                     is ChatEvent.SendMessage -> {
-                                        Log.d("TAGGG","MESs")
                                         chatViewModel.addMessage(user.friends_ids[UserData.user!!.id]!!,
                                             //todo set sender picture_url
                                             ChatMessage(text = event.message, sender_picture_url ="", sent_time ="" , sender_id =UserData.user!!.id, message_type ="text" ,id="") )
@@ -100,18 +97,10 @@ class ChatFragment : Fragment() {
                     }
                 }
             }
-
         }else{
-            val chat:Chat=chatViewModel._chatCollectionStateFlow.value
-            if (chatViewModel._chatCollectionStateFlow.value.id.toString().isNotEmpty()) {
-                chatViewModel.getMessages(chatViewModel._chatCollectionStateFlow.value.id!!)
-            } else {
+            val chat = arguments?.getSerializable("chat") as Chat
 
-            }
-//            chatViewModel.resetChatCollectionStateFlow()
-
-
-
+            chatViewModel.getMessages(chat.id!!)
             return ComposeView(requireContext()).apply {
                 setContent {
 
@@ -120,6 +109,11 @@ class ChatFragment : Fragment() {
                             onEvent = { event ->
                                 when (event) {
                                     is ChatEvent.GoBack -> viewModel.handleGoBack()
+                                    is ChatEvent.SendMessage -> {
+                                        chatViewModel.addMessage(chat.id!!,
+                                            //todo set sender picture_url
+                                            ChatMessage(text = event.message, sender_picture_url =UserData.user?.pictureUrl!!, sent_time ="" , sender_id =UserData.user!!.id, message_type ="text" ,id="") )
+                                    }
 
                                 }
                             }
@@ -127,7 +121,11 @@ class ChatFragment : Fragment() {
                     }
                 }
             }
+
         }
+
+
+
 
     }
 

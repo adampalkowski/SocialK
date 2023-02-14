@@ -19,6 +19,8 @@ interface AuthRepository {
     suspend fun signup(name:String,email:String,password: String): Response<FirebaseUser>
 
     fun logout()
+    fun deleteAuth()
+     suspend fun deleteAccount(id:String)
 
     suspend fun oneTapSignInWithGoogle(): OneTapSignInResponse
 

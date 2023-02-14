@@ -1,5 +1,7 @@
 package com.example.socialk.model
 
+import java.io.Serializable
+
 data class User(
     var name: String?,
     var username: String?,
@@ -10,7 +12,7 @@ data class User(
     var friends_ids: HashMap<String,String>,
     var invited_ids: ArrayList<String>,
     var description:String,
-) {
+) : Serializable {
     constructor() : this(
         name = "",
         username = "",

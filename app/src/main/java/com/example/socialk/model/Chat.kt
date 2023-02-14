@@ -1,5 +1,7 @@
 package com.example.socialk.model
 
+import java.io.Serializable
+
 
 data class Chat (
     var create_date:String?,
@@ -15,7 +17,7 @@ data class Chat (
     var user_one_profile_pic:String?,
     var user_two_username:String?,
     var user_two_profile_pic:String?,
-    ){
+    ): Serializable {
     constructor(): this("", "","", listOf(),"","","","","",
     user_one_username="",user_one_profile_pic="",user_two_profile_pic="",user_two_username="")
 }

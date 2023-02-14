@@ -28,6 +28,9 @@ class ChatViewModel @Inject constructor(
     private val _chatCollectionState = mutableStateOf<Response<Chat>>(Response.Loading)
     val chatCollectionState: State<Response<Chat>> = _chatCollectionState
 
+    private val _chatCollectionsState = mutableStateOf<Response<ArrayList<Chat>>>(Response.Loading)
+    val chatCollectionsState: State<Response<ArrayList<Chat>>> = _chatCollectionsState
+
     private val _messagesState = mutableStateOf<Response<ArrayList<ChatMessage>>>(Response.Loading)
     val messagesState: State<Response<ArrayList<ChatMessage>>> = _messagesState
     private val _addedMessagesState = mutableStateOf<Response<ArrayList<ChatMessage>>>(Response.Loading)
@@ -61,7 +64,14 @@ class ChatViewModel @Inject constructor(
     val checkIfChatExistsState: State<Response<Chat>> = _checkIfChatExistsState
 
 
-
+    fun getChatCollections(id:String){
+        viewModelScope.launch {
+            repo.getChatCollections(id).collect{
+                    response->
+                _chatCollectionsState.value=response
+            }
+        }
+    }
 
     fun getChatCollection(id: String) {
         viewModelScope.launch {
@@ -187,6 +197,11 @@ class ChatViewModel @Inject constructor(
         message.sent_time=formatted
         viewModelScope.launch {
             repo.addMessage(chat_collection_id,message).collect{
+                    response->
+                _addMessageState.value=response
+            }
+
+            repo.updateChatCollectionRecentMessage(chat_collection_id, recent_message = message.text, recent_message_time = message.sent_time).collect{
                     response->
                 _addMessageState.value=response
             }

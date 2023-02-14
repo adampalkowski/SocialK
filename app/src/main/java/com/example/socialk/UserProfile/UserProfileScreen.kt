@@ -44,7 +44,7 @@ sealed class UserProfileEvent {
     class InviteUser (user:User) : UserProfileEvent(){val user :User =user}
     class RemoveInvite (user:User) : UserProfileEvent(){val user :User =user}
 }
-
+//user here is the searched user profile
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun UserProfileScreen(viewModel:UserProfileViewModel,user:User?,userViewModel:UserViewModel?, onEvent: (UserProfileEvent) -> Unit) {
@@ -99,9 +99,9 @@ fun UserProfileScreen(viewModel:UserProfileViewModel,user:User?,userViewModel:Us
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
 
-            //   if(UserData.user!!.friends_ids.contains(user.id)){
+             if(UserData.user!!.friends_ids.contains(user.id)){
 
-              // }else{
+            }else{
                 viewModel.inviteEventState.value.let {
                     if (it) {
                         profileButton(
@@ -120,11 +120,13 @@ fun UserProfileScreen(viewModel:UserProfileViewModel,user:User?,userViewModel:Us
                                 onEvent(UserProfileEvent.InviteUser(user))
                                 viewModel.inviteSent()
                             })
-                    //}
+                   }
                 }
                }
-
-                profileButton(onClick = { onEvent(UserProfileEvent.GoToChat(user)) }, label = "Message", iconDrawable =R.drawable.ic_chat )
+                //CHAT ACCESSSIBLE ONLY IF FRIENDS !!!!!
+                if(user.friends_ids.containsKey(UserData.user!!.id)){
+                    profileButton(onClick = { onEvent(UserProfileEvent.GoToChat(user)) }, label = "Message", iconDrawable =R.drawable.ic_chat )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))

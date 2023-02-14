@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -59,19 +60,64 @@ fun ChatScreen(
     onEvent: (ChatEvent) -> Unit,
     textState: TextFieldState = remember { ActivityTextFieldState() }
 ) {  val keyboardController = LocalSoftwareKeyboardController.current
+    val data = remember { mutableStateOf(ArrayList<ChatMessage>()) }
+    val added_data_state = remember { mutableStateOf(false) }
+    var messageOptionsVisibility by remember { mutableStateOf(false) }
     Column(modifier = Modifier.fillMaxSize()) {
         ChatScreenTopBar(chat, onEvent = onEvent)
         Divider()
+
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = 12.dp)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    keyboardController?.hide()
+                },
             reverseLayout = true
         ) {
 
+            items(data.value) {
+                if (it.sender_id==UserData.user!!.id){
+                    Spacer(modifier = Modifier.height(4.dp))
+                    ChatItemRight(textMessage =it.text, date=it.sent_time, onLongPress = {messageOptionsVisibility=true})
+                    Spacer(modifier = Modifier.height(4.dp))
+                }else{
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ChatItemLeft(textMessage =it.text,date=it.sent_time, onLongPress = {messageOptionsVisibility=true}
+                        ,picture_url=it.sender_picture_url)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                }
+
+            }
+
         }
         Divider()
-        ChatScreenBottomInputs(keyboardController,onEvent = {}, textState)
+
+
+        ChatScreenBottomInputs(keyboardController,onEvent = {
+            if (textState.text.length>0){
+                onEvent(ChatEvent.SendMessage(message = textState.text.trim()))
+
+            }
+            textState.text = ""
+        }, textState)
+
+
+    }
+
+    chatViewModel.messagesState.value.let {
+        when (it) {
+            is Response.Success -> {
+                data.value =it.data
+            }
+            is Response.Loading -> {}
+            is Response.Failure -> {}
+        }
     }
 }
 
@@ -199,7 +245,23 @@ fun ChatScreenTopBar(chat: Chat, onEvent: (ChatEvent) -> Unit) {
 
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = chat.chat_name!!,
+                text = if (chat.chat_name != null) {
+                    chat.chat_name!!
+                } else if (chat.user_one_username.equals(UserData.user!!.username)) {
+                    if (chat.user_two_username != null) {
+                        chat.user_two_username!!
+                    } else {
+                        ""
+                    }
+                } else if (chat.user_two_username.equals(UserData.user!!.username)) {
+                    if (chat.user_one_username != null) {
+                        chat.user_one_username!!
+                    } else {
+                        ""
+                    }
+                } else {
+                    ""
+                },
                 style = TextStyle(
                     fontFamily = Inter,
                     fontSize = 18.sp,
@@ -265,7 +327,7 @@ fun ChatItemRight(date:String,textMessage: String,onLongPress:()->Unit) {
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ChatItemLeft(date:String,textMessage: String,onLongPress:()->Unit) {
+fun ChatItemLeft(date:String,textMessage: String,onLongPress:()->Unit,picture_url:String) {
     var itemClickedState by remember {
         mutableStateOf(false)
     }
@@ -279,7 +341,7 @@ fun ChatItemLeft(date:String,textMessage: String,onLongPress:()->Unit) {
             }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
-                painter = rememberAsyncImagePainter("https://firebasestorage.googleapis.com/v0/b/socialv2-340711.appspot.com/o/uploads%2F1662065348037.null?alt=media&token=40cebce4-0c53-470c-867f-d9d34cba63ab"),
+                painter = rememberAsyncImagePainter(picture_url),            contentScale = ContentScale.Crop,
                 contentDescription = "profile image", modifier = Modifier
                     .size(32.dp)
                     .clip(CircleShape)
@@ -371,7 +433,7 @@ fun ChatScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                 }else{
                     Spacer(modifier = Modifier.height(8.dp))
-                    ChatItemLeft(textMessage =it.text,date=it.sent_time, onLongPress = {messageOptionsVisibility=true})
+                    ChatItemLeft(textMessage =it.text,date=it.sent_time, onLongPress = {messageOptionsVisibility=true}, picture_url = it.sender_picture_url)
                     Spacer(modifier = Modifier.height(8.dp))
 
                 }

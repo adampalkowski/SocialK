@@ -33,6 +33,7 @@ class UserRepositoryImpl @Inject constructor(
 ):UserRepository {
 
     override suspend fun getUser(id: String): Flow<Response<User>> = callbackFlow {
+            trySend(Response.Loading)
            val registration= usersRef.document(id).addSnapshotListener  {  snapshot, exception ->
 
                if (exception != null) {
@@ -145,12 +146,12 @@ class UserRepositoryImpl @Inject constructor(
           Log.d("ImagePicker","123 called")
 
           if (imageUri!=null){
-              Log.d("ImagePicker","try called")
+              Log.d("c","try called")
               val fileName = user_id
               Log.d("ImagePicker","123 called")
                 val imageRef=storageRef.child("images/$fileName")
               imageRef.putFile(imageUri).await1()
-              val url=storageRef.child("images/$fileName"+"_180x180").downloadUrl.await1()
+              val url=storageRef.child("images/$fileName"+"_200x200").downloadUrl.await1()
               emit(Response.Success(url.toString()))
           }
       }
