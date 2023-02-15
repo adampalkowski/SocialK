@@ -134,6 +134,7 @@ class ChatRepositoryImpl @Inject constructor(
         var messages : ArrayList<ChatMessage> = ArrayList()
 
         lastVisibleData=null
+        Log.d("ChatRepository","getmessages called")
         val registration=   messagesRef.document(chat_collection_id).collection("messages")
             .orderBy("sent_time",Query.Direction.DESCENDING).limit(15)
             .addSnapshotListener{  snapshots , exception ->
@@ -142,7 +143,7 @@ class ChatRepositoryImpl @Inject constructor(
                 return@addSnapshotListener
             }
             var new_messages =  ArrayList<ChatMessage>()
-             new_messages.addAll(messages)
+            new_messages.addAll(messages)
             if(snapshots==null ||snapshots.isEmpty()) {
                 lastVisibleData = null
             } else {
@@ -153,9 +154,15 @@ class ChatRepositoryImpl @Inject constructor(
                 when (dc.type) {
                     DocumentChange.Type.ADDED -> {
                         val message = dc.document.toObject(ChatMessage::class.java)
-                        new_messages.reverse()
-                        new_messages.add(message)
-                        new_messages.reverse()
+                        if(messages.isEmpty()){
+                            new_messages.add(message)
+
+                        }else{         new_messages.reverse()
+                            new_messages.add(message)
+                            new_messages.reverse()
+
+                        }
+
                         Log.d("TAGGG", messages.toString())
                     }
                     DocumentChange.Type.MODIFIED -> {

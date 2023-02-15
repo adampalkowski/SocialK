@@ -26,7 +26,6 @@ import kotlinx.coroutines.launch
 import java.util.*
 
 
-
 /*
 To enter chat fragment you either click in 1.users proifle (message),.2 click on chat in chat collection or 3. chat in activity
 if _chatCollectionStateFlow.value.id = empty then it needs to have a user vice versa
@@ -72,61 +71,100 @@ class ChatFragment : Fragment() {
                 navigate(navigateTo, Screen.Chat)
             }
         }
+        return ComposeView(requireContext()).apply {
+            setContent {
+                SocialTheme {
 
-        if(arguments?.getSerializable("chat") ==null){
-            val user = arguments?.getSerializable("user") as User
-            chatViewModel.getMessages(user.friends_ids[UserData.user!!.id]!!)
+                    if (arguments?.getSerializable("chat") != null) {
 
 
-            return ComposeView(requireContext()).apply {
-                setContent {
-                    SocialTheme {
-                        ChatScreen(user, chatViewModel,
-                            onEvent = { event ->
-                                when (event) {
-                                    is ChatEvent.GoBack -> viewModel.handleGoBack()
-                                    is ChatEvent.SendMessage -> {
-                                        chatViewModel.addMessage(user.friends_ids[UserData.user!!.id]!!,
-                                            //todo set sender picture_url
-                                            ChatMessage(text = event.message, sender_picture_url ="", sent_time ="" , sender_id =UserData.user!!.id, message_type ="text" ,id="") )
-                                    }
+                        val chat = arguments?.getSerializable("chat") as Chat
 
-                                }
-                            }
-                        )
-                    }
-                }
-            }
-        }else{
-            val chat = arguments?.getSerializable("chat") as Chat
-
-            chatViewModel.getMessages(chat.id!!)
-            return ComposeView(requireContext()).apply {
-                setContent {
-
-                    SocialTheme {
+                        chatViewModel.getMessages(chat.id!!)
                         ChatScreen(chat, chatViewModel,
                             onEvent = { event ->
                                 when (event) {
-                                    is ChatEvent.GoBack -> viewModel.handleGoBack()
+                                    is ChatEvent.GoBack ->activity?.onBackPressedDispatcher?.onBackPressed()
                                     is ChatEvent.SendMessage -> {
-                                        chatViewModel.addMessage(chat.id!!,
+                                        chatViewModel.addMessage(
+                                            chat.id!!,
                                             //todo set sender picture_url
-                                            ChatMessage(text = event.message, sender_picture_url =UserData.user?.pictureUrl!!, sent_time ="" , sender_id =UserData.user!!.id, message_type ="text" ,id="") )
+                                            ChatMessage(
+                                                text = event.message,
+                                                sender_picture_url = UserData.user?.pictureUrl!!,
+                                                sent_time = "",
+                                                sender_id = UserData.user!!.id,
+                                                message_type = "text",
+                                                id = ""
+                                            )
+                                        )
+                                    }
+
+                                }
+                            }
+                        )
+                    } else if (arguments?.getSerializable("user") != null) {
+                        val user = arguments?.getSerializable("user") as User
+                        chatViewModel.getMessages(user.friends_ids[UserData.user!!.id]!!)
+
+                        ChatScreen(user, chatViewModel,
+                            onEvent = { event ->
+                                when (event) {
+                                    is ChatEvent.GoBack ->activity?.onBackPressedDispatcher?.onBackPressed()
+                                    is ChatEvent.SendMessage -> {
+                                        chatViewModel.addMessage(
+                                            user.friends_ids[UserData.user!!.id]!!,
+                                            //todo set sender picture_url
+                                            ChatMessage(
+                                                text = event.message,
+                                                sender_picture_url = "",
+                                                sent_time = "",
+                                                sender_id = UserData.user!!.id,
+                                                message_type = "text",
+                                                id = ""
+                                            )
+                                        )
+                                    }
+
+                                }
+                            }
+                        )
+
+
+                    }else{
+                        val activity = arguments?.getSerializable("activity") as Activity
+
+                        chatViewModel.getMessages(activity.id!!)
+                        ChatScreen(activity, chatViewModel,
+                            onEvent = { event ->
+                                when (event) {
+                                    is ChatEvent.GoBack ->getActivity()?.onBackPressedDispatcher?.onBackPressed()
+                                    is ChatEvent.SendMessage -> {
+                                        chatViewModel.addMessage(
+                                            activity.id!!,
+                                            //todo set sender picture_url
+                                            ChatMessage(
+                                                text = event.message,
+                                                sender_picture_url = UserData.user?.pictureUrl!!,
+                                                sent_time = "",
+                                                sender_id = UserData.user!!.id,
+                                                message_type = "text",
+                                                id = ""
+                                            )
+                                        )
                                     }
 
                                 }
                             }
                         )
                     }
+
                 }
+
             }
+
 
         }
 
-
-
-
     }
-
 }

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.callbackFlow
 
 interface UserRepository {
     suspend fun getUser(id:String):Flow<Response<User>>
+    suspend fun getUserListener(id:String):Flow<Response<User>>
     suspend fun getUserByUsername(username:String):Flow<Response<User>>
     suspend fun addUser(user: User): Flow<Response<Void?>>
     suspend fun deleteUser(id:String): Flow<Response<Void?>>
@@ -16,6 +17,7 @@ interface UserRepository {
     suspend fun addProfilePictureToStorage(user_id:String,imageUri: Uri): Flow<Response<String>>
     suspend fun deleteProfilePictureFromStorage(user_id:String,picture_url:String): Flow<Response<Void?>>
     suspend fun getProfilePictureFromStorage(user_id:String,picture_url:String): Flow<Response<String>>
+    suspend fun getFriends(id:String): Flow<Response<ArrayList<User>>>
 
 
     suspend fun addInvitedIDs(

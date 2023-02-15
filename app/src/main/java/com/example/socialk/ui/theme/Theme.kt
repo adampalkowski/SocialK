@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 private val LightColorPalette = SocialColors(
-    brand = Shadow5,
+    brand = Shadow2,
     brandSecondary = Ocean3,
     uiBackground = Neutral0,
     uiBorder = Neutral1,
@@ -44,7 +44,7 @@ private val LightColorPalette = SocialColors(
 )
 
 private val DarkColorPalette = SocialColors(
-    brand = Shadow1,
+    brand = Shadow7,
     brandSecondary = Ocean2,
     uiBackground = Neutral8,
     uiBorder = Neutral3,

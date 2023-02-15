@@ -33,12 +33,14 @@ sealed class SignUpEvent {
     object SignUp : SignUpEvent()
     object SignInAsGuest : SignUpEvent()
     object NavigateBack : SignUpEvent()
+    object PickUsername : SignUpEvent()
 }
 
 @OptIn(ExperimentalMaterial3Api::class) // Scaffold is experimental in m3
 @Composable
-fun SignUp(viewModel: AuthViewModel?,onNavigationEvent: (SignUpEvent) -> Unit) {
+fun SignUp(userViewModel:UserViewModel,viewModel: AuthViewModel?,onNavigationEvent: (SignUpEvent) -> Unit) {
     val singupFlow = viewModel?.signupFlow?.collectAsState()
+    val userFlow = userViewModel?.userValidation?.collectAsState()
     Scaffold(
         topBar = {
             SignInSignUpTopAppBar(
@@ -65,8 +67,27 @@ fun SignUp(viewModel: AuthViewModel?,onNavigationEvent: (SignUpEvent) -> Unit) {
     singupFlow?.value.let {
         when(it){
             is Response.Success->{
-                LaunchedEffect(Unit){
-                    onNavigationEvent(SignUpEvent.SignUp)
+                userViewModel?.validateUser(it.data)
+                userFlow?.value?.let {
+                        validationResponse ->
+                    when(validationResponse){
+                        is Response.Success->{
+                            if(validationResponse.data){
+                                LaunchedEffect(Unit){
+                                    onNavigationEvent(SignUpEvent.SignIn)
+                                }
+                            }else{
+                                LaunchedEffect(Unit){
+                                    onNavigationEvent(SignUpEvent.PickUsername)
+                                }
+                            }
+
+                        }
+                        is Response.Failure->{
+                            val context = LocalContext.current
+                            Toast.makeText(context,"Failed to validate user code 102",Toast.LENGTH_LONG).show()
+                        }
+                    }
                 }
             }
             is Response.Loading ->{
@@ -182,10 +203,3 @@ fun Name(
 }
 
 
-@Preview(widthDp = 1024)
-@Composable
-fun SignUpPreview() {
-    SocialTheme() {
-        SignUp (null){}
-    }
-}

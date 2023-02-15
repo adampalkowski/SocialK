@@ -26,4 +26,7 @@ class SignUpViewModel( ) : ViewModel() {
     fun signIn() {
         _navigateTo.value = Event(Screen.Home)
     }
+    fun handleGoToPickUsername() {
+        _navigateTo.value = Event(Screen.PickUsername)
+    }
 }

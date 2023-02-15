@@ -162,7 +162,7 @@ class ChatViewModel @Inject constructor(
             repo.getMessages(id).collect{response->
                 when(response){
                     is Response.Success->{
-                        Log.d("TAGGG","viewmodel response"+response.data.toString())
+                        Log.d("ChatViewModel","viewmodel response"+response.data.toString())
 
                         _messagesState.value=response
                        /* if(alreadyRead){

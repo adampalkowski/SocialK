@@ -1,10 +1,6 @@
 package com.example.socialk.chat
 
-import android.content.ClipData
-import android.service.autofill.OnClickAction
-import android.util.Log
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
@@ -32,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.socialk.R
-import com.example.socialk.components.BottomSheetLayout
 import com.example.socialk.create.ActivityTextFieldState
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.model.*
@@ -99,7 +93,7 @@ fun ChatScreen(
         Divider()
 
 
-        ChatScreenBottomInputs(keyboardController,onEvent = {
+        ChatScreenBottomInputs(modifier = Modifier,keyboardController,onEvent = {
             if (textState.text.length>0){
                 onEvent(ChatEvent.SendMessage(message = textState.text.trim()))
 
@@ -123,7 +117,10 @@ fun ChatScreen(
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun ChatScreenBottomInputs(keyboardController: SoftwareKeyboardController?,onEvent: () -> Unit, textState: TextFieldState) {
+fun ChatScreenBottomInputs(
+    modifier: Modifier? =Modifier,
+    keyboardController: SoftwareKeyboardController?,
+    onEvent: () -> Unit, textState: TextFieldState) {
     var chatTextFieldFocused by remember { mutableStateOf(false) }
     var textSendAvailable by remember { mutableStateOf(false) }
     Box(
@@ -262,6 +259,47 @@ fun ChatScreenTopBar(chat: Chat, onEvent: (ChatEvent) -> Unit) {
                 } else {
                     ""
                 },
+                style = TextStyle(
+                    fontFamily = Inter,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            IconButton(onClick = { onEvent(ChatEvent.GoToChatUserSettings) }) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_more),
+                    tint = SocialTheme.colors.textPrimary,
+                    contentDescription = null
+                )
+            }
+            Spacer(modifier = Modifier.width(24.dp))
+        }
+    }
+}
+
+@Composable
+fun ChatScreenTopBar(activity: Activity, onEvent: (ChatEvent) -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp), contentAlignment = Alignment.Center
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Spacer(modifier = Modifier.width(24.dp))
+            IconButton(onClick = { onEvent(ChatEvent.GoBack) }) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_back),
+                    tint = SocialTheme.colors.textPrimary,
+                    contentDescription = null
+                )
+            }
+
+            Spacer(modifier = Modifier.width(24.dp))
+
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text =activity.title,
                 style = TextStyle(
                     fontFamily = Inter,
                     fontSize = 18.sp,
@@ -444,7 +482,7 @@ fun ChatScreen(
         Divider()
 
 
-            ChatScreenBottomInputs(keyboardController,onEvent = {
+            ChatScreenBottomInputs(modifier = Modifier,keyboardController,onEvent = {
                 if (textState.text.length>0){
                     onEvent(ChatEvent.SendMessage(message = textState.text.trim()))
 
@@ -466,6 +504,75 @@ fun ChatScreen(
     }
 }
 
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun ChatScreen(
+    activity: Activity,
+    chatViewModel: ChatViewModel,
+    onEvent: (ChatEvent) -> Unit,
+    textState: TextFieldState = remember { ActivityTextFieldState() }
+) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val data = remember { mutableStateOf(ArrayList<ChatMessage>()) }
+    val added_data_state = remember { mutableStateOf(false) }
+    var messageOptionsVisibility by remember { mutableStateOf(false) }
+    Column(modifier = Modifier.fillMaxSize()) {
+        ChatScreenTopBar(activity, onEvent = onEvent)
+        Divider()
+
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 12.dp)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    keyboardController?.hide()
+                },
+            reverseLayout = true
+        ) {
+
+            items(data.value) {
+                if (it.sender_id==UserData.user!!.id){
+                    Spacer(modifier = Modifier.height(4.dp))
+                    ChatItemRight(textMessage =it.text, date=it.sent_time, onLongPress = {messageOptionsVisibility=true})
+                    Spacer(modifier = Modifier.height(4.dp))
+                }else{
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ChatItemLeft(textMessage =it.text,date=it.sent_time, onLongPress = {messageOptionsVisibility=true}, picture_url = it.sender_picture_url)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                }
+
+            }
+
+        }
+        Divider()
+
+
+        ChatScreenBottomInputs(modifier = Modifier,keyboardController,onEvent = {
+            if (textState.text.length>0){
+                onEvent(ChatEvent.SendMessage(message = textState.text.trim()))
+
+            }
+            textState.text = ""
+        }, textState)
+
+
+    }
+
+    chatViewModel.messagesState.value.let {
+        when (it) {
+            is Response.Success -> {
+                data.value =it.data
+            }
+            is Response.Loading -> {}
+            is Response.Failure -> {}
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable

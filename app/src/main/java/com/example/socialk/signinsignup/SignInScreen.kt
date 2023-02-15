@@ -223,11 +223,4 @@ fun ErrorSnackbar(
     )
 }
 
-@Preview(name = "Sign in light theme", uiMode = Configuration.UI_MODE_NIGHT_NO)
-@Preview(name = "Sign in dark theme", uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun SignInPreview() {
-    SocialTheme {
-        SignIn (viewModel = null, userViewModel =null){}
-    }
-}
+

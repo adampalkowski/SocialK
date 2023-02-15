@@ -44,7 +44,7 @@ class MapFragment:Fragment() {
                         bottomNavEvent  ={screen->
                             when (screen) {
                                 is Home -> viewModel.handleGoToHome()
-                                is com.example.socialk.Map -> viewModel.handleGoToMap()
+                                is Map -> viewModel.handleGoToMap()
                                 is Chats -> viewModel.handleGoToChats()
                                 is Create -> viewModel.handleGoToCreate()
                                 is Profile ->viewModel.handleGoToProfile()

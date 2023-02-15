@@ -31,14 +31,15 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.socialk.*
 import com.example.socialk.R
-import com.example.socialk.components.ActivityItem
-import com.example.socialk.components.BottomBar
-import com.example.socialk.components.BottomBarRow
-import com.example.socialk.components.BottomDialog
+import com.example.socialk.chat.ChatEvent
+import com.example.socialk.components.*
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
+import com.example.socialk.di.ChatViewModel
 import com.example.socialk.model.Activity
+import com.example.socialk.model.ChatMessage
 import com.example.socialk.model.Response
+import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.Ocean1
@@ -62,7 +63,7 @@ sealed class HomeEvent {
     object LogOut : HomeEvent()
     object GoToMemories : HomeEvent()
     object GoToSettings : HomeEvent()
-
+    class GoToChat (activity: Activity): HomeEvent(){val activity=activity}
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -70,6 +71,7 @@ sealed class HomeEvent {
 fun HomeScreen(
     activeUsersViewModel: ActiveUsersViewModel?,
     activityViewModel: ActivityViewModel?,
+    chatViewModel: ChatViewModel,
     viewModel: AuthViewModel?,
     onEvent: (HomeEvent) -> Unit,
     bottomNavEvent: (Destinations) -> Unit
@@ -106,8 +108,8 @@ fun HomeScreen(
                     activityEvent = {
                        when(it) {
                            is ActivityEvent.OpenActivityChat->{
-                               bottomSheetType="chat"
-                               bottomSheetActivity=it.activity
+                               onEvent(HomeEvent.GoToChat(it.activity))
+
                            }
                            is ActivityEvent.OpenActivitySettings->{
                                bottomSheetType="settings"
@@ -126,7 +128,18 @@ fun HomeScreen(
             }
 
         })
-    BottomDialog(state = bottomSheetState,activity=bottomSheetActivity, type = bottomSheetType)
+    BottomDialog(state = bottomSheetState,activity=bottomSheetActivity, type = bottomSheetType,onEvent={
+            event ->
+        when (event) {
+            is BottomDialogEvent.SendMessage -> {
+                chatViewModel.addMessage(bottomSheetActivity.id,
+                    //todo set sender picture_url
+                    ChatMessage(text = event.message, sender_picture_url = UserData.user?.pictureUrl!!
+                        , sent_time ="" , sender_id = UserData.user!!.id, message_type ="text" ,id="") )
+            }
+
+        }
+    }, chatViewModel = chatViewModel)
 
 }
 

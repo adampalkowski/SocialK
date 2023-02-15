@@ -43,7 +43,6 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             val result = auth.signInWithEmailAndPassword(email, password).await()
             Log.d("TAG","SIGNIN")
-            //retrieve user from DB-> check if id's and email's match ->set userdata to current user
 
             Response.Success(result.user!!)
         } catch (e: Exception) {

@@ -22,6 +22,7 @@ class SignUpFragment : Fragment() {
 
     private val viewModel by viewModels<SignUpViewModel>()
     private val authViewModel by viewModels<AuthViewModel>()
+    private val userViewModel by viewModels<UserViewModel>()
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -44,20 +45,23 @@ class SignUpFragment : Fragment() {
             )
             setContent {
                 SocialTheme() {
-                    SignUp(authViewModel,
+                    SignUp(userViewModel = userViewModel,authViewModel,
                         onNavigationEvent = { event ->
                             when (event) {
                                 is SignUpEvent.SignUp -> {
                                     viewModel.signUp()
                                 }
-                                SignUpEvent.SignIn -> {
+                                is SignUpEvent.SignIn -> {
                                     viewModel.signIn()
                                 }
-                                SignUpEvent.SignInAsGuest -> {
+                                is SignUpEvent.SignInAsGuest -> {
                                     viewModel.signInAsGuest()
                                 }
-                                SignUpEvent.NavigateBack -> {
+                                is SignUpEvent.NavigateBack -> {
                                     activity?.onBackPressedDispatcher?.onBackPressed()
+                                }
+                                is SignUpEvent.PickUsername->{
+                                    viewModel.handleGoToPickUsername()
                                 }
                             }
                         }

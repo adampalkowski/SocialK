@@ -1,7 +1,7 @@
 package com.example.socialk
 
 import android.util.Log
-import androidx.compose.foundation.Image
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -10,9 +10,6 @@ import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -23,34 +20,28 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.rememberAsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
 import com.example.socialk.PickUsername.UsernameState
 import com.example.socialk.PickUsername.UsernameStateSaver
 import com.example.socialk.UserProfile.DescriptionState
 import com.example.socialk.UserProfile.DescriptionStateSaver
 import com.example.socialk.components.ScreenHeading
-import com.example.socialk.create.ActivityTextStateSaver
-import com.example.socialk.create.CreateActivityButton
 import com.example.socialk.di.UserViewModel
 import com.example.socialk.model.Response
 import com.example.socialk.model.User
 import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.*
 import com.example.socialk.ui.theme.Inter
-import com.example.socialk.ui.theme.SocialTheme
 
 sealed class EditProfileEvent {
     object GoToProfile : EditProfileEvent()
@@ -70,6 +61,7 @@ fun EditProfileScreen(
     profileUrl: String
 ) {
     var user_flow= userViewModel?.userState?.collectAsState()
+    var user_flow2= userViewModel?.currentUserProfile?.collectAsState()
     var user: User = UserData.user!!
     val nameFocusRequester = remember { FocusRequester() }
     val usernameFocusRequester = remember { FocusRequester() }
@@ -101,13 +93,22 @@ fun EditProfileScreen(
                 shape = RoundedCornerShape(1000.dp),
                 onClick = { onEvent(EditProfileEvent.PickImage) }) {
 
-                        Image(
-                            painter = rememberAsyncImagePainter(user.pictureUrl),
-                            contentScale = ContentScale.Crop,
-                            contentDescription = "profile image", modifier = Modifier
-                                .size(128.dp)
-                                .clip(CircleShape)
-                        )
+                SubcomposeAsyncImage(
+                    model =  ImageRequest.Builder(LocalContext.current)
+                        .data(user.pictureUrl)
+                        .crossfade(true)
+                        .build(),
+                    loading = {
+                        CircularProgressIndicator()
+                    },
+                    contentDescription = "stringResource(R.string.description)",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .size(128.dp)
+                )
+
+
 
                 }
 
@@ -115,7 +116,8 @@ fun EditProfileScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             ClickableText(text = AnnotatedString("Change profile picture"),
-                onClick = { onEvent(EditProfileEvent.PickImage) },
+                onClick = {
+                    onEvent(EditProfileEvent.PickImage) },
                 style = TextStyle(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
@@ -159,18 +161,29 @@ fun EditProfileScreen(
                 Text(text = "Confirm changes")
             }
         }
-        user_flow?.value.let {
-            when(it){
-                is Response.Success->{
-                    Log.d("Edit_profile_screen",it.data.toString())
-                    user=it.data
-                }
-                is Response.Loading->{
-                    CircularProgressIndicator()
-                }
-                is Response.Failure->{}
+
+    }
+    user_flow?.value.let {
+        when(it){
+            is Response.Success->{
+                Log.d("Edit_profile_screen",it.data.toString())
+                user=it.data
+                userViewModel?.resetUserValue()
+
+                Toast.makeText(LocalContext.current,it.data.pictureUrl.toString(),Toast.LENGTH_LONG).show()
             }
+            is Response.Loading->{
+
+            }
+            is Response.Failure->{}
         }
+    }
+    user_flow2?.value.let {
+        if(it!=null){
+            user=it
+        }
+
+
     }
 }
 

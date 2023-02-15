@@ -18,6 +18,7 @@ import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
 import com.example.socialk.Map
 import com.example.socialk.di.ActivityViewModel
+import com.example.socialk.di.UserViewModel
 import com.example.socialk.home.HomeViewModel
 import com.example.socialk.model.Activity
 import com.example.socialk.model.UserData
@@ -31,6 +32,7 @@ class CreateFragment : Fragment() {
     private val viewModel by viewModels<CreateViewModel>()
     private val activityViewModel by viewModels<ActivityViewModel>()
     private val authViewModel by viewModels<AuthViewModel>()
+    private val userViewModel by viewModels<UserViewModel>()
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -43,11 +45,11 @@ class CreateFragment : Fragment() {
             }
 
         }
-
+        userViewModel.getFriends(authViewModel.currentUser!!.uid)
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
-                    CreateScreen(activityViewModel, onEvent = { event ->
+                    CreateScreen(userViewModel,activityViewModel, onEvent = { event ->
                         when (event) {
                             is CreateEvent.GoToProfile -> viewModel.handleGoToProfile()
                             is CreateEvent.GoToHome -> {

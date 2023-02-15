@@ -22,7 +22,7 @@ data class Activity(
     val disableMemories:Boolean,
     val likes:Int,
 
-){
+):java.io.Serializable{
     constructor(): this("", "","", "","", "","",
         "","","", "","","", 0,100,false,false,0)
 }

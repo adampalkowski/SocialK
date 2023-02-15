@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.example.socialk.Chats
@@ -17,6 +18,7 @@ import com.example.socialk.Main.navigate
 import com.example.socialk.Profile
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
+import com.example.socialk.di.ChatViewModel
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,6 +26,7 @@ import dagger.hilt.android.AndroidEntryPoint
 class HomeFragment:Fragment() {
     private val viewModel by viewModels<HomeViewModel>()
     private val authViewModel by viewModels<AuthViewModel>()
+    private val chatViewModel by viewModels<ChatViewModel>()
     private val activityViewModel by viewModels<ActivityViewModel>()
     private val activeUsersViewModel by viewModels<ActiveUsersViewModel>()
 
@@ -35,7 +38,14 @@ class HomeFragment:Fragment() {
 
         viewModel.navigateTo.observe(viewLifecycleOwner) { navigateToEvent ->
             navigateToEvent.getContentIfNotHandled()?.let { navigateTo ->
-                navigate(navigateTo, Screen.Home)
+                if(navigateTo==Screen.Chat){
+                    val bundle = Bundle()
+                    bundle.putSerializable("activity",viewModel.clicked_chat_activity.value)
+                    navigate(navigateTo, Screen.Home,bundle)
+                }else{
+                    navigate(navigateTo, Screen.Home)
+
+                }
             }
         }
         activityViewModel?.getActivitiesForUser(authViewModel?.currentUser?.uid)
@@ -45,13 +55,16 @@ class HomeFragment:Fragment() {
             setContent {
 
                 SocialTheme {
-                    HomeScreen(activeUsersViewModel,activityViewModel,authViewModel,
+                    HomeScreen(activeUsersViewModel,activityViewModel, chatViewModel = chatViewModel,authViewModel,
                         onEvent = { event ->
                             when (event) {
                                 is HomeEvent.GoToProfile -> viewModel.handleGoToProfile()
                                 is HomeEvent.LogOut -> viewModel.handleLogOut()
                                 is HomeEvent.GoToSettings -> viewModel.handleGoToSettings()
                                 is HomeEvent.GoToMemories -> viewModel.handleGoToMemories()
+                                is HomeEvent.GoToChat -> {
+                                    viewModel.handleGoToChat(event.activity)
+                                }
                             }
                         },
                         bottomNavEvent  ={screen->

@@ -38,6 +38,9 @@ class UserViewModel @Inject constructor(
     val userState: StateFlow<Response<User>> = _userState
 
 
+    private val _friendState = MutableStateFlow<Response<ArrayList<User>>>(Response.Loading)
+    val friendState: StateFlow<Response<ArrayList<User>>> = _friendState
+
     private val _isUserAddedState = mutableStateOf<Response<Void?>?>(Response.Success(null))
     val isUserAddedState: State<Response<Void?>?> = _isUserAddedState
 
@@ -95,6 +98,13 @@ class UserViewModel @Inject constructor(
         viewModelScope.launch {
             repo.addChatCollectionToUsers(id,friend_id,chat_id).collect { response ->
                 _isChatCollectionAddedToUsersState.value = response
+            }
+        }
+    }
+    fun getFriends(id:String){
+        viewModelScope.launch {
+            repo.getFriends(id).collect { response ->
+                _friendState.value = response
             }
         }
     }
@@ -224,6 +234,13 @@ class UserViewModel @Inject constructor(
     fun getUser(id: String) {
         viewModelScope.launch {
             repo.getUser(id).collect { response ->
+                _userState.value = response
+            }
+        }
+    }
+    fun getUserListener(id: String) {
+        viewModelScope.launch {
+            repo.getUserListener(id).collect { response ->
                 _userState.value = response
             }
         }
