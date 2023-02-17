@@ -35,6 +35,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.socialk.*
 import com.example.socialk.R
 import com.example.socialk.components.BottomBar
+import com.example.socialk.components.UserPicker
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.UserViewModel
 import com.example.socialk.model.Response
@@ -51,6 +52,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.*
+import kotlin.collections.ArrayList
 
 sealed class CreateEvent {
     object GoToProfile : CreateEvent()
@@ -72,7 +74,12 @@ sealed class CreateEvent {
         val title: String,
         val date: String,
         val start_time: String,
-        val time_length: String
+        val time_length: String,
+        val description: String,
+        val min: String,
+        val max: String,
+        val custom_location: String,
+        val invited_users:List<User>
     ) : CreateEvent()
 }
 
@@ -84,12 +91,33 @@ fun CreateScreen(
     onEvent: (CreateEvent) -> Unit,
     bottomNavEvent: (Destinations) -> Unit
 ) {
-
-
+    val _selected_list = rememberSaveable { mutableStateOf(listOf<User>()) }
+    val selected_list by remember{ _selected_list }
+    fun addUser(user: User) {
+        val newList = ArrayList(selected_list)
+        newList.add(user)
+        _selected_list.value = newList
+    }
+    fun removeUser(user: User) {
+        val newList = ArrayList(selected_list)
+        newList.remove(user)
+        _selected_list.value = newList
+    }
     val activityTextState by rememberSaveable(stateSaver = ActivityTextStateSaver) {
         mutableStateOf(ActivityTextFieldState())
     }
-
+    val descriptionTextState by rememberSaveable(stateSaver = BasicTextFieldStateSaver) {
+        mutableStateOf(BasicTextFieldState())
+    }
+    val customLocationTextState by rememberSaveable(stateSaver = BasicTextFieldStateSaver) {
+        mutableStateOf(BasicTextFieldState())
+    }
+    val minTextState by rememberSaveable(stateSaver = NumberTextFieldStateSaver) {
+        mutableStateOf(NumberTextFieldState())
+    }
+    val maxTextState by rememberSaveable(stateSaver = NumberTextFieldStateSaver) {
+        mutableStateOf(NumberTextFieldState())
+    }
     var timeState by rememberSaveable {
         mutableStateOf(LocalTime.now().noSeconds())
     }
@@ -235,8 +263,13 @@ fun CreateScreen(
             //User picker field
             UserPicker(
                 modifier = Modifier.fillMaxWidth(),
-                onEvent = onEvent,
-                userViewModel = userViewModel
+                onEvent =     {event->
+                    when(event){
+                    is CreateEvent.UserSelected->{addUser(event.user)}
+                    is CreateEvent.UserUnSelected->{removeUser(event.user)}
+                }},
+                userViewModel = userViewModel,
+                selected_list=selected_list
             )
 
 
@@ -253,14 +286,14 @@ fun CreateScreen(
             //DESCRIPTION FIELD
             EditTextField(hint = "Additional information",
                 hideKeyboard = hideKeyboard,
-                onFocusClear = { hideKeyboard = false },
+                onFocusClear = { hideKeyboard = false },textState=descriptionTextState,
                 modifier = Modifier, title = "Description",
                 icon = R.drawable.ic_description, focusManager = focusManager, onClick = {})
 
             //CUSTOM LOCATION FIELD
             EditTextField(hint = "Describe the location",
                 hideKeyboard = hideKeyboard,
-                onFocusClear = { hideKeyboard = false },
+                onFocusClear = { hideKeyboard = false },textState=customLocationTextState,
                 modifier = Modifier, title = "Custom location",
                 icon = R.drawable.ic_edit_location, focusManager = focusManager, onClick = {})
 
@@ -269,7 +302,7 @@ fun CreateScreen(
                 modifier = Modifier,
                 onClick = {
                     focusManager.clearFocus()
-                },
+                }, minState =minTextState, maxState =maxTextState ,
                 title = "Participants limits",
                 value = locationState,
                 icon = R.drawable.ic_checklist
@@ -291,7 +324,12 @@ fun CreateScreen(
                         title = activityTextState.text,
                         date = dateState.toString(),
                         start_time = timeState.toString(),
-                        time_length = timeLengthState.toString()
+                        time_length = timeLengthState.toString(),
+                        invited_users = selected_list,
+                        description=descriptionTextState.text,
+                        custom_location=customLocationTextState.text,
+                        min=minTextState.text,
+                        max=maxTextState.text
                     )
                 )
 
@@ -329,282 +367,11 @@ fun CreateScreen(
 }
 
 @Composable
-fun UserPicker(modifier: Modifier, onEvent: (CreateEvent) -> Unit, userViewModel: UserViewModel) {
-
-
-    val _selected_list = rememberSaveable { mutableStateOf(listOf<User>()) }
-    val selected_list by remember{ _selected_list }
-    fun addUser(user: User) {
-        val newList = ArrayList(selected_list)
-        newList.add(user)
-        _selected_list.value = newList
-    }
-    fun removeUser(user: User) {
-        val newList = ArrayList(selected_list)
-        newList.remove(user)
-        _selected_list.value = newList
-    }
-
-    val friends_flow = userViewModel.friendState.collectAsState()
-    var friends_list = ArrayList<User>()
-    val user2: User = User()
-    user2.pictureUrl =
-        "https://firebasestorage.googleapis.com/v0/b/socialv2-340711.appspot.com/o/images%2F6upv389tZqNrSjnbBO6yf0ZGZAx2_200x200?alt=media&token=204b3ac0-37b8-4447-9808-b3ac9ccd106e"
-    user2.username = "123123 pla"
-    val user: User = User()
-    user.pictureUrl =
-        "https://firebasestorage.googleapis.com/v0/b/socialv2-340711.appspot.com/o/images%2F6upv389tZqNrSjnbBO6yf0ZGZAx2_200x200?alt=media&token=204b3ac0-37b8-4447-9808-b3ac9ccd106e"
-    user.username = "adam pla"
-    Box(
-        modifier = modifier
-            .height(450.dp)
-            .padding(vertical = 6.dp)
-    ) {
-        Column() {
-
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.padding(horizontal = 24.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_group_not_filled),
-                    contentDescription = null,
-                    tint = SocialTheme.colors.iconSecondary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Select group",
-                    fontFamily = Inter,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 16.sp,
-                    color = SocialTheme.colors.iconSecondary
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    text = "All friends",
-                    fontFamily = Inter,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 16.sp,
-                    color = SocialTheme.colors.textInteractive
-                )
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            Row (modifier= Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)){
-                selected_list.reversed().forEach {
-                    SelectedName(it = it)
-                    Spacer(modifier = Modifier.width(12.dp))
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            LazyHorizontalGrid(rows = GridCells.Fixed(3)) {
-                item {
-                    UserItem(user, onEvent = { event ->
-
-                        when (event) {
-                            is CreateEvent.UserSelected -> {
-                                addUser(event.user)
-                            }
-                            is CreateEvent.UserUnSelected -> {
-                                removeUser(event.user)
-                          }
-                        }
-                    })
-                }
-                item {
-                    UserItem(user2, onEvent = { event ->
-
-                        when (event) {
-                            is CreateEvent.UserSelected -> {
-                                addUser(event.user)
-                            }
-                            is CreateEvent.UserUnSelected -> {
-                                removeUser(event.user)
-                            }
-                        }
-                    })
-                }
-                item {
-                    UserItem(user, onEvent = { event ->
-
-                        when (event) {
-                            is CreateEvent.UserSelected -> {
-                                addUser(event.user)
-                            }
-                            is CreateEvent.UserUnSelected -> {
-                                removeUser(event.user)
-                            }
-                        }
-                    })
-                }
-                item {
-                    UserItem(user2, onEvent = { event ->
-
-                        when (event) {
-                            is CreateEvent.UserSelected -> {
-                                addUser(event.user)
-                            }
-                            is CreateEvent.UserUnSelected -> {
-                                removeUser(event.user)
-                            }
-                        }
-                    })
-                }
-                item {
-                    UserItem(user, onEvent = { event ->
-
-                        when (event) {
-                            is CreateEvent.UserSelected -> {
-                                addUser(event.user)
-                            }
-                            is CreateEvent.UserUnSelected -> {
-                                removeUser(event.user)
-                            }
-                        }
-                    })
-                }
-                item {
-                    UserItem(user2, onEvent = { event ->
-
-                        when (event) {
-                            is CreateEvent.UserSelected -> {
-                                addUser(event.user)
-                            }
-                            is CreateEvent.UserUnSelected -> {
-                                removeUser(event.user)
-                            }
-                        }
-                    })
-                }
-                item {
-                    UserItem(user, onEvent = { event ->
-
-                        when (event) {
-                            is CreateEvent.UserSelected -> {
-                                addUser(event.user)
-                            }
-                            is CreateEvent.UserUnSelected -> {
-                                removeUser(event.user)
-                            }
-                        }
-                    })
-                }
-                /* friends_flow.value.let {
-                 when(it){
-                     is Response.Success->{
-                         items(it.data) {
-
-
-                        }
-
-                     }
-                     is Response.Loading->{}
-                     is Response.Failure->{}
-                 }
-                 }*/
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            Divider()
-        }
-
-    }
-}
-
-
-@Composable
-fun SelectedName(it: User) {
-    Card(
-        shape = RoundedCornerShape(4.dp),
-        border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated)
-    ) {
-        Box(modifier= Modifier
-            .background(color = SocialTheme.colors.uiBackground)
-            .padding(4.dp)){
-            Text(text = it.username.toString(), style = TextStyle(fontFamily = Inter, fontWeight = FontWeight.Light, fontSize = 10.sp), color = SocialTheme.colors.textPrimary)
-        }
-
-    }
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun UserItem(user: User, onEvent: (CreateEvent) -> Unit) {
-    var selected: Boolean by rememberSaveable {
-        mutableStateOf(false)
-    }
-    Row() {
-        Box(
-            modifier = Modifier
-                .padding(6.dp)
-                .widthIn(40.dp, 120.dp)
-        ) {
-            Card(
-                elevation = if (selected) {
-                    4.dp
-                } else {
-                    0.dp
-                }/*,border = BorderStroke(1.dp,,color=SocialTheme.colors.uiFloated)*/,
-                shape = RoundedCornerShape(12.dp),
-                onClick = {
-                    if(!selected){onEvent(CreateEvent.UserSelected(user))}else{onEvent(CreateEvent.UserUnSelected(user))}
-                    selected = !selected
-
-                }) {
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = if (selected) {
-                                SocialTheme.colors.brand
-                            } else {
-                                SocialTheme.colors.uiBackground
-                            }
-                        )
-                        .padding(8.dp)
-                ) {
-                    Column(horizontalAlignment = CenterHorizontally) {
-                        Image(
-                            painter = rememberAsyncImagePainter(user.pictureUrl),
-                            contentDescription = "profile image",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = user.username.toString(),
-                            color = SocialTheme.colors.textPrimary,
-                            textAlign = TextAlign.Center,
-                            style = TextStyle(
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Light,
-                                fontFamily = Inter
-                            )
-                        )
-                    }
-                }
-            }
-        }
-        Box(
-            modifier = Modifier
-                .height(100.dp)
-                .background(color = SocialTheme.colors.uiFloated)
-                .width(1.dp)
-        )
-    }
-}
-
-@Composable
 fun RequirementsField(
     onClick: (Int) -> Unit,
     modifier: Modifier,
     title: String,
-    value: String = "value",
+    value: String = "value",minState:TextFieldState,maxState:TextFieldState,
     icon: Int
 ) {
     Column(
@@ -643,14 +410,14 @@ fun RequirementsField(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(6.dp))
-                RequirementsNumberField("Min")
+                RequirementsNumberField("Min", numberState = minState)
             }
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(6.dp))
-                RequirementsNumberField("Max")
+                RequirementsNumberField("Max", numberState = maxState)
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
@@ -734,8 +501,8 @@ fun ConfigureField(
 }
 
 @Composable
-fun RequirementsNumberField(hint: String) {
-    var textState = remember { NumberTextFieldState() }
+fun RequirementsNumberField(hint: String,numberState:TextFieldState) {
+
     Card(
         modifier = Modifier
             .widthIn(50.dp, 100.dp)
@@ -750,10 +517,10 @@ fun RequirementsNumberField(hint: String) {
             TextField(
                 modifier = Modifier,
                 textStyle = TextStyle(fontSize = 14.sp),
-                value = textState.text,
+                value = numberState.text,
                 onValueChange = {
                     if (it.length < 4) {
-                        textState.text = it
+                        numberState.text = it
                     }
                 },
                 placeholder = {

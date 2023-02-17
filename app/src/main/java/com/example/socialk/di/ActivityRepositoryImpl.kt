@@ -4,7 +4,9 @@ import com.example.socialk.ActiveUser
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
 import com.example.socialk.model.SocialException
+import com.example.socialk.model.User
 import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.toObject
@@ -40,6 +42,26 @@ class ActivityRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun likeActivity(id: String, user: User): Flow<Response<Void?>> =flow{
+        try{
+            emit(Response.Loading)
+            val update = activitiesRef.document(id).update("participants_profile_pictures"+"."+user.id,user.pictureUrl,"participants_usernames"+"."+user.id,user.username).await()
+            emit(Response.Success(update))
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("likeActivity exception",Exception())))
+        }
+    }
+
+    override suspend fun unlikeActivity(id: String, user: User): Flow<Response<Void?>> =flow{
+        try{
+            emit(Response.Loading)
+            val update = activitiesRef.document(id).update("participants_profile_pictures"+"."+user.id,FieldValue.delete(),"participants_usernames"+"."+user.id,FieldValue.delete()).await()
+            emit(Response.Success(update))
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("unlikeActivity exception",Exception())))
+        }
+    }
+
     override suspend fun addActivity(activity: Activity) :Flow<Response<Void?>> = flow {
         try {
             emit(Response.Loading)
@@ -49,6 +71,30 @@ class ActivityRepositoryImpl @Inject constructor(
 
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("AddActivity exception",Exception())))
+        }
+    }
+
+    override suspend fun addUserToActivityInvites(activity: Activity,user_id:String): Flow<Response<Void?>> =flow {
+        try {
+            emit(Response.Loading)
+            val activityId=activity.id
+            val addition = activitiesRef.document(activityId).update("invited_users",FieldValue.arrayUnion(user_id)).await()
+            emit(Response.Success(addition))
+
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("addUserToActivityInvites exception",Exception())))
+        }
+    }
+
+    override suspend fun removeUserFromActivityInvites(activity: Activity,user_id:String): Flow<Response<Void?>> =flow {
+        try {
+            emit(Response.Loading)
+            val activityId=activity.id
+            val addition = activitiesRef.document(activityId).update("invited_users",FieldValue.arrayRemove(user_id)).await()
+            emit(Response.Success(addition))
+
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("removeUserFromActivityInvites exception",Exception())))
         }
     }
 
@@ -63,7 +109,7 @@ class ActivityRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getActivitiesForUser(id: String): Flow<Response<List<Activity>>> =callbackFlow {
-        val snapshotListener = activitiesRef.whereEqualTo("creator_id",id).get().addOnSuccessListener { documents->
+        val snapshotListener = activitiesRef.whereArrayContains("invited_users",id).get().addOnSuccessListener { documents->
             var activitiesList:List<Activity> = mutableListOf()
 
 

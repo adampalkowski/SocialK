@@ -415,7 +415,7 @@ fun ChatItemLeft(date:String,textMessage: String,onLongPress:()->Unit,picture_ur
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ChatButton(onEvent: () -> Unit, icon: Int) {
+fun ChatButton(onEvent: () -> Unit, icon: Int,iconTint:Color=SocialTheme.colors.iconPrimary) {
     Card(
         modifier = Modifier.size(48.dp),
         shape = RoundedCornerShape(12.dp),
@@ -428,7 +428,7 @@ fun ChatButton(onEvent: () -> Unit, icon: Int) {
             Icon(
                 painter = painterResource(id = icon),
                 contentDescription = null,
-                tint = SocialTheme.colors.iconPrimary
+                tint =iconTint
             )
         }
     }

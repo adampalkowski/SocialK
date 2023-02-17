@@ -16,13 +16,18 @@ data class Activity(
     var time_left:String,
     var end_time:String,
     var latLng:String,
+    var custom_location:String,
     val minUserCount:Int,
     val maxUserCount:Int,
     val disableChat:Boolean,
     val disableMemories:Boolean,
     val likes:Int,
+    val invited_users:ArrayList<String>,
+    val participants_profile_pictures:HashMap<String,String>,
+    val participants_usernames:HashMap<String,String>,
 
 ):java.io.Serializable{
     constructor(): this("", "","", "","", "","",
-        "","","", "","","", 0,100,false,false,0)
+        "","","", "","","","", 0,100,false,false,0, ArrayList(), HashMap(),HashMap
+    ())
 }

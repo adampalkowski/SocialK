@@ -72,6 +72,7 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
 
+
     //sys ui conttroller used in themes
     implementation "com.google.accompanist:accompanist-systemuicontroller:0.28.0"
 

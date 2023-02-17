@@ -19,6 +19,7 @@ import com.example.socialk.Profile
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.ChatViewModel
+import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -65,6 +66,13 @@ class HomeFragment:Fragment() {
                                 is HomeEvent.GoToChat -> {
                                     viewModel.handleGoToChat(event.activity)
                                 }
+                                is HomeEvent.ActivityLiked -> {
+                                    activityViewModel.likeActivity(event.activity.id,UserData.user!!)
+                                }
+                                is HomeEvent.ActivityUnLiked -> {
+                                    activityViewModel.unlikeActivity(event.activity.id,UserData.user!!)
+                                }
+
                             }
                         },
                         bottomNavEvent  ={screen->

@@ -1,37 +1,30 @@
 package com.example.socialk.home
 
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.util.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.*
-import androidx.compose.ui.modifier.modifierLocalConsumer
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.rememberAsyncImagePainter
 import com.example.socialk.*
-import com.example.socialk.R
-import com.example.socialk.chat.ChatEvent
 import com.example.socialk.components.*
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
@@ -42,20 +35,27 @@ import com.example.socialk.model.Response
 import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.Inter
-import com.example.socialk.ui.theme.Ocean1
 import com.example.socialk.ui.theme.SocialTheme
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.marosseleng.compose.material3.datetimepickers.time.domain.noSeconds
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.time.LocalTime
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 sealed class ActivityEvent() {
-    class OpenActivitySettings(activity: Activity) : ActivityEvent(){val activity=activity}
-    class OpenActivityChat (activity: Activity): ActivityEvent(){val activity=activity}
+    class OpenActivitySettings(activity: Activity) : ActivityEvent() {
+        val activity = activity
+    }
+
+    class OpenActivityChat(activity: Activity) : ActivityEvent() {
+        val activity = activity
+    }
+
+    class ActivityLiked(activity: Activity) : ActivityEvent() {
+        val activity = activity
+    }
+
+    class ActivityUnLiked(activity: Activity) : ActivityEvent() {
+        val activity = activity
+    }
 }
 
 sealed class HomeEvent {
@@ -63,7 +63,15 @@ sealed class HomeEvent {
     object LogOut : HomeEvent()
     object GoToMemories : HomeEvent()
     object GoToSettings : HomeEvent()
-    class GoToChat (activity: Activity): HomeEvent(){val activity=activity}
+    class GoToChat(activity: Activity) : HomeEvent() {
+        val activity = activity
+    }
+    class ActivityLiked(activity: Activity) : HomeEvent() {
+        val activity = activity
+    }
+    class ActivityUnLiked(activity: Activity) : HomeEvent() {
+        val activity = activity
+    }
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -83,7 +91,7 @@ fun HomeScreen(
     }
     val isDark = isSystemInDarkTheme()
     val scaffoldState = rememberScaffoldState()
-    var bottomSheetActivity by remember { mutableStateOf(Activity()) }
+    var bottomSheetActivity by rememberSaveable{ mutableStateOf(Activity()) }
 
     androidx.compose.material.Scaffold(
         scaffoldState = scaffoldState,
@@ -102,24 +110,35 @@ fun HomeScreen(
             ) {
                 HomeScreenContent(activeUsersViewModel = activeUsersViewModel,
                     viewModel = viewModel,
-                   activityViewModel= activityViewModel,
+                    activityViewModel = activityViewModel,
                     padding = it,
                     isDark = isDark,
                     activityEvent = {
-                       when(it) {
-                           is ActivityEvent.OpenActivityChat->{
-                               onEvent(HomeEvent.GoToChat(it.activity))
+                        when (it) {
+                            is ActivityEvent.OpenActivityChat -> {
+                                onEvent(HomeEvent.GoToChat(it.activity))
+                            }
+                            is ActivityEvent.ActivityLiked -> {
+                                Log.d("HomeScreen","like")
 
-                           }
-                           is ActivityEvent.OpenActivitySettings->{
-                               bottomSheetType="settings"
-                               bottomSheetActivity=it.activity
+                                onEvent(HomeEvent.ActivityLiked(it.activity))
+                            }
+                            is ActivityEvent.ActivityUnLiked -> {
+                                Log.d("HomeScreen","dislike")
 
-                           }
-                       }
-                        scope.launch {
-                            bottomSheetState.show()
+                                onEvent(HomeEvent.ActivityUnLiked(it.activity))
+
+                            }
+                            is ActivityEvent.OpenActivitySettings -> {
+                                Log.d("HomeScreen","open settings")
+                                bottomSheetType = "settings"
+                                bottomSheetActivity = it.activity
+                                scope.launch {
+                                    bottomSheetState.show()
+                                }
+                            }
                         }
+
                     },
                     onEvent = { homeEvent ->
 
@@ -128,18 +147,36 @@ fun HomeScreen(
             }
 
         })
-    BottomDialog(state = bottomSheetState,activity=bottomSheetActivity, type = bottomSheetType,onEvent={
-            event ->
-        when (event) {
-            is BottomDialogEvent.SendMessage -> {
-                chatViewModel.addMessage(bottomSheetActivity.id,
-                    //todo set sender picture_url
-                    ChatMessage(text = event.message, sender_picture_url = UserData.user?.pictureUrl!!
-                        , sent_time ="" , sender_id = UserData.user!!.id, message_type ="text" ,id="") )
-            }
+    BottomDialog(
+        state = bottomSheetState,
+        activity = bottomSheetActivity,
+        type = bottomSheetType,
+        onEvent = { event ->
+            when (event) {
+                is BottomDialogEvent.SendMessage -> {
+                    chatViewModel.addMessage(
+                        bottomSheetActivity.id,
+                        //todo set sender picture_url
+                        ChatMessage(
+                            text = event.message,
+                            sender_picture_url = UserData.user?.pictureUrl!!,
+                            sent_time = "",
+                            sender_id = UserData.user!!.id,
+                            message_type = "text",
+                            id = ""
+                        )
+                    )
+                }
+                is BottomDialogEvent.removeUserFromActivity->{
+                    activityViewModel?.removeUserFromActivityInvites(bottomSheetActivity,UserData.user!!.id!!)
+                    activityViewModel?.getActivitiesForUser(viewModel?.currentUser!!.uid)
 
-        }
-    }, chatViewModel = chatViewModel)
+                }
+
+            }
+        },
+        chatViewModel = chatViewModel
+    )
 
 }
 
@@ -151,10 +188,23 @@ fun HomeScreenContent(
     activityViewModel: ActivityViewModel?,
     padding: PaddingValues,
     isDark: Boolean,
-    onEvent: (HomeEvent) -> Unit
+    onEvent: (HomeEvent) -> Unit,
+
 ) {
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    val refreshScope = rememberCoroutineScope()
+    var refreshing by remember { mutableStateOf(false) }
+
+    fun refresh() = refreshScope.launch {
+        refreshing = true
+        activityViewModel?.getActivitiesForUser(viewModel?.currentUser!!.uid)
+
+    }
+
+    val state = rememberPullRefreshState(refreshing, ::refresh)
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .pullRefresh(state)) {
         LazyColumn {
             //Space for the header
             item {
@@ -194,19 +244,23 @@ fun HomeScreenContent(
             activityViewModel?.activitiesListState?.value.let {
                 when (it) {
                     is Response.Success -> {
+                        refreshing = false
                         //display activities
+                        Log.d("homescreen", it.data.toString())
                         items(it.data) { item ->
-                            ActivityItem(activity=item,
+                            ActivityItem(
+                                activity = item,
                                 onEvent = activityEvent,
                                 username = item.creator_username,
                                 profilePictureUrl = item.creator_profile_picture,
                                 timeLeft = item.time_left,
                                 title = item.title,
-                                description = "",
+                                description = item.description,
                                 date = item.date,
+                                liked= item.participants_usernames.containsKey(UserData.user!!.id!!),
                                 //todo add the time end
                                 timePeriod = item.start_time + " - " + item.end_time,
-                                location = item.title
+                                custom_location = item.custom_location
                             )
 
                         }
@@ -219,7 +273,15 @@ fun HomeScreenContent(
             }
         }
 
-
+        PullRefreshIndicator(
+            refreshing,
+            state,
+            Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 64.dp),
+            backgroundColor = SocialTheme.colors.uiBackground,
+            contentColor = SocialTheme.colors.textPrimary
+        )
     }
     Box(
         modifier = Modifier
@@ -233,11 +295,6 @@ fun HomeScreenContent(
             picked_screen = "Activities"
         )
     }
-
-    Box(modifier = Modifier, contentAlignment = Alignment.BottomEnd) {
-
-    }
-
 
 }
 

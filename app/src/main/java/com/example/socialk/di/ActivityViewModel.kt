@@ -10,6 +10,7 @@ import com.example.socialk.home.HomeEvent
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
 import com.example.socialk.model.SocialException
+import com.example.socialk.model.User
 import com.marosseleng.compose.material3.datetimepickers.time.domain.noSeconds
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.collect
@@ -42,6 +43,12 @@ class ActivityViewModel @Inject constructor(
 
     private val _isActivityDeletedState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isActivityDeletedState: State<Response<Void?>> = _isActivityDeletedState
+
+    private val _isInviteAddedToActivity = mutableStateOf<Response<Void?>?>(Response.Success(null))
+    val isInviteAddedToActivity: State<Response<Void?>?> = _isInviteAddedToActivity
+
+    private val _isInviteRemovedFromActivity = mutableStateOf<Response<Void?>?>(Response.Success(null))
+    val isInviteRemovedFromActivity: State<Response<Void?>?> = _isInviteRemovedFromActivity
 
     init {
        // getActivities()
@@ -106,10 +113,39 @@ class ActivityViewModel @Inject constructor(
         }
     }
 
+    fun addUserToActivityInvites(activity: Activity,user_id:String){
+        viewModelScope.launch {
+            repo.addUserToActivityInvites(activity,user_id).collect{ response ->
+                _isInviteAddedToActivity.value=response
+            }
+        }
+    }
+    fun removeUserFromActivityInvites(activity: Activity,user_id:String) {
+        viewModelScope.launch {
+            repo.removeUserFromActivityInvites(activity,user_id).collect{ response ->
+                _isInviteRemovedFromActivity.value=response
+            }
+        }
+    }
+
     fun activityAdded(){
         _isActivityAddedState.value=null
     }
+    fun likeActivity(id:String,user: User){
+        viewModelScope.launch {
+            repo.likeActivity(id,user).collect{ response ->
+                _isActivityDeletedState.value=response
+            }
+        }
+    }
+    fun unlikeActivity(id:String,user: User){
+        viewModelScope.launch {
+            repo.unlikeActivity(id,user).collect{ response ->
+                _isActivityDeletedState.value=response
+            }
+        }
 
+    }
    fun deleteActivity(id:String){
         viewModelScope.launch {
             repo.deleteActivity(id).collect{ response ->
