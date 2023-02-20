@@ -180,10 +180,9 @@ fun EditProfileScreen(
     }
     user_flow2?.value.let {
         if(it!=null){
+            Log.d("Edit_profile_screen",user.toString())
             user=it
         }
-
-
     }
 }
 

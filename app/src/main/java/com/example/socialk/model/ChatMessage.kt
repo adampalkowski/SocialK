@@ -1,7 +1,7 @@
 package com.example.socialk.model
 
 data class ChatMessage (
-    val text: String,
+    var text: String,
     var sender_picture_url:String,
     var sent_time:String,
     val sender_id:String,

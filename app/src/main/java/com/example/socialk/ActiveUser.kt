@@ -8,8 +8,11 @@ data class ActiveUser(
     val location: String?,
     val time_length: String,
     val time_start: String,
-    val time_end: String
+    val time_end: String,
+    val create_time:String,
+    val destroy_time:String,
+    val invited_users:ArrayList<String>,
 ){
-    constructor(): this(id="",creator_id="",pictureUrl="",username="",location="",time_length="",time_start="",time_end="")
+    constructor(): this(id="",creator_id="",pictureUrl="",username="",location="",time_length="",time_start="",time_end="",create_time="",destroy_time="",ArrayList())
 
 }

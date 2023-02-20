@@ -5,10 +5,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import com.example.socialk.Chats
 import com.example.socialk.Create
@@ -23,9 +22,10 @@ import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
+
 @AndroidEntryPoint
 class HomeFragment:Fragment() {
-    private val viewModel by viewModels<HomeViewModel>()
+    private val viewModel by activityViewModels<HomeViewModel>()
     private val authViewModel by viewModels<AuthViewModel>()
     private val chatViewModel by viewModels<ChatViewModel>()
     private val activityViewModel by viewModels<ActivityViewModel>()
@@ -51,12 +51,20 @@ class HomeFragment:Fragment() {
         }
         activityViewModel?.getActivitiesForUser(authViewModel?.currentUser?.uid)
         activeUsersViewModel?.getActiveUsersForUser(authViewModel?.currentUser?.uid)
+        viewModel.activity_link.value.let {
+            if (it!=null){
+                Log.d("HomeFragment",it.toString())
+                activityViewModel.getActivity(it)
+                viewModel.resetLink()
+            }
+        }
+
 
         return ComposeView(requireContext()).apply {
             setContent {
 
                 SocialTheme {
-                    HomeScreen(activeUsersViewModel,activityViewModel, chatViewModel = chatViewModel,authViewModel,
+                    HomeScreen(activeUsersViewModel,activityViewModel, chatViewModel = chatViewModel,authViewModel, homeViewModel = viewModel,
                         onEvent = { event ->
                             when (event) {
                                 is HomeEvent.GoToProfile -> viewModel.handleGoToProfile()

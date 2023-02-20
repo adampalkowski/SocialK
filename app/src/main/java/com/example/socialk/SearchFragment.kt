@@ -74,7 +74,8 @@ class SearchFragment: Fragment() {
                                         user_one_username =UserData.user!!.username,
                                         user_two_username =event.user.username,
                                         user_one_profile_pic = UserData.user!!.pictureUrl,
-                                        user_two_profile_pic = event.user.pictureUrl
+                                        user_two_profile_pic = event.user.pictureUrl,
+                                        highlited_message = ""
                                     ))
 
                                 }

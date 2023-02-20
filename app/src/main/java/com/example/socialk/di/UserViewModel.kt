@@ -2,26 +2,18 @@ package com.example.socialk.di
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.socialk.model.*
 import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.util.*
 import javax.inject.Inject
-import kotlin.Exception
-import kotlin.collections.ArrayList
 
 
 @HiltViewModel
@@ -29,8 +21,8 @@ class UserViewModel @Inject constructor(
     private val repo: UserRepository
 ) : ViewModel() {
     val userProfileId = MutableLiveData<String>()
-    val _currentUserProfile = MutableStateFlow<User>(User())
-    val currentUserProfile: StateFlow<User> = _currentUserProfile
+    val _currentUserProfile = MutableStateFlow<User?>(null)
+    val currentUserProfile: StateFlow<User?> = _currentUserProfile
     private val _userValidation = MutableStateFlow<Response<Boolean>>(Response.Loading)
     val userValidation: StateFlow<Response<Boolean>> = _userValidation
 
@@ -47,7 +39,7 @@ class UserViewModel @Inject constructor(
     private val _isUsernameAddedFlow = MutableStateFlow<Response<Void?>>(Response.Loading)
     val isUsernameAddedFlow: StateFlow<Response<Void?>> = _isUsernameAddedFlow
 
-    private val _loginFlow= MutableStateFlow<Response<FirebaseUser>?>(null)
+    private val _loginFlow = MutableStateFlow<Response<FirebaseUser>?>(null)
     val loginFlow: StateFlow<Response<FirebaseUser>?> = _loginFlow
 
     private val _isUserDeletedState = mutableStateOf<Response<Void?>>(Response.Success(null))
@@ -72,14 +64,19 @@ class UserViewModel @Inject constructor(
     private val _isFriendRemovedState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isFriendRemovedState: State<Response<Void?>> = _isFriendRemovedState
 
-    private val _isFriendAddedToBothUsersState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    private val _isFriendAddedToBothUsersState =
+        mutableStateOf<Response<Void?>>(Response.Success(null))
     val isFriendAddedToBothUsersState: State<Response<Void?>> = _isFriendAddedToBothUsersState
 
-    private val _isFriendRemovedFromBothUsersState = mutableStateOf<Response<Void?>>(Response.Success(null))
-    val isFriendRemovedFromBothUsersState: State<Response<Void?>> = _isFriendRemovedFromBothUsersState
+    private val _isFriendRemovedFromBothUsersState =
+        mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isFriendRemovedFromBothUsersState: State<Response<Void?>> =
+        _isFriendRemovedFromBothUsersState
 
-    private val _isChatCollectionAddedToUsersState = mutableStateOf<Response<Void?>>(Response.Success(null))
-    val isChatCollectionAddedToUsersState: State<Response<Void?>> = _isChatCollectionAddedToUsersState
+    private val _isChatCollectionAddedToUsersState =
+        mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isChatCollectionAddedToUsersState: State<Response<Void?>> =
+        _isChatCollectionAddedToUsersState
     private val _isChatAddedToUsersState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isChatAddedToUsersState: State<Response<Void?>> = _isChatAddedToUsersState
 
@@ -92,16 +89,21 @@ class UserViewModel @Inject constructor(
     private val _isInviteAcceptedState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isInviteAcceptedState: State<Response<Void?>> = _isInviteAcceptedState
 
-    private val _isUserProfilePictureChangedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    private val _isImageAddedToStorageState = mutableStateOf<Response<String>>(Response.Loading)
+    val isImageAddedToStorageState: State<Response<String>> = _isImageAddedToStorageState
+
+    private val _isUserProfilePictureChangedState =
+        mutableStateOf<Response<Void?>>(Response.Success(null))
     val isUserProfilePictureChangedState: State<Response<Void?>> = _isUserProfilePictureChangedState
-    fun addChatCollectionToUsers(id:String,friend_id:String,chat_id:String){
+    fun addChatCollectionToUsers(id: String, friend_id: String, chat_id: String) {
         viewModelScope.launch {
-            repo.addChatCollectionToUsers(id,friend_id,chat_id).collect { response ->
+            repo.addChatCollectionToUsers(id, friend_id, chat_id).collect { response ->
                 _isChatCollectionAddedToUsersState.value = response
             }
         }
     }
-    fun getFriends(id:String){
+
+    fun getFriends(id: String) {
         viewModelScope.launch {
             repo.getFriends(id).collect { response ->
                 _friendState.value = response
@@ -109,41 +111,48 @@ class UserViewModel @Inject constructor(
         }
     }
 
-    fun acceptInvite(current_user:User,user:User,chat:Chat){
+    fun acceptInvite(current_user: User, user: User, chat: Chat) {
         viewModelScope.launch {
-            repo.acceptInvite(current_user,user,chat).collect { response ->
+            repo.acceptInvite(current_user, user, chat).collect { response ->
                 _isInviteAcceptedState.value = response
             }
         }
     }
-    fun changeUserProfilePicture(user_id:String,picture_uri: Uri){
+
+    fun changeUserProfilePicture(user_id: String, picture_uri: Uri) {
         viewModelScope.launch {
-            Log.d("ImagePicker","changeUserProfilePicture called")
-            Log.d("ImagePicker","changeUserProfilePicture "+picture_uri.toString()+user_id)
-            Log.d("ImagePicker","changeUserProfilePicture "+user_id)
-            Log.d("ImagePicker","changeUserProfilePicture "+picture_uri.toString())
-            repo.addProfilePictureToStorage(user_id, picture_uri).collect{ response ->
-                when(response){
-                    is Response.Success->{
-                        repo.changeUserProfilePicture(user_id,response.data).collect { response ->
-                            when(response){
-                                is Response.Success->{
-                                    currentUserProfile.value.pictureUrl=response.data.toString()
-                                    UserData.user!!.pictureUrl=response.data.toString()
-                                    Log.d("Edit_profile_screen","get user called")
+            Log.d("ImagePicker", "changeUserProfilePicture called")
+            repo.addProfilePictureToStorage(user_id, picture_uri).collect { response ->
+                when (response) {
+                    is Response.Success -> {
+                        val imageUrl=response.data
+                        Log.d("UserViewModel", "changeUserProfilePicture response"+response.data)
+                        repo.changeUserProfilePicture(user_id, response.data).collect { response ->
+                            when (response) {
+                                is Response.Success -> {
+                                    Log.d("UserViewModel", "changeUserProfilePicture response"+response.data)
+                                    currentUserProfile.value?.pictureUrl = imageUrl
+                                    UserData.user!!.pictureUrl = imageUrl
+                                    Log.d("Edit_profile_screen", "get user called")
                                     repo.getUser(user_id).collect { response ->
-                                        when(response){is Response.Success->
-                                            UserData.user=response.data}
-                                            _userState.value = response
+                                        _userState.value = response
+                                        when (response) {
+                                            is Response.Success -> {
+                                                UserData.user = response.data
+                                            }
+                                        }
+
                                     }
                                 }
-                                is Response.Failure->{  Log.d("ImagePicker",response.e.message)
+                                is Response.Failure -> {
+                                    Log.d("ImagePicker", response.e.message)
                                 }
                             }
 
                         }
                     }
-                    is Response.Failure->{  Log.d("ImagePicker",response.e.message)
+                    is Response.Failure -> {
+                        Log.d("ImagePicker", response.e.message)
                     }
                 }
 
@@ -152,69 +161,80 @@ class UserViewModel @Inject constructor(
         }
     }
 
-
-    fun addFriendToBothUsers(my_id:String,friend_id:String){
+    fun addImageToStorage(id: String, picture_uri: Uri) {
         viewModelScope.launch {
-            repo.addFriendToBothUsers(my_id,friend_id).collect { response ->
+            repo.addProfilePictureToStorage(id, picture_uri).collect { response ->
+                _isImageAddedToStorageState.value = response
+            }
+        }
+    }
+
+    fun addFriendToBothUsers(my_id: String, friend_id: String) {
+        viewModelScope.launch {
+            repo.addFriendToBothUsers(my_id, friend_id).collect { response ->
                 _isFriendAddedToBothUsersState.value = response
             }
         }
     }
 
-    fun removeFriendFromBothUsers(my_id:String,friend_id:String){
+    fun removeFriendFromBothUsers(my_id: String, friend_id: String) {
         viewModelScope.launch {
-            repo.removeFriendFromBothUsers(my_id,friend_id).collect { response ->
+            repo.removeFriendFromBothUsers(my_id, friend_id).collect { response ->
                 _isFriendRemovedFromBothUsersState.value = response
             }
         }
     }
 
-    fun addFriendIdToUser(my_id:String,friend_id:String){
+    fun addFriendIdToUser(my_id: String, friend_id: String) {
         viewModelScope.launch {
-            repo.addInvitedIDs(my_id,friend_id).collect { response ->
+            repo.addInvitedIDs(my_id, friend_id).collect { response ->
                 _isFriendAddedState.value = response
             }
         }
     }
-    fun removeFriendIdFromUser(my_id:String,friend_id:String){
+
+    fun removeFriendIdFromUser(my_id: String, friend_id: String) {
         viewModelScope.launch {
-            repo.removeInvitedIDs(my_id,friend_id).collect { response ->
+            repo.removeInvitedIDs(my_id, friend_id).collect { response ->
                 _isFriendRemovedState.value = response
             }
         }
     }
-    fun addBlockedIdToUser(my_id:String,blocked_id:String){
+
+    fun addBlockedIdToUser(my_id: String, blocked_id: String) {
         viewModelScope.launch {
-            repo.addInvitedIDs(my_id,blocked_id).collect { response ->
+            repo.addInvitedIDs(my_id, blocked_id).collect { response ->
                 _isBlockedAddedState.value = response
             }
         }
     }
-    fun removeBlockedIdFromUser(my_id:String,blocked_id:String){
+
+    fun removeBlockedIdFromUser(my_id: String, blocked_id: String) {
         viewModelScope.launch {
-            repo.removeInvitedIDs(my_id,blocked_id).collect { response ->
+            repo.removeInvitedIDs(my_id, blocked_id).collect { response ->
                 _isBlockedRemovedState.value = response
             }
         }
     }
-    fun removeInvitedIdFromUser(my_id:String,invited_id:String){
+
+    fun removeInvitedIdFromUser(my_id: String, invited_id: String) {
         viewModelScope.launch {
-            repo.removeInvitedIDs(my_id,invited_id).collect { response ->
+            repo.removeInvitedIDs(my_id, invited_id).collect { response ->
                 _isInviteRemovedState.value = response
             }
         }
     }
 
-    fun addInvitedIdToUser(my_id:String,invited_id:String){
+    fun addInvitedIdToUser(my_id: String, invited_id: String) {
         viewModelScope.launch {
-            repo.addInvitedIDs(my_id,invited_id).collect { response ->
+            repo.addInvitedIDs(my_id, invited_id).collect { response ->
                 _isInviteAddedState.value = response
             }
         }
     }
 
 
-    fun getInvites(id:String){
+    fun getInvites(id: String) {
         viewModelScope.launch {
             repo.getInvites(id).collect { response ->
                 _invitesStateFlow.value = response
@@ -223,14 +243,14 @@ class UserViewModel @Inject constructor(
     }
 
 
-    fun resetUserValue()
-    {
+    fun resetUserValue() {
         _userState.value = Response.Loading
     }
-    fun setCurrentUser(user:User)
-    {
-        _currentUserProfile.value=user
+
+    fun setCurrentUser(user: User) {
+        _currentUserProfile.value = user
     }
+
     fun getUser(id: String) {
         viewModelScope.launch {
             repo.getUser(id).collect { response ->
@@ -238,6 +258,7 @@ class UserViewModel @Inject constructor(
             }
         }
     }
+
     fun getUserListener(id: String) {
         viewModelScope.launch {
             repo.getUserListener(id).collect { response ->
@@ -274,17 +295,22 @@ class UserViewModel @Inject constructor(
             }
         }
     }
-    fun addUsernameToUser( id:String, username :String) {
+
+    fun addUsernameToUser(id: String, username: String) {
         viewModelScope.launch {
-            repo.getUserByUsername(username).collect{ response->
-                when(response){
-                    is Response.Success->{
+            repo.getUserByUsername(username).collect { response ->
+                when (response) {
+                    is Response.Success -> {
                         _isUsernameAddedFlow.value =
-                            Response.Failure(e=SocialException("addUsernameToUser erro user with same username has been found",
-                                Exception()))
+                            Response.Failure(
+                                e = SocialException(
+                                    "addUsernameToUser erro user with same username has been found",
+                                    Exception()
+                                )
+                            )
                     }
-                    is Response.Failure->{
-                        repo.addUsernameToUser(id=id,username=username).collect { response ->
+                    is Response.Failure -> {
+                        repo.addUsernameToUser(id = id, username = username).collect { response ->
                             _isUsernameAddedFlow.value = response
                         }
                     }
@@ -293,8 +319,6 @@ class UserViewModel @Inject constructor(
 
         }
     }
-
-
 
 
     fun validateUser(firebaseUser: FirebaseUser) {
@@ -307,13 +331,18 @@ class UserViewModel @Inject constructor(
                         //emails don't match
                         //TODO SHOW CORRECT EXCEPTION
                         if (user.email != firebaseUser.email) {
-                            _userValidation.value = Response.Failure(SocialException(message = "validate user error emails dont match",Exception()))
+                            _userValidation.value = Response.Failure(
+                                SocialException(
+                                    message = "validate user error emails dont match",
+                                    Exception()
+                                )
+                            )
                         }
-                        if (user.username==null){
+                        if (user.username == null) {
                             UserData.user = user
                             Log.d("TAG", "succes")
                             _userValidation.value = Response.Success(false)
-                        }else{
+                        } else {
                             //SET THE GLOBAL USER
                             UserData.user = user
                             Log.d("TAG", "succes")
@@ -323,7 +352,12 @@ class UserViewModel @Inject constructor(
                     }
                     is Response.Failure -> {
                         //issue with retreiving user from database
-                        _userValidation.value = Response.Failure(SocialException("validate error issue with retreiving user from database",Exception()))
+                        _userValidation.value = Response.Failure(
+                            SocialException(
+                                "validate error issue with retreiving user from database",
+                                Exception()
+                            )
+                        )
                     }
                 }
 

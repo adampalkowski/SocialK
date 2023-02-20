@@ -1,22 +1,20 @@
 package com.example.socialk.create
 
-import android.content.res.Configuration
-import androidx.compose.foundation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Surface
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.onFocusEvent
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.socialk.Create
@@ -25,13 +23,17 @@ import com.example.socialk.R
 import com.example.socialk.bottomTabRowScreens
 import com.example.socialk.components.BottomBar
 import com.example.socialk.components.BottomBarRow
+import com.example.socialk.components.timepicker.TimeSelection
+import com.example.socialk.components.timepicker.rememberSheetState
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.home.cardHighlited
 import com.example.socialk.home.cardnotHighlited
 import com.example.socialk.model.Response
-import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
+import com.marosseleng.compose.material3.datetimepickers.time.domain.noSeconds
+import com.marosseleng.compose.material3.datetimepickers.time.ui.dialog.TimePickerDialog
 import java.time.LocalDate
+import java.time.LocalTime
 
 
 sealed class LiveEvent{
@@ -49,34 +51,66 @@ sealed class LiveEvent{
     ): LiveEvent()
 
 }
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LiveScreen (activeUsersViewModel:ActiveUsersViewModel?,onEvent: (LiveEvent) -> Unit, bottomNavEvent:(Destinations)->Unit){
 
     var isDateDialogShown: Boolean by rememberSaveable {
         mutableStateOf(false)
     }
-    var date: LocalDate? by remember {
-        mutableStateOf(null)
+    var isTimeDialogShown: Boolean by rememberSaveable {
+        mutableStateOf(false)
     }
-    var dateState by rememberSaveable {
-        mutableStateOf(LocalDate.now().toString())
+    var isTimeLengthDialogShown: Boolean by rememberSaveable {
+        mutableStateOf(false)
     }
-    if (isDateDialogShown) {
-        DatePicker(onDismissRequest = { isDateDialogShown = false },
-            onDateChange = {
-                date = it
-                isDateDialogShown = false
-                dateState = date.toString()
+    var timeLengthState by rememberSaveable {
+        mutableStateOf("01:00")
+    }
+    var timeState by rememberSaveable {
+        mutableStateOf(LocalTime.now().noSeconds().toString())
+    }
+    // Initializing a Calendar
+    val (selectedTimeinit, setSelectedTime) = rememberSaveable {
+        mutableStateOf(LocalTime.now().noSeconds())
+    }
+    val selectedTime = remember { mutableStateOf<LocalTime?>(null) }
 
-            })
+    if (isTimeLengthDialogShown) {
+        TimePickerDialog(
+            onDismissRequest = { isTimeLengthDialogShown = false },
+            initialTime =LocalTime.now(),
+            onTimeChange = {
+
+                setSelectedTime(it)
+                isTimeLengthDialogShown = false
+                timeLengthState = it.toString()
+            },
+            title = { Text(text = "Select time") }
+        )
+    }
+    if (isTimeDialogShown) {
+        TimePickerDialog(
+            onDismissRequest = { isTimeDialogShown = false },
+            initialTime = selectedTimeinit,
+            onTimeChange = {
+                setSelectedTime(it)
+                isTimeDialogShown = false
+                timeState = it.toString()
+            },
+            title = { Text(text = "Select time") }
+        )
     }
 
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
+
+
     Surface(modifier = Modifier
         .fillMaxSize()
         .background(SocialTheme.colors.uiBackground),color= SocialTheme.colors.uiBackground
     ) {
+
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
@@ -91,30 +125,43 @@ fun LiveScreen (activeUsersViewModel:ActiveUsersViewModel?,onEvent: (LiveEvent) 
             CreateClickableTextField(
                 modifier = Modifier,
                 onClick = {   focusManager.clearFocus()
-                    isDateDialogShown = true },
+                    isTimeDialogShown = true },
                 title = "Start time",
                 icon = R.drawable.ic_schedule,
-                value=dateState,
+                value=timeState,
 
                 )
 
             CreateClickableTextField(
                 onClick = {  focusManager.clearFocus()
-                    isDateDialogShown = true },
+                    isTimeLengthDialogShown = true },
                 modifier = Modifier,
                 title = "Time length",
-                value=dateState,
+                value=      if (!timeLengthState.split(":")[0].equals("00")) {
+                    if (timeLengthState.split(":")[0].equals("01")) {
+                        timeLengthState.split(":")[0].toInt()
+                            .toString() + " hour " + " " + timeLengthState.split(":")[1].toInt()
+                            .toString() + " minutes"
+
+                    } else {
+                        timeLengthState.split(":")[0].toInt()
+                            .toString() + " hours " + " " + timeLengthState.split(":")[1].toInt()
+                            .toString() + " minutes"
+                    }
+                } else {
+
+                    timeLengthState.split(":")[1].toInt().toString() + " " + " minutes"
+                },
 
                 icon = R.drawable.ic_hourglass
             )
-
 
             Spacer(modifier = Modifier.height(48.dp))
             CreateActivityButton(onClick = {
                 onEvent(
                     LiveEvent.CreateActiveUser(
-                         start_time=dateState.toString(),
-                         time_length=dateState.toString()
+                         start_time=timeState.toString(),
+                         time_length=timeLengthState.toString()
                     )
                 )
             }, text = "Create activity")
@@ -129,7 +176,7 @@ fun LiveScreen (activeUsersViewModel:ActiveUsersViewModel?,onEvent: (LiveEvent) 
             BottomBarRow(
                 allScreens = bottomTabRowScreens,
                 onTabSelected = { screen -> bottomNavEvent(screen) },
-                currentScreen = Create
+                currentScreen = Create, transparent = false
             )
         }
     }
@@ -173,17 +220,3 @@ fun activityPickerLive(isDark:Boolean,modifier: Modifier = Modifier, onEvent: (L
 
 }
 
-    @Preview(showBackground = true)
-@Composable
-fun previewLiveScreen () {
-    SocialTheme{
-        LiveScreen(onEvent = {}, bottomNavEvent = {}, activeUsersViewModel = null)
-    }
-}
-@Preview(showBackground = true,uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun previewLiveScreenDark(){
-    SocialTheme{
-        LiveScreen(onEvent = {}, bottomNavEvent = {}, activeUsersViewModel = null)
-    }
-}

@@ -1,15 +1,21 @@
 package com.example.socialk.di
 
+import android.net.Uri
 import android.util.Log
+import com.example.socialk.await1
 import com.example.socialk.model.*
 import com.google.firebase.firestore.*
 import com.google.firebase.firestore.ktx.toObject
+import com.google.firebase.storage.StorageException
+import com.google.firebase.storage.StorageReference
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
+import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,7 +26,8 @@ import javax.inject.Singleton
 class ChatRepositoryImpl @Inject constructor(
     private val messagesRef: CollectionReference,
     private val chatCollectionsRef: CollectionReference,
-):ChatRepository{
+    private val resStorage: StorageReference,
+    ):ChatRepository{
     private var lastVisibleData: DocumentSnapshot? = null
     override suspend fun getChatCollection(id: String): Flow<Response<Chat>>  = callbackFlow {
         chatCollectionsRef.document(id).get().addOnSuccessListener { documentSnapshot->
@@ -34,6 +41,61 @@ class ChatRepositoryImpl @Inject constructor(
         }
         awaitClose(){
 
+        }
+    }
+
+
+
+    suspend fun keepTrying(triesRemaining: Int, storageRef: StorageReference): String {
+        if (triesRemaining < 0) {
+            throw TimeoutException("out of tries")
+        }
+
+        return try {
+            val url = storageRef.downloadUrl.await()
+            url.toString()
+        } catch (error: Exception) {
+            when (error) {
+                is StorageException -> {
+                    if (error.errorCode ==StorageException.ERROR_OBJECT_NOT_FOUND) {
+                        delay(1000)
+                        keepTrying(triesRemaining - 1, storageRef)
+                    } else {
+                        println(error)
+                        throw error
+                    }
+                }
+                else -> {
+                    println(error)
+                    throw error
+                }
+            }
+        }
+    }
+    override suspend fun addImageFromGalleryToStorage(
+        id: String,
+        imageUri: Uri
+    ): Flow<Response<String>>  = flow {
+        try {
+            emit(Response.Loading)
+            if (imageUri != null) {
+                val fileName = id
+                val imageRef = resStorage.child("images/$fileName")
+                imageRef.putFile(imageUri).await1()
+                val reference= resStorage.child("images/$fileName" + "_600x600")
+                val url =keepTrying(5,reference)
+                emit(Response.Success(url))
+            }
+        } catch (e: Exception) {
+            Log.d("ImagePicker", "try addProfilePictureToStorage EXCEPTION")
+            emit(
+                Response.Failure(
+                    e = SocialException(
+                        "addProfilePictureToStorage exception",
+                        Exception()
+                    )
+                )
+            )
         }
     }
 
@@ -55,6 +117,28 @@ class ChatRepositoryImpl @Inject constructor(
             emit(Response.Success(deletion))
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("deleteChatCollection exception",Exception())))
+        }
+    }
+
+    override suspend fun addGroupHighlight(
+        group_id: String,
+        text_message: String
+    ): Flow<Response<Void?>> =flow {
+        try {
+            emit(Response.Loading)
+            val deletion = chatCollectionsRef.document(group_id).update("highlited_message",text_message).await()
+            emit(Response.Success(deletion))
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("addGroupHighlight exception",Exception())))
+        }
+    }
+    override suspend fun removeGroupHighlight(group_id: String): Flow<Response<Void?>> =flow {
+        try {
+            emit(Response.Loading)
+            val deletion = chatCollectionsRef.document(group_id).update("highlited_message",FieldValue.delete()).await()
+            emit(Response.Success(deletion))
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("removeGroupHighlight exception",Exception())))
         }
     }
 

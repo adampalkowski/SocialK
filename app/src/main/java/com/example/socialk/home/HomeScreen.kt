@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.socialk.*
+import com.example.socialk.R
 import com.example.socialk.components.*
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
@@ -36,7 +37,6 @@ import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -80,10 +80,11 @@ fun HomeScreen(
     activeUsersViewModel: ActiveUsersViewModel?,
     activityViewModel: ActivityViewModel?,
     chatViewModel: ChatViewModel,
-    viewModel: AuthViewModel?,
+    viewModel: AuthViewModel?,homeViewModel:HomeViewModel?,
     onEvent: (HomeEvent) -> Unit,
     bottomNavEvent: (Destinations) -> Unit
 ) {
+    val openDialog = remember { mutableStateOf(false)  }
     var bottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
     val scope = rememberCoroutineScope()
     var bottomSheetType by remember {
@@ -91,6 +92,7 @@ fun HomeScreen(
     }
     val isDark = isSystemInDarkTheme()
     val scaffoldState = rememberScaffoldState()
+    val showDialogState: Boolean by homeViewModel?.showDialog!!.collectAsState()
     var bottomSheetActivity by rememberSaveable{ mutableStateOf(Activity()) }
 
     androidx.compose.material.Scaffold(
@@ -120,12 +122,10 @@ fun HomeScreen(
                             }
                             is ActivityEvent.ActivityLiked -> {
                                 Log.d("HomeScreen","like")
-
                                 onEvent(HomeEvent.ActivityLiked(it.activity))
                             }
                             is ActivityEvent.ActivityUnLiked -> {
                                 Log.d("HomeScreen","dislike")
-
                                 onEvent(HomeEvent.ActivityUnLiked(it.activity))
 
                             }
@@ -147,6 +147,31 @@ fun HomeScreen(
             }
 
         })
+
+    activityViewModel?.activityState?.value.let {   event->
+     when(event){
+            is Response.Success->{
+                Log.d("Homefragment2",event.toString())
+                if(event.data!=null){
+                  homeViewModel?.setActivity(event.data)
+                    homeViewModel?.setShowDialog(true)
+                }
+
+            }
+            is Response.Loading->{
+
+            }
+            is Response.Failure->{
+
+            }
+        }
+    }
+    activityDialog(activity =homeViewModel?.activity?.value , activityDialogState =showDialogState,onEvent={
+        homeViewModel?.setShowDialog(false)
+        activityViewModel?.resetActivityState()
+        homeViewModel?.removeActivity()
+        Log.d("homescreen","falseeee")
+    })
     BottomDialog(
         state = bottomSheetState,
         activity = bottomSheetActivity,
@@ -180,6 +205,26 @@ fun HomeScreen(
 
 }
 
+
+@Composable
+fun activityDialog(activity:Activity?, activityDialogState: Boolean, onEvent: () -> Unit){
+   if (activityDialogState){
+       ActivityDialog(     onDismiss = onEvent,
+           onConfirm = {  },
+           onCancel = {
+               onEvent()
+
+           },
+           title ="asd",
+           info ="ass",
+           icon = R.drawable.ic_delete,
+           activity =activity!!)
+   }else{
+
+   }
+
+}
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun HomeScreenContent(
@@ -194,7 +239,6 @@ fun HomeScreenContent(
 
     val refreshScope = rememberCoroutineScope()
     var refreshing by remember { mutableStateOf(false) }
-
     fun refresh() = refreshScope.launch {
         refreshing = true
         activityViewModel?.getActivitiesForUser(viewModel?.currentUser!!.uid)

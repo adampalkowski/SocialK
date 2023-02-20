@@ -43,7 +43,7 @@ private const val TabFadeOutAnimationDuration = 100
 @Composable
 fun BottomBarRow(     allScreens: List<Destinations>,
                       onTabSelected: (Destinations) -> Unit,
-                      currentScreen: Destinations){
+                      currentScreen: Destinations,transparent:Boolean){
    Surface(modifier = Modifier
        .height(TabHeight)
        .fillMaxWidth(),
@@ -52,10 +52,7 @@ fun BottomBarRow(     allScreens: List<Destinations>,
        Row(modifier = Modifier
            .selectableGroup()
            .background(
-               brush = Brush.verticalGradient(
-                   colors = SocialTheme.colors.gradient6_1
-               )
-
+                   brush = (if (transparent){ Brush.verticalGradient( listOf(Color.Transparent ,Color.Transparent ,SocialTheme.colors.uiBackground)) }else{ Brush.verticalGradient( colors = SocialTheme.colors.gradient6_1)})
            ), horizontalArrangement = Arrangement.SpaceEvenly) {
            allScreens.forEach { screen ->
                BottomTab(
@@ -102,12 +99,12 @@ fun BottomBarRowCustom(     allScreens: List<Destinations>,
 }
 
 @Composable
-fun BottomBar( onTabSelected: (Destinations) -> Unit,currentScreen: Destinations){
+fun BottomBar( onTabSelected: (Destinations) -> Unit,currentScreen: Destinations,transparent:Boolean=false){
     Box(modifier = Modifier
         .fillMaxWidth()
         .heightIn(56.dp)
         ,contentAlignment = Alignment.BottomCenter){
-        BottomBarRow(allScreens = bottomTabRowScreens, onTabSelected = {screen->onTabSelected(screen)},currentScreen = currentScreen)
+        BottomBarRow(allScreens = bottomTabRowScreens, onTabSelected = {screen->onTabSelected(screen)},currentScreen = currentScreen,transparent)
     }
 }
 
@@ -166,33 +163,5 @@ fun BottomTab(text: String,
                 Text(text.uppercase(Locale.getDefault()), color = SocialTheme.colors.iconInteractive, fontSize = 12.sp)
             }
 
-    }
-}
-@Preview
-@Composable
-fun previewBottomBar(){
-    SocialTheme() {
-        BottomBarRow(allScreens = bottomTabRowScreens, onTabSelected = {}, currentScreen = Home)
-    }
-}
-@Preview(uiMode = UI_MODE_NIGHT_YES)
-@Composable
-fun previewBottomBarDark(){
-    SocialTheme() {
-        BottomBarRow(allScreens = bottomTabRowScreens, onTabSelected = {}, currentScreen = Home)
-    }
-}
-@Preview
-@Composable
-fun previewBottomBarCustom(){
-    SocialTheme() {
-        BottomBarRowCustom(allScreens = bottomTabRowScreens, onTabSelected = {}, currentScreen = Home)
-    }
-}
-@Preview(uiMode = UI_MODE_NIGHT_YES)
-@Composable
-fun previewBottomBarDarkCustom(){
-    SocialTheme() {
-        BottomBarRowCustom(allScreens = bottomTabRowScreens, onTabSelected = {}, currentScreen = Home)
     }
 }

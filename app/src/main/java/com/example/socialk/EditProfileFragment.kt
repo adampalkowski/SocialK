@@ -41,7 +41,7 @@ class EditProfileFragment :Fragment() {
 
             if (uri != null) {
                 Log.d("ImagePicker", "Selected URI: $uri")
-                userViewModel.currentUserProfile.value.pictureUrl=uri.toString()
+                userViewModel.currentUserProfile.value?.pictureUrl=uri.toString()
                 userViewModel.changeUserProfilePicture( UserData.user!!.id,uri)
             } else {
                 Log.d("ImagePicker", "No media selected")

@@ -49,7 +49,7 @@ fun SocialDialog(onDismiss:()->Unit,onConfirm:(Int)->Unit,onCancel:(Int)->Unit,
                         Spacer(modifier = Modifier.width(24.dp))
                         ClickableText(text = AnnotatedString(actionButtonText), style = TextStyle(color= Color.Red,
                             fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
-                        ), onClick =onConfirm )
+                        ), onClick =onConfirm)
                     }
                 }
             }

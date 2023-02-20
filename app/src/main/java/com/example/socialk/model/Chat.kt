@@ -17,7 +17,8 @@ data class Chat (
     var user_one_profile_pic:String?,
     var user_two_username:String?,
     var user_two_profile_pic:String?,
+    var highlited_message:String?
     ): Serializable {
     constructor(): this("", "","", listOf(),"","","","","",
-    user_one_username="",user_one_profile_pic="",user_two_profile_pic="",user_two_username="")
+    user_one_username="",user_one_profile_pic="",highlited_message="",user_two_profile_pic="",user_two_username="")
 }

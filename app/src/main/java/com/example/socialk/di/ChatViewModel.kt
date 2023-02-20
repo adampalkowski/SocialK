@@ -1,15 +1,20 @@
 package com.example.socialk.di
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.socialk.model.Chat
 import com.example.socialk.model.ChatMessage
 import com.example.socialk.model.Response
+import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -28,6 +33,10 @@ class ChatViewModel @Inject constructor(
     private val _chatCollectionState = mutableStateOf<Response<Chat>>(Response.Loading)
     val chatCollectionState: State<Response<Chat>> = _chatCollectionState
 
+    private val _uri = MutableLiveData<Uri>()
+    val uri: LiveData<Uri> = _uri
+    private val _uriReceived = mutableStateOf(false)
+    val uriReceived: State<Boolean> = _uriReceived
     private val _chatCollectionsState = mutableStateOf<Response<ArrayList<Chat>>>(Response.Loading)
     val chatCollectionsState: State<Response<ArrayList<Chat>>> = _chatCollectionsState
 
@@ -57,13 +66,20 @@ class ChatViewModel @Inject constructor(
     private val _addMessageState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val addMessageState: State<Response<Void?>> = _addMessageState
 
+    private val _isImageAddedToStorageState = MutableStateFlow<Response<String>?>(null)
+    val isImageAddedToStorageFlow: StateFlow<Response<String>?> = _isImageAddedToStorageState
+
     private val _deleteMessageState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val deleteMessageState: State<Response<Void?>> = _deleteMessageState
 
     private val _checkIfChatExistsState = mutableStateOf<Response<Chat>>(Response.Loading)
     val checkIfChatExistsState: State<Response<Chat>> = _checkIfChatExistsState
 
+    private val _highlightAddedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val highlightAddedState: State<Response<Void?>> = _highlightAddedState
 
+    private val _highlightRemovedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val highlightRemovedState: State<Response<Void?>> = _highlightRemovedState
     fun getChatCollections(id:String){
         viewModelScope.launch {
             repo.getChatCollections(id).collect{
@@ -72,7 +88,14 @@ class ChatViewModel @Inject constructor(
             }
         }
     }
+    fun onUriReceived(uri: Uri) {
+        _uri.value = uri
+        _uriReceived.value = true
+    }
 
+    fun onUriProcessed() {
+        _uriReceived.value = false
+    }
     fun getChatCollection(id: String) {
         viewModelScope.launch {
             repo.getChatCollection(id).collect{
@@ -190,7 +213,6 @@ class ChatViewModel @Inject constructor(
         val uuid: UUID = UUID.randomUUID()
         val id:String = uuid.toString()
         message.id=id
-
         val current = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val formatted = current.format(formatter)
@@ -208,7 +230,13 @@ class ChatViewModel @Inject constructor(
         }
 
     }
-
+    fun addImageToStorage(id:String,picture_uri: Uri){
+        viewModelScope.launch {
+            repo.addImageFromGalleryToStorage(id, picture_uri).collect{ response ->
+                _isImageAddedToStorageState.value=response
+            }
+        }
+    }
     fun deleteMessage(
         chat_collection_id: String,
         message_id: String
@@ -218,6 +246,64 @@ class ChatViewModel @Inject constructor(
                     response->
                 _deleteMessageState.value=response
             }
+        }
+    }
+
+    fun addHighLight(group_id:String,highlitedMessageText: String) {
+        viewModelScope.launch {
+            repo.addGroupHighlight(group_id,highlitedMessageText).collect{
+                    response->
+                _highlightAddedState.value=response
+            }
+        }
+    }
+    fun removeHighLight(group_id:String,highlitedMessageText: String) {
+        viewModelScope.launch {
+            repo.removeGroupHighlight(group_id).collect{
+                    response->
+                _highlightRemovedState.value=response
+            }
+        }
+    }
+
+    fun sendImage(chat_id: String,message:ChatMessage, uri: Uri) {
+
+        val uuid: UUID = UUID.randomUUID()
+        val id:String = uuid.toString()
+        message.id=id
+        val current = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        val formatted = current.format(formatter)
+        message.sent_time=formatted
+        viewModelScope.launch {
+            repo.addImageFromGalleryToStorage(id, uri).collect{ response ->
+                _isImageAddedToStorageState.value=response
+                when(response){
+                    is Response.Success->{
+                        val new_url:String=response.data
+                        message.text=new_url
+                        Log.d("ImagePicker","url add message"+message.text)
+                        repo.addMessage(chat_id,message).collect{
+                                response->
+                            _addMessageState.value=response
+                        }
+                        repo.updateChatCollectionRecentMessage(chat_id, recent_message = "image sent", recent_message_time = message.sent_time).collect{
+                                response->
+                            _addMessageState.value=response
+                        }
+                    }
+                    is Response.Loading->{
+
+                    }
+                    is Response.Failure->{
+
+                    }
+                }
+
+            }
+
+
+
         }
     }
 

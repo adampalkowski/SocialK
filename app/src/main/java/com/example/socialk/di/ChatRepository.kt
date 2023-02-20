@@ -1,5 +1,6 @@
 package com.example.socialk.di
 
+import android.net.Uri
 import com.example.socialk.model.Chat
 import com.example.socialk.model.ChatMessage
 import com.example.socialk.model.Response
@@ -10,6 +11,9 @@ interface ChatRepository {
     suspend fun getChatCollection(id: String): Flow<Response<Chat>>
     suspend fun addChatCollection(chatCollection: Chat): Flow<Response<Void?>>
     suspend fun deleteChatCollection(id: String): Flow<Response<Void?>>
+    suspend fun addGroupHighlight(group_id:String,text_message:String): Flow<Response<Void?>>
+    suspend fun removeGroupHighlight(group_id:String): Flow<Response<Void?>>
+    suspend fun addImageFromGalleryToStorage(id:String,imageUri: Uri): Flow<Response<String>>
     suspend fun updateChatCollectionRecentMessage(
         id: String,
         recentMessage: String

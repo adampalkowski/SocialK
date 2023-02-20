@@ -8,6 +8,9 @@ import com.example.socialk.Main.Screen
 import com.example.socialk.model.Activity
 import com.example.socialk.model.User
 import com.example.socialk.util.Event
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 
 class HomeViewModel : ViewModel() {
@@ -16,6 +19,29 @@ class HomeViewModel : ViewModel() {
     private val _clicked_chat_activity = MutableLiveData<Activity>()
     val clicked_chat_activity: LiveData<Activity> = _clicked_chat_activity
 
+    private val _showDialog = MutableStateFlow(false)
+    val showDialog: StateFlow<Boolean> = _showDialog.asStateFlow()
+
+    private val _activity = MutableLiveData<Activity?>()
+    val activity: LiveData<Activity?> = _activity
+
+    private val _activity_link = MutableLiveData<String?>()
+    val activity_link: LiveData<String?> = _activity_link
+    fun setShowDialog(b: Boolean) {
+        _showDialog.value=b
+    }
+    fun resetLink() {
+        _activity_link.value=null
+    }
+    fun setActivity(data: Activity) {
+        _activity.value=data
+    }
+    fun removeActivity() {
+        _activity.value=null
+    }
+    fun setActivityLink(link:String){
+        _activity_link.value=link
+    }
 
     fun handleGoToProfile( ) {
         _navigateTo.value = Event(Screen.Profile)
@@ -45,5 +71,8 @@ class HomeViewModel : ViewModel() {
     fun handleGoToCreate( ) {
         _navigateTo.value = Event(Screen.Create)
     }
+
+
+
 
 }

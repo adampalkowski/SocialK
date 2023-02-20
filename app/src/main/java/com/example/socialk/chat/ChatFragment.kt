@@ -5,25 +5,21 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.runtime.currentRecomposeScope
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
-import com.example.socialk.*
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
-import com.example.socialk.Map
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.di.UserViewModel
 import com.example.socialk.model.*
-import com.example.socialk.model.UserData.user
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
-import java.util.*
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 /*
@@ -71,6 +67,16 @@ class ChatFragment : Fragment() {
                 navigate(navigateTo, Screen.Chat)
             }
         }
+        val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            // Callback is invoked after the user selects a media item or closes the
+            // photo picker.
+            if (uri != null) {
+                Log.d("ImageFromGallery", "image received"+uri.toString())
+                chatViewModel.onUriReceived(uri)
+            } else {
+                Log.d("PhotoPicker", "No media selected")
+            }
+        }
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
@@ -86,20 +92,40 @@ class ChatFragment : Fragment() {
                                 when (event) {
                                     is ChatEvent.GoBack ->activity?.onBackPressedDispatcher?.onBackPressed()
                                     is ChatEvent.SendMessage -> {
+                                    //id and sent_time are set in view model
                                         chatViewModel.addMessage(
                                             chat.id!!,
-                                            //todo set sender picture_url
                                             ChatMessage(
                                                 text = event.message,
                                                 sender_picture_url = UserData.user?.pictureUrl!!,
-                                                sent_time = "",
+                                                sent_time ="",
                                                 sender_id = UserData.user!!.id,
                                                 message_type = "text",
                                                 id = ""
                                             )
                                         )
                                     }
+                                    is ChatEvent.SendImage -> {
+                                        //id and sent_time are set in view model
+                                        //we have URI
+                                        //add uri to storage and resize it
+                                        //get the url and add it to the message
+                                        chatViewModel.sendImage(chat.id!!,     ChatMessage(
+                                            text = event.message.toString(),
+                                            sender_picture_url = UserData.user?.pictureUrl!!,
+                                            sent_time = "",
+                                            sender_id = UserData.user!!.id,
+                                            message_type = "uri",
+                                            id = ""
+                                        ),event.message)
 
+
+
+                                    }
+                                    is ChatEvent.OpenGallery -> {
+                                        pickMedia.launch(PickVisualMediaRequest(
+                                            ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                    }
                                 }
                             }
                         )

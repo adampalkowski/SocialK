@@ -8,12 +8,16 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ktx.toObject
+import com.google.firebase.storage.StorageException
 import com.google.firebase.storage.StorageReference
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.tasks.await
+import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,6 +27,7 @@ class UserRepositoryImpl @Inject constructor(
     private val usersRef: CollectionReference,
     private val chatCollectionsRef: CollectionReference,
     private val storageRef: StorageReference,
+    private val resStorage: StorageReference,
 ) : UserRepository {
 
     override suspend fun getUser(id: String): Flow<Response<User>> = callbackFlow {
@@ -207,23 +212,72 @@ class UserRepositoryImpl @Inject constructor(
             )
         }
     }
+    suspend fun keepTrying(triesRemaining: Int, storageRef: StorageReference): String {
+        if (triesRemaining < 0) {
+            throw TimeoutException("out of tries")
+        }
 
+        return try {
+            val url = storageRef.downloadUrl.await()
+            url.toString()
+        } catch (error: Exception) {
+            when (error) {
+                is StorageException -> {
+                    if (error.errorCode == StorageException.ERROR_OBJECT_NOT_FOUND) {
+                        delay(1000)
+                        keepTrying(triesRemaining - 1, storageRef)
+                    } else {
+                        println(error)
+                        throw error
+                    }
+                }
+                else -> {
+                    println(error)
+                    throw error
+                }
+            }
+        }
+    }
     override suspend fun addProfilePictureToStorage(
         user_id: String,
         imageUri: Uri
     ): Flow<Response<String>> = flow {
         try {
-            Log.d("ImagePicker", " storeage called")
             emit(Response.Loading)
-            Log.d("ImagePicker", "123 called")
 
             if (imageUri != null) {
-                Log.d("c", "try called")
                 val fileName = user_id
-                Log.d("ImagePicker", "123 called")
+                storageRef.child("images/images/$fileName" + "_200x200").delete().await1()
                 val imageRef = storageRef.child("images/$fileName")
                 imageRef.putFile(imageUri).await1()
-                val url = storageRef.child("images/$fileName" + "_200x200").downloadUrl.await1()
+                val reference = storageRef.child("images/images/$fileName" + "_200x200")
+                val url =keepTrying(5,reference)
+                emit(Response.Success(url.toString()))
+            }
+        } catch (e: Exception) {
+            Log.d("ImagePicker", "try addProfilePictureToStorage EXCEPTION")
+            emit(
+                Response.Failure(
+                    e = SocialException(
+                        "addProfilePictureToStorage exception",
+                        Exception()
+                    )
+                )
+            )
+        }
+    }
+
+    override suspend fun addImageFromGalleryToStorage(
+        id: String,
+        imageUri: Uri
+    ): Flow<Response<String>>  = flow {
+        try {
+            emit(Response.Loading)
+            if (imageUri != null) {
+                val fileName = id
+                val imageRef = resStorage.child("images/$fileName")
+                imageRef.putFile(imageUri).await1()
+                val url = resStorage.child("images/$fileName" + "_600x600").downloadUrl.await1()
                 emit(Response.Success(url.toString()))
             }
         } catch (e: Exception) {

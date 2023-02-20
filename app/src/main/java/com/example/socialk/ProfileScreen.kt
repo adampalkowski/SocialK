@@ -338,11 +338,3 @@ fun ProfileScreen(user:User,onEvent: (ProfileEvent) -> Unit, bottomNavEvent: (De
         BottomBar(onTabSelected = { screen -> bottomNavEvent(screen) }, currentScreen = Profile)
     }
 }
-@Preview
-@Composable
-fun previewProfileScreen() {
-    SocialTheme() {
-        ProfileScreen(onEvent = {}, bottomNavEvent = {}, user = User(description = "",name = "", username = "",
-            id = "m", email = "", pictureUrl = "", blocked_ids = ArrayList(), friends_ids = HashMap(), invited_ids = ArrayList() ))
-    }
-}

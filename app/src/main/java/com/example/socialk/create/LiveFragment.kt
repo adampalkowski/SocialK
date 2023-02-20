@@ -13,9 +13,13 @@ import com.example.socialk.Main.navigate
 import com.example.socialk.Map
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.model.Activity
+import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 
@@ -24,6 +28,31 @@ class LiveFragment : Fragment() {
     private val viewModel by viewModels<CreateViewModel>()
     private val activeUsersViewModel by viewModels<ActiveUsersViewModel>()
     private val authViewModel by viewModels<AuthViewModel>()
+
+    private fun calculateDestroyTime(currentTime:String,otherTime:String):String {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val (currentHours, currentMinutes) = currentTime.split(":").map { it.toInt() }
+        val (otherHours, otherMinutes) = otherTime.split(":").map { it.toInt() }
+
+        var totalMinutes = currentMinutes + otherMinutes + (currentHours + otherHours) * 60
+        if (totalMinutes >= 1440) {
+            totalMinutes -= 1440
+
+            val current = LocalDate.now().plusDays(1).format(formatter)
+            val hours = totalMinutes / 60
+            val minutes = totalMinutes % 60
+            val result = String.format("%02d:%02d", hours, minutes)
+            return "$current $result"
+        }else{
+            val current = LocalDate.now().format(formatter)
+            val hours = totalMinutes / 60
+            val minutes = totalMinutes % 60
+            val result = String.format("%02d:%02d", hours, minutes)
+            return "$current $result"
+        }
+
+
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -52,17 +81,25 @@ class LiveFragment : Fragment() {
                             is LiveEvent.CreateActiveUser -> {
                                 val uuid: UUID = UUID.randomUUID()
                                 val id:String = uuid.toString()
+                                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                                val current = LocalDateTime.now().format(formatter)
+
                                 //todo what if current user is null
+
+                                val destroyTime:String= calculateDestroyTime( event.start_time,event.time_length)
+
                                 activeUsersViewModel.addActiveUser(
-                    //TODO CREATE A GLOBAL USER CLASS THAT CAN BE ACCESED IN DIFFERENT FRAGMENT AND INITALIZE IT AT THE LOGIN
                                     ActiveUser(id=id,
                                         creator_id = if (authViewModel.currentUser==null){""}else{ authViewModel.currentUser!!.uid.toString()},
-                                        pictureUrl = "https://firebasestorage.googleapis.com/v0/b/socialv2-340711.appspot.com/o/uploads%2F1662065348037.null?alt=media&token=40cebce4-0c53-470c-867f-d9d34cba63ab",
-                                        username = "username",
+                                        pictureUrl =  UserData.user!!.pictureUrl!!,
+                                        username =  UserData.user!!.username!!,
                                         location = null,
-                                        time_end = event.start_time,
+                                        time_end = "",
                                         time_length = event.time_length,
-                                        time_start = "123213"
+                                        time_start = event.start_time,
+                                        create_time = current,
+                                        invited_users = ArrayList<String>(UserData.user!!.friends_ids.keys),
+                                        destroy_time=destroyTime,
                                 ))
                             }
                         }

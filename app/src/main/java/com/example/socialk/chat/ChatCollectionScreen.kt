@@ -1,8 +1,6 @@
 package com.example.socialk.chat
 
-import android.util.Log
 import androidx.compose.foundation.*
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,19 +16,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.example.socialk.*
 import com.example.socialk.R
 import com.example.socialk.components.BottomBar
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.model.Chat
-import com.example.socialk.model.ChatMessage
 import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.SocialTheme
 import com.example.socialk.ui.theme.Typography
-import com.google.android.gms.common.api.Response
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 sealed class ChatCollectionEvent {
@@ -85,7 +88,7 @@ fun ChatCollectionScreen(
               horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                items(data.value) {
+                items(data.value.reversed()) {
                     chatItem(
                         onClick = { onEvent(ChatCollectionEvent.GoToChat(it)) },
                         profileUrl = if (it.chat_picture != null) {
@@ -196,52 +199,89 @@ fun chatItem(
     lastMessageDate: String?
 ) {
     Card(onClick = onClick, colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 18.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),verticalAlignment = Alignment.CenterVertically
             ) {
-                Image(
-                    painter = rememberAsyncImagePainter(profileUrl),            contentScale = ContentScale.Crop,
-                    contentDescription = "profile image", modifier = Modifier
-                        .size(48.dp)
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(profileUrl)
+                        .crossfade(true)
+                        .build(),
+                    placeholder = painterResource(R.drawable.ic_person),
+                    contentDescription = "image sent",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier .size(48.dp)
                         .clip(CircleShape)
                 )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column() {
-                    Text(
-                        text = if (name != null) {
-                            name
-                        } else {
-                            ""
-                        },
-                        style = Typography.h2
-                    )
+
+
+                    Spacer(modifier = Modifier.width(16.dp))
+                Row(horizontalArrangement = Arrangement.SpaceBetween) {
+
+
+                    Column(modifier=Modifier.weight(1f).padding(end=12.dp)) {
+                        Text(
+                            text = if (name != null) {
+                                if(name.length>20){
+                                    name.substring(0,20)+"..."
+                                }else{
+                                    name
+                                }
+
+                            } else {
+                                ""
+                            },
+                            style = Typography.h2
+                        )
+
+
                     Text(
                         text = if (lastMessage != null) {
-                            lastMessage
+                            if(lastMessage.length>30){
+                                lastMessage.substring(0,30)+"..."
+                            }else{
+                                lastMessage
+                            }
                         } else {
                             ""
                         },
-                        style = Typography.h5
+                        style = Typography.h6
                     )
                 }
-                Spacer(modifier = Modifier.weight(1f))
-                Text(
+                val parts= lastMessageDate?.split(" ")
+                val date = parts?.get(0)
+                val time = parts?.get(1)
+                val today:Boolean= checkIfToday(date)
+                
+                Text(modifier = Modifier   .align(Alignment.CenterVertically),
                     text = if (lastMessageDate != null) {
-                        lastMessageDate
+                        if (today){
+                            if (time==null){
+                                ""
+                            }else{
+                                time.trim()
+                            }
+
+                        }else{
+                            if (date==null){
+                                ""
+                            }else{
+                                date.trim()
+                            }
+                        }
+
                     } else {
                         ""
                     },
                     style = Typography.h5
                 )
             }
-
+            }
 
         }
     }
@@ -253,3 +293,15 @@ fun chatItem(
     )
 
 }
+fun checkIfToday(date:String?):Boolean{
+    if(date ==null){
+        return false
+    }else{
+        val currentDate = LocalDate.now()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val dateToCompare = LocalDate.parse(date.toString(), formatter)
+        return dateToCompare==currentDate
+    }
+
+}
+

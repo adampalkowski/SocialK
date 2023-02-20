@@ -9,12 +9,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import com.example.socialk.R
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 
@@ -26,12 +32,18 @@ HOME TOP ROW displays active user profile picture and username, provides on clic
 fun ActiveUserItem(profileUrl: String, username: String, onClick: () -> Unit) {
     Box(modifier = Modifier.padding(6.dp).clickable { onClick }) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
-                painter = rememberAsyncImagePainter(profileUrl),
-                contentDescription = "active user image", modifier = Modifier
-                    .size(48.dp)
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(profileUrl)
+                    .crossfade(true)
+                    .build(),
+                placeholder = painterResource(R.drawable.ic_person),
+                contentDescription = "image sent",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier     .size(48.dp)
                     .clip(CircleShape)
             )
+
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 modifier= Modifier.widthIn(0.dp, max=if(username.length<8){60.dp}else if (username.length<20){80.dp}else{100.dp}),

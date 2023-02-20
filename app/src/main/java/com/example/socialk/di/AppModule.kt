@@ -22,11 +22,19 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Named
+import javax.inject.Qualifier
 
 //Names
 const val SIGN_IN_REQUEST = "signInRequest"
 const val SIGN_UP_REQUEST = "signUpRequest"
 
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class FirebaseStorageDefault
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class FirebaseStorageRes
 
 @Module
 @InstallIn(ViewModelComponent::class)
@@ -34,7 +42,11 @@ class AppModule {
     @Provides
     fun provideFirebaseAuth() = Firebase.auth
     @Provides
-    fun provideFirebaseStorage() = Firebase.storage
+    @FirebaseStorageDefault
+    fun provideFirebaseStorage() = Firebase.storage("gs://socialv2-340711.appspot.com/")
+    @Provides
+    @FirebaseStorageRes
+    fun provideFirebaseStorageRes() = Firebase.storage("gs://socialv2-340711")
     @Provides
     fun provideFirebaseFirestore() = Firebase.firestore
 
@@ -104,9 +116,11 @@ class AppModule {
     @Provides
     fun provideChatRepository(
         db: FirebaseFirestore,
+        @FirebaseStorageRes resStorage: FirebaseStorage
     ): ChatRepository = ChatRepositoryImpl(
         chatCollectionsRef =db.collection("groups"),
         messagesRef = db.collection("Chats"),
+        resStorage=resStorage.reference
     )
     @Provides
     fun provideActivityRepository(
@@ -114,15 +128,19 @@ class AppModule {
     ):ActivityRepository= ActivityRepositoryImpl(
         activitiesRef =db.collection("Activities"),
         activeUsersRef =db.collection("ActiveUsers"),
+        chatCollectionsRef =db.collection("groups") ,
+        messagessRef =db.collection("Chats")
     )
     @Provides
     fun provideUsersRepository(
         db: FirebaseFirestore,
-        storage: FirebaseStorage,
+        @FirebaseStorageDefault storage: FirebaseStorage,
+        @FirebaseStorageRes resStorage: FirebaseStorage
     ):UserRepository= UserRepositoryImpl(
         usersRef =db.collection("Users"),
         chatCollectionsRef =db.collection("groups"),
         storageRef =storage.reference,
+        resStorage=resStorage.reference
     )
     @Provides
     fun provideProfileRepository(

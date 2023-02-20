@@ -1,5 +1,6 @@
 package com.example.socialk.di
 
+import android.util.Log
 import com.example.socialk.ActiveUser
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
@@ -26,19 +27,23 @@ import javax.inject.Singleton
 @ExperimentalCoroutinesApi
 class ActivityRepositoryImpl @Inject constructor(
     private val activitiesRef: CollectionReference,
-    private val activeUsersRef:CollectionReference
+    private val activeUsersRef:CollectionReference,
+    private val chatCollectionsRef: CollectionReference,
+    private val messagessRef: CollectionReference,
 ):ActivityRepository{
 
     override suspend fun getActivity(id:String): Flow<Response<Activity>> = callbackFlow {
-
-       activitiesRef.document(activitiesRef.document().id).get().addOnSuccessListener {  documentSnapshot ->
+        activitiesRef.document(id).get().addOnSuccessListener {  documentSnapshot ->
             val response = if (documentSnapshot != null) {
                 val activity = documentSnapshot.toObject<Activity>()
+                Log.d("ActivityRepositoryImpl",activity.toString())
                 Response.Success(activity)
             } else {
                 Response.Failure(e= SocialException("getActivty document null",Exception()))
             }
             trySend(response as Response<Activity>).isSuccess
+        }
+        awaitClose(){
         }
     }
 
@@ -101,8 +106,11 @@ class ActivityRepositoryImpl @Inject constructor(
     override suspend fun deleteActivity(id: String) :Flow<Response<Void?>> = flow {
         try{
             emit(Response.Loading)
-            val deletion = activitiesRef.document(id).delete().await()
-            emit(Response.Success(deletion))
+           // val deletion1 = activitiesRef.document(id).delete().await()
+            //todo delete messages that are in the collections
+            //val deletion2 = messagessRef.document(id).collection("messages").dele().await()
+            val deletion3 = chatCollectionsRef.document(id).delete().await()
+            emit(Response.Success(deletion3))
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("deleteActivity exception",Exception())))
         }
@@ -128,7 +136,7 @@ class ActivityRepositoryImpl @Inject constructor(
     }
         //TODO CHANGE WHERE_EQUAL_TO
     override suspend fun getActiveUsers(id: String): Flow<Response<List<ActiveUser>>> = callbackFlow {
-        val snapshotListener = activeUsersRef.whereEqualTo("creator_id",id).get().addOnSuccessListener { documents->
+        val snapshotListener = activeUsersRef.whereArrayContains("invited_users",id).get().addOnSuccessListener { documents->
             var activitiesList:List<ActiveUser> = mutableListOf()
 
             val response = if (documents != null) {
@@ -147,7 +155,7 @@ class ActivityRepositoryImpl @Inject constructor(
         try {
             emit(Response.Loading)
             val activityId=activeUser.id
-            val addition = activeUsersRef.document(activityId).set(activeUser).await()
+            val addition = activeUsersRef.document(activeUser.creator_id).set(activeUser).await()
             emit(Response.Success(addition))
 
         }catch (e:Exception){
