@@ -5,23 +5,18 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.view.WindowCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.viewModelScope
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.fragment.findNavController
-import com.example.socialk.*
+import com.example.socialk.Chats
+import com.example.socialk.Home
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
 import com.example.socialk.Map
+import com.example.socialk.Profile
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.di.UserViewModel
-import com.example.socialk.home.HomeViewModel
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Chat
 import com.example.socialk.model.User
@@ -32,7 +27,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
-import kotlin.collections.HashMap
 
 @AndroidEntryPoint
 class CreateFragment : Fragment() {
@@ -76,6 +70,7 @@ class CreateFragment : Fragment() {
                             is CreateEvent.GoToEvent -> viewModel.handleGoToEvent()
                             is CreateEvent.GoToLive -> viewModel.handleGoToLive()
                             is CreateEvent.GoToActivity -> viewModel.handleGoToActivity()
+                            is CreateEvent.GoToMap -> viewModel.handleGoToMap()
                             is CreateEvent.CreateActivity -> {
                                 val uuid: UUID = UUID.randomUUID()
                                 val id: String = uuid.toString()
@@ -93,6 +88,7 @@ class CreateFragment : Fragment() {
                                 userIdList.add(authViewModel.currentUser!!.uid.toString())
                                 participants_profile_pictures[authViewModel.currentUser!!.uid]=UserData.user!!.pictureUrl!!
                                 participants_usernames[authViewModel.currentUser!!.uid]=UserData.user!!.username!!
+                                Log.d("CreateFragment",event.location)
                                 activityViewModel.addActivity(
                                     Activity(
                                         id = id,
@@ -116,7 +112,8 @@ class CreateFragment : Fragment() {
                                         invited_users = userIdList,
                                         participants_profile_pictures =participants_profile_pictures ,
                                         participants_usernames =participants_usernames,
-                                        creation_time = current
+                                        creation_time = current,
+                                        location=event.location
                                     )
                                 )
 

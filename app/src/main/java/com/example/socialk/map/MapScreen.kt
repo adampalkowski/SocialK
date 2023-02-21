@@ -27,6 +27,8 @@ import com.example.socialk.Destinations
 import com.example.socialk.R
 import com.example.socialk.components.BottomBar
 import com.example.socialk.components.SocialDialog
+import com.example.socialk.di.ActivityViewModel
+import com.example.socialk.model.Response
 import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
@@ -85,7 +87,7 @@ fun loadIcon(
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun MapScreen(
+fun MapScreen(activityViewModel:ActivityViewModel,
     onEvent: (MapEvent) -> Unit,
     bottomNavEvent: (Destinations) -> Unit,
     viewModel: MapViewModel,
@@ -211,6 +213,49 @@ fun MapScreen(
 
                                 }
 
+                            }
+                            activityViewModel.activitiesListState.value.let {
+                                when(it){
+                                    is Response.Success ->{
+                                        it.data.forEach {
+                                            if(it.location.isNotEmpty()){
+                                                val values=it.location.split("/")
+                                                val latLng= LatLng(values.get(0).toDouble(),values.get(1).toDouble())
+                                                MarkerInfoWindow(
+                                                    state = MarkerState(
+                                                        position = latLng
+                                                    ), icon = bitmap
+                                                ) {
+                                                    Column() {
+                                                        Card(shape = RoundedCornerShape(6.dp)) {
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .background(color = SocialTheme.colors.uiBackground)
+                                                                    .padding(6.dp)
+                                                            ) {
+                                                                Text(
+                                                                    text = "Activity location",
+                                                                    style = TextStyle(
+                                                                        fontFamily = Inter,
+                                                                        fontWeight = FontWeight.Normal,
+                                                                        fontSize = 14.sp
+                                                                    ),
+                                                                    color = SocialTheme.colors.textPrimary
+                                                                )
+                                                            }
+                                                        }
+                                                        Spacer(modifier = Modifier.height(4.dp))
+                                                    }
+
+                                                }
+                                            }
+
+                                        }
+
+                                    }
+                                    is Response.Loading ->{}
+                                    is Response.Failure ->{}
+                                }
                             }
                             location_picked_flow.value.let {
                                 if (it == null) {

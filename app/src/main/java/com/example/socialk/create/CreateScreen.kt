@@ -1,11 +1,10 @@
 package com.example.socialk.create
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -14,45 +13,47 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Center
-import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.rememberAsyncImagePainter
 import com.example.socialk.*
 import com.example.socialk.R
 import com.example.socialk.components.BottomBar
+import com.example.socialk.components.CustomSocialDialog
 import com.example.socialk.components.UserPicker
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.UserViewModel
+import com.example.socialk.map.loadIcon
 import com.example.socialk.model.Response
 import com.example.socialk.model.User
+import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.TextFieldError
 import com.example.socialk.signinsignup.TextFieldState
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.*
 import com.marosseleng.compose.material3.datetimepickers.date.domain.DatePickerShapes
 import com.marosseleng.compose.material3.datetimepickers.date.ui.dialog.DatePickerDialog
 import com.marosseleng.compose.material3.datetimepickers.time.domain.noSeconds
 import com.marosseleng.compose.material3.datetimepickers.time.ui.dialog.TimePickerDialog
-import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.*
-import kotlin.collections.ArrayList
 
 sealed class CreateEvent {
     object GoToProfile : CreateEvent()
@@ -62,6 +63,7 @@ sealed class CreateEvent {
     object GoToLive : CreateEvent()
     object GoToEvent : CreateEvent()
     object GoToActivity : CreateEvent()
+    object GoToMap : CreateEvent()
     object ClearState : CreateEvent()
     class UserSelected(user: User) : CreateEvent() {
         val user = user
@@ -79,11 +81,14 @@ sealed class CreateEvent {
         val min: String,
         val max: String,
         val custom_location: String,
+        val location: String,
         val invited_users:List<User>
     ) : CreateEvent()
 }
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalMaterialApi::class
+)
 @Composable
 fun CreateScreen(location:String?,
     userViewModel: UserViewModel,
@@ -91,6 +96,9 @@ fun CreateScreen(location:String?,
     onEvent: (CreateEvent) -> Unit,
     bottomNavEvent: (Destinations) -> Unit
 ) {
+    val openDialog = remember { mutableStateOf(false)  }
+    var location= remember{ mutableStateOf(location)  }
+    var latlng= remember{ mutableStateOf("")  }
     val _selected_list = rememberSaveable { mutableStateOf(listOf<User>()) }
     val selected_list by remember{ _selected_list }
     fun addUser(user: User) {
@@ -272,17 +280,19 @@ fun CreateScreen(location:String?,
                 selected_list=selected_list
             )
 
-            if(location!=null){
+            if(location.value!=null){
                 //LOCATON FIELD
-                CreateClickableTextField(
-                    modifier = Modifier,
+
+                LocationField(  modifier = Modifier,
                     onClick = {
                         focusManager.clearFocus()
+                        //open dialog to change or remove location
+                        openDialog.value=true
                     },
                     title = "Location",
-                    value = location,
-                    icon = R.drawable.ic_location_24
-                )
+                    value = "Already Selected",
+                    icon = R.drawable.ic_location_24)
+
             }else{
                 //CUSTOM LOCATION FIELD
                 EditTextField(hint = "Describe the location",
@@ -322,6 +332,7 @@ fun CreateScreen(location:String?,
             )
             Spacer(modifier = Modifier.height(48.dp))
 
+
             CreateActivityButton(onClick = {
                 onEvent(
                     CreateEvent.CreateActivity(
@@ -333,7 +344,8 @@ fun CreateScreen(location:String?,
                         description=descriptionTextState.text,
                         custom_location=customLocationTextState.text,
                         min=minTextState.text,
-                        max=maxTextState.text
+                        max=maxTextState.text,
+                        location=latlng.value
                     )
                 )
 
@@ -366,7 +378,193 @@ fun CreateScreen(location:String?,
             }
         }
     }
+    if(openDialog.value){
+        CustomSocialDialog(
+            onDismiss = { openDialog.value=false },
+            onConfirm = {
 
+            },
+            onCancel = { openDialog.value=false },
+            title = "Location selected",
+            info ="Location was picked from map, if current location isn't correct change or remove it" ,
+            icon =R.drawable.ic_location_24,
+            actionButtonText = "Delete"
+        ){
+            var isMapLoaded by remember { mutableStateOf(false) }
+
+            val cameraPositionState: CameraPositionState = rememberCameraPositionState {
+                position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 11f)
+            }
+            var uiSettings by remember {
+                mutableStateOf(
+                    MapUiSettings(
+                        zoomControlsEnabled = false,
+                        myLocationButtonEnabled = true,
+                        indoorLevelPickerEnabled = true
+                    )
+                )
+            }
+            var bitmap: BitmapDescriptor? =
+                loadIcon(LocalContext.current, UserData.user?.pictureUrl!!, R.drawable.ic_person)
+            var properties by remember {
+                mutableStateOf(MapProperties(mapType = MapType.NORMAL))
+            }
+            val pattern = "\\((-?\\d+\\.\\d+),(-?\\d+\\.\\d+)\\)".toRegex()
+            var latLng = LatLng(0.0,0.0)
+            var matchResult:MatchResult? =null
+            if(location.value!=null){
+                matchResult = pattern.find(location.value!!)
+            }else{
+
+            }
+
+            if (matchResult != null) {
+                val lat = matchResult.groupValues[1].toDouble()
+                val lng = matchResult.groupValues[2].toDouble()
+                latLng = LatLng(lat, lng)
+                latlng.value=lat.toString()+"/"+lng.toString()
+                cameraPositionState.position= CameraPosition.fromLatLngZoom(latLng, 13f)
+            } else {
+            }
+            Column() {
+                Card(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(200.dp), shape = RoundedCornerShape(8.dp)){
+                    GoogleMap(Modifier.fillMaxSize(),
+                        cameraPositionState,
+                        properties = properties, onMapLoaded = {
+                            isMapLoaded = true
+                        },
+                        uiSettings = uiSettings
+                    ) {
+                        MarkerInfoWindow(
+                            state = MarkerState(
+                                position = latLng
+                            )
+                        ) {
+                            Column() {
+                                Card(shape = RoundedCornerShape(6.dp)) {
+                                    Box(
+                                        modifier = Modifier
+                                            .background(color = SocialTheme.colors.uiBackground)
+                                            .padding(6.dp)
+                                    ) {
+                                        androidx.compose.material.Text(
+                                            text = "Current location",
+                                            style = TextStyle(
+                                                fontFamily = Inter,
+                                                fontWeight = FontWeight.Normal,
+                                                fontSize = 14.sp
+                                            ),
+                                            color = SocialTheme.colors.textPrimary
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
+
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.SpaceEvenly) {
+                    Card(shape= RoundedCornerShape(6.dp), border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated), onClick = { openDialog.value=false}){
+                        Box(modifier= Modifier
+                            .background(color = SocialTheme.colors.uiBackground)
+                            .padding(vertical = 6.dp, horizontal = 12.dp)){
+                            ClickableText(text = AnnotatedString("Dismiss")
+                                , style = TextStyle(color= SocialTheme.colors.textPrimary,
+                                    fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
+                                ), onClick = { openDialog.value=false })
+                        }
+
+                    }
+
+
+                    Card(shape= RoundedCornerShape(6.dp), border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated), onClick = {
+                        openDialog.value=false
+                        onEvent(CreateEvent.GoToMap)}){
+                        Box(modifier= Modifier
+                            .background(color = SocialTheme.colors.uiBackground)
+                            .padding(vertical = 6.dp, horizontal = 12.dp)){
+                            ClickableText(text = AnnotatedString("Change")
+                                , style = TextStyle(color= Color.Green,
+                                    fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
+                                ), onClick = {
+                                    openDialog.value=false
+                                    onEvent(CreateEvent.GoToMap) })
+                        }
+
+                    }
+                    Card(shape= RoundedCornerShape(6.dp), border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated), onClick = {
+                        openDialog.value=false
+                        location.value=null }){
+                        Box(modifier= Modifier
+                            .background(color = SocialTheme.colors.uiBackground)
+                            .padding(vertical = 6.dp, horizontal = 12.dp)){
+                            ClickableText(text = AnnotatedString("Remove"), style = TextStyle(color=Color.Red,
+                                fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
+                            ), onClick = {
+                                openDialog.value=false
+                                location.value=null })
+                }
+            }
+
+                }
+
+            }
+
+
+
+        }
+    }
+
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun LocationField(modifier: Modifier.Companion, onClick: () -> Unit, title: String, value: String, icon: Int) {
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Row(
+                modifier = Modifier.padding(24.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(id = icon),
+                    contentDescription = null,
+                    tint = SocialTheme.colors.iconSecondary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = title,
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 16.sp,
+                    color = SocialTheme.colors.iconSecondary
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Card(shape= RoundedCornerShape(6.dp), border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated), onClick = onClick){
+                    Box(modifier= Modifier
+                        .background(color = SocialTheme.colors.uiBackground)
+                        .padding(vertical = 6.dp, horizontal = 12.dp)){
+                        ClickableText(text = AnnotatedString(value), style = TextStyle(fontSize = 16.sp, fontFamily = Inter,
+                            fontWeight = FontWeight.Normal), onClick ={onClick()})
+                    }
+
+
+                }
+
+            }
+
+            Divider()
+        }
 
 }
 

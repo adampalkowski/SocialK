@@ -13,11 +13,13 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import com.example.socialk.*
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
 import com.example.socialk.Map
+import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.ui.theme.SocialTheme
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
@@ -28,6 +30,8 @@ import java.util.jar.Manifest
 class MapFragment:Fragment() {
     private val viewModel by viewModels<MapViewModel>()
     private  var fusedLocationClient: FusedLocationProviderClient?=null
+
+    private val activityViewModel by activityViewModels<ActivityViewModel>()
     private  var PERMISSION_REQUEST_CODE= 100
 
 
@@ -159,7 +163,7 @@ class MapFragment:Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
-                    MapScreen(onEvent = { event ->
+                    MapScreen(activityViewModel,onEvent = { event ->
                         when (event) {
                             is MapEvent.GoToProfile -> viewModel.handleGoToProfile()
                             is MapEvent.LogOut -> viewModel.handleLogOut()

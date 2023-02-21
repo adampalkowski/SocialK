@@ -1,8 +1,11 @@
 package com.example.socialk.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -27,7 +30,6 @@ fun SocialDialog(onDismiss:()->Unit,onConfirm:(Int)->Unit,onCancel:(Int)->Unit,
     Dialog(onDismissRequest =onDismiss) {
         Card(shape= RoundedCornerShape(16.dp)) {
             Box(modifier = Modifier.padding(24.dp),){
-
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(painter = painterResource(id = icon), contentDescription = null, tint = SocialTheme.colors.iconPrimary)
                     Spacer(modifier = Modifier.height(16.dp))
@@ -50,6 +52,42 @@ fun SocialDialog(onDismiss:()->Unit,onConfirm:(Int)->Unit,onCancel:(Int)->Unit,
                         ClickableText(text = AnnotatedString(actionButtonText), style = TextStyle(color=actionButtonTextColor,
                             fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
                         ), onClick =onConfirm)
+                    }
+                }
+            }
+
+        }
+
+    }
+
+
+}
+
+
+@Composable
+fun CustomSocialDialog(onDismiss:()->Unit,onConfirm:(Int)->Unit,onCancel:(Int)->Unit,
+                 title:String,info:String,icon:Int,actionButtonText:String="Delete",actionButtonTextColor:Color=Color.Red,content:@Composable ()->Unit){
+    Dialog(onDismissRequest =onDismiss) {
+        Card(shape= RoundedCornerShape(16.dp)) {
+            Box(modifier = Modifier.background(color=SocialTheme.colors.uiBackground).padding(24.dp)){
+                Column(horizontalAlignment = Alignment.CenterHorizontally,modifier=Modifier.verticalScroll(
+                    rememberScrollState()
+                )) {
+                    Icon(painter = painterResource(id = icon), contentDescription = null, tint = SocialTheme.colors.iconPrimary)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(text = title,style= TextStyle(
+                        fontWeight = FontWeight.Medium, fontSize = 20.sp, fontFamily = Inter
+                    )
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(text = info, style = TextStyle(
+                        fontSize = 14.sp, fontWeight = FontWeight.Normal , fontFamily = Inter
+                    )
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Row(modifier = Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.SpaceEvenly) {
+                        content()
+
                     }
                 }
             }

@@ -28,7 +28,7 @@ class HomeFragment:Fragment() {
     private val viewModel by activityViewModels<HomeViewModel>()
     private val authViewModel by viewModels<AuthViewModel>()
     private val chatViewModel by viewModels<ChatViewModel>()
-    private val activityViewModel by viewModels<ActivityViewModel>()
+    private val activityViewModel by activityViewModels<ActivityViewModel>()
     private val activeUsersViewModel by viewModels<ActiveUsersViewModel>()
 
     override fun onCreateView(
