@@ -16,6 +16,7 @@ import com.google.firebase.dynamiclinks.PendingDynamicLinkData
 import com.google.firebase.dynamiclinks.ktx.dynamicLinks
 import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.jar.Manifest
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {

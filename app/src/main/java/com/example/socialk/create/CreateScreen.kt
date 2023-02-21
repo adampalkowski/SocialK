@@ -85,7 +85,7 @@ sealed class CreateEvent {
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun CreateScreen(
+fun CreateScreen(location:String?,
     userViewModel: UserViewModel,
     activityViewModel: ActivityViewModel?,
     onEvent: (CreateEvent) -> Unit,
@@ -272,17 +272,26 @@ fun CreateScreen(
                 selected_list=selected_list
             )
 
+            if(location!=null){
+                //LOCATON FIELD
+                CreateClickableTextField(
+                    modifier = Modifier,
+                    onClick = {
+                        focusManager.clearFocus()
+                    },
+                    title = "Location",
+                    value = location,
+                    icon = R.drawable.ic_location_24
+                )
+            }else{
+                //CUSTOM LOCATION FIELD
+                EditTextField(hint = "Describe the location",
+                    hideKeyboard = hideKeyboard,
+                    onFocusClear = { hideKeyboard = false },textState=customLocationTextState,
+                    modifier = Modifier, title = "Custom location",
+                    icon = R.drawable.ic_edit_location, focusManager = focusManager, onClick = {})
+            }
 
-            //LOCATON FIELD
-            CreateClickableTextField(
-                modifier = Modifier,
-                onClick = {
-                    focusManager.clearFocus()
-                },
-                title = "Location",
-                value = locationState,
-                icon = R.drawable.ic_location_24
-            )
             //DESCRIPTION FIELD
             EditTextField(hint = "Additional information",
                 hideKeyboard = hideKeyboard,
@@ -290,12 +299,7 @@ fun CreateScreen(
                 modifier = Modifier, title = "Description",
                 icon = R.drawable.ic_description, focusManager = focusManager, onClick = {})
 
-            //CUSTOM LOCATION FIELD
-            EditTextField(hint = "Describe the location",
-                hideKeyboard = hideKeyboard,
-                onFocusClear = { hideKeyboard = false },textState=customLocationTextState,
-                modifier = Modifier, title = "Custom location",
-                icon = R.drawable.ic_edit_location, focusManager = focusManager, onClick = {})
+
 
 
             RequirementsField(

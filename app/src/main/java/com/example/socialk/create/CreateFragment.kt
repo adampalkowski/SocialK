@@ -1,6 +1,7 @@
 package com.example.socialk.create
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -52,11 +53,17 @@ class CreateFragment : Fragment() {
             }
 
         }
+        var location:String?=arguments?.getString("location")
         userViewModel.getFriends(authViewModel.currentUser!!.uid)
+
+        Log.d("mapscreen",location.toString())
+
+
+
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
-                    CreateScreen(userViewModel,activityViewModel, onEvent = { event ->
+                    CreateScreen(location,userViewModel,activityViewModel, onEvent = { event ->
                         when (event) {
                             is CreateEvent.GoToProfile -> viewModel.handleGoToProfile()
                             is CreateEvent.GoToHome -> {

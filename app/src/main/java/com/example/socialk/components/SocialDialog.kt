@@ -23,7 +23,7 @@ import com.example.socialk.ui.theme.SocialTheme
 
 @Composable
 fun SocialDialog(onDismiss:()->Unit,onConfirm:(Int)->Unit,onCancel:(Int)->Unit,
-                 title:String,info:String,icon:Int,actionButtonText:String="Delete"){
+                 title:String,info:String,icon:Int,actionButtonText:String="Delete",actionButtonTextColor:Color=Color.Red){
     Dialog(onDismissRequest =onDismiss) {
         Card(shape= RoundedCornerShape(16.dp)) {
             Box(modifier = Modifier.padding(24.dp),){
@@ -47,7 +47,7 @@ fun SocialDialog(onDismiss:()->Unit,onConfirm:(Int)->Unit,onCancel:(Int)->Unit,
                                 fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
                             ), onClick = onCancel)
                         Spacer(modifier = Modifier.width(24.dp))
-                        ClickableText(text = AnnotatedString(actionButtonText), style = TextStyle(color= Color.Red,
+                        ClickableText(text = AnnotatedString(actionButtonText), style = TextStyle(color=actionButtonTextColor,
                             fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
                         ), onClick =onConfirm)
                     }

@@ -47,7 +47,7 @@ fun Fragment.navigate(to: Screen, from: Screen,bundle: Bundle= Bundle.EMPTY) {
             findNavController().navigate(R.id.memories_fragment)
         }
         Screen.Create -> {
-            findNavController().navigate(R.id.create_fragment)
+            findNavController().navigate(R.id.create_fragment,args=bundle)
         }
         Screen.Live -> {
             findNavController().navigate(R.id.live_fragment)
