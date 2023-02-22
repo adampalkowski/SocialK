@@ -3,7 +3,6 @@ package com.example.socialk.map
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
-import android.transition.Transition
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -13,21 +12,24 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.example.socialk.Destinations
 import com.example.socialk.R
-import com.example.socialk.components.BottomBar
-import com.example.socialk.components.SocialDialog
+import com.example.socialk.components.*
 import com.example.socialk.di.ActivityViewModel
+import com.example.socialk.home.ActivityEvent
+import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
 import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.Inter
@@ -38,7 +40,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
-import kotlinx.coroutines.coroutineScope
 
 sealed class MapEvent {
     object GoToProfile : MapEvent()
@@ -87,7 +88,7 @@ fun loadIcon(
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun MapScreen(activityViewModel:ActivityViewModel,
+fun MapScreen(latLngInitial: LatLng?,activityViewModel:ActivityViewModel,
     onEvent: (MapEvent) -> Unit,
     bottomNavEvent: (Destinations) -> Unit,
     viewModel: MapViewModel,
@@ -153,9 +154,22 @@ fun MapScreen(activityViewModel:ActivityViewModel,
                                     location?.longitude!!
                                 )
                             )
-                            currentLocation = LatLng(location?.latitude!!, location?.longitude!!)
-                            cameraPositionState.position =
-                                CameraPosition.fromLatLngZoom(currentLocation!!, 13f)
+
+                            if (currentLocation==null){
+                                currentLocation = LatLng(location?.latitude!!, location?.longitude!!)
+                                Log.d("Mapfragment"," dats")
+                                if (latLngInitial==null){
+                                    cameraPositionState.position =
+                                        CameraPosition.fromLatLngZoom(currentLocation!!, 13f)
+                                }else{
+                                    cameraPositionState.position =
+                                        CameraPosition.fromLatLngZoom(latLngInitial!!, 13f)
+                                }
+
+                            }else{
+                                currentLocation = LatLng(location?.latitude!!, location?.longitude!!)
+                            }
+
                             Log.d("MapScreen", "got location")
                         }
                     }
@@ -217,37 +231,45 @@ fun MapScreen(activityViewModel:ActivityViewModel,
                             activityViewModel.activitiesListState.value.let {
                                 when(it){
                                     is Response.Success ->{
-                                        it.data.forEach {
-                                            if(it.location.isNotEmpty()){
-                                                val values=it.location.split("/")
+                                        it.data.forEach {activity->
+                                            if(activity.location.isNotEmpty()){
+                                                val values=activity.location.split("/")
                                                 val latLng= LatLng(values.get(0).toDouble(),values.get(1).toDouble())
                                                 MarkerInfoWindow(
                                                     state = MarkerState(
                                                         position = latLng
-                                                    ), icon = bitmap
+                                                    ), icon = loadIcon(LocalContext.current, activity.creator_profile_picture, R.drawable.ic_person)
                                                 ) {
-                                                    Column() {
-                                                        Card(shape = RoundedCornerShape(6.dp)) {
-                                                            Box(
-                                                                modifier = Modifier
-                                                                    .background(color = SocialTheme.colors.uiBackground)
-                                                                    .padding(6.dp)
-                                                            ) {
-                                                                Text(
-                                                                    text = "Activity location",
-                                                                    style = TextStyle(
-                                                                        fontFamily = Inter,
-                                                                        fontWeight = FontWeight.Normal,
-                                                                        fontSize = 14.sp
+                                                    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                                                        androidx.compose.material3.Card(
+                                                            shape = RoundedCornerShape(
+                                                                16.dp
+                                                            )
+                                                        ) {
+                                                            Box(modifier = Modifier.background(color = SocialTheme.colors.uiBackground),) {
+                                                                MapActivityItem(
+                                                                    activity = activity,
+                                                                    username = activity.creator_username,
+                                                                    profilePictureUrl = activity.creator_profile_picture,
+                                                                    timeLeft = activity.time_left,
+                                                                    title = activity.title,
+                                                                    description = activity.description,
+                                                                    date = activity.date,
+                                                                    timePeriod = activity.start_time + "-" + activity.end_time,
+                                                                    custom_location = activity.custom_location,
+                                                                    liked = activity.participants_usernames.containsKey(
+                                                                        UserData.user!!.id
                                                                     ),
-                                                                    color = SocialTheme.colors.textPrimary
+                                                                    onEvent = {}
                                                                 )
-                                                            }
-                                                        }
-                                                        Spacer(modifier = Modifier.height(4.dp))
-                                                    }
 
-                                                }
+                                                            }}
+
+
+                                                                Spacer(modifier = Modifier.height(4.dp))
+                                                            }
+
+                                                        }
                                             }
 
                                         }
@@ -295,9 +317,7 @@ fun MapScreen(activityViewModel:ActivityViewModel,
                         }
                         location_picked_flow.value.let {
                             if (it != null) {
-                                Log.d("MapScreen", "forehac " + it.toString())
-                                cameraPositionState.position =
-                                    CameraPosition.fromLatLngZoom(it!!, 13f)
+
                                 Box(
                                     modifier = Modifier
                                         .align(
@@ -377,5 +397,107 @@ fun MapScreen(activityViewModel:ActivityViewModel,
             currentScreen = com.example.socialk.Map,
             transparent = true
         )
+    }
+}
+
+@Composable
+fun MapActivityItem(
+    activity: Activity,
+    username: String,
+    profilePictureUrl: String,
+    timeLeft: String,
+    title: String,
+    description: String,
+    date: String,
+    timePeriod: String,
+    custom_location: String,
+    liked: Boolean,
+    onEvent: (ActivityEvent) -> Unit
+) {
+
+
+    var liked = rememberSaveable { mutableStateOf(liked) }
+    Box(
+        modifier = Modifier
+            .padding(start = 12.dp)
+            .padding(end = 12.dp)
+            .padding(vertical = 12.dp)
+    ) {
+        Column() {
+            //ACtivity top content
+            Row(modifier = Modifier, verticalAlignment = Alignment.CenterVertically) {
+
+              /*  AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(profilePictureUrl)
+                        .crossfade(true)
+                        .build(),
+                    placeholder = painterResource(R.drawable.ic_person),
+                    contentDescription = "image sent",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier .size(36.dp)
+                        .clip(CircleShape)
+                )*/
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier) {
+                    Text(
+                        text = username,
+                        style = com.example.socialk.ui.theme.Typography.h5,
+                        fontWeight = FontWeight.Light,
+                        color = SocialTheme.colors.textPrimary
+                    )
+                    Text(
+                        text = timeLeft,
+                        style = com.example.socialk.ui.theme.Typography.subtitle1,
+                        textAlign = TextAlign.Center,
+                        color = SocialTheme.colors.textPrimary
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+
+                Spacer(modifier = Modifier.width(12.dp))
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            //TEXT AND CONTROLS ROW
+            Row(modifier = Modifier, verticalAlignment = Alignment.CenterVertically) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp), verticalArrangement = Arrangement.Top
+                ) {
+                    Text(
+                        text = title,
+                        style = com.example.socialk.ui.theme.Typography.h3,
+                        fontWeight = FontWeight.Normal,
+                        color = SocialTheme.colors.textPrimary,
+                        textAlign = TextAlign.Left
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = description,
+                        style = com.example.socialk.ui.theme.Typography.h5,
+                        fontWeight = FontWeight.Light,
+                        color = SocialTheme.colors.iconPrimary,
+                        textAlign = TextAlign.Left
+                    )
+                }
+
+            }
+
+            //DETAILS
+            Spacer(modifier = Modifier.height(12.dp))
+            //todo either custom location or latlng
+            ActivityDetailsBar(custom_location = null,location = null, date = date, timePeriod = timePeriod, onEvent = {})
+            Spacer(modifier = Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp)
+                    .height(1.dp)
+                    .background(color = SocialTheme.colors.uiFloated)
+            )
+
+
+        }
     }
 }

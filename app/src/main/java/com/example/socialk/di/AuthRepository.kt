@@ -20,6 +20,7 @@ interface AuthRepository {
 
     fun logout()
     fun deleteAuth()
+    fun resetPassword(new_password:String)
      suspend fun deleteAccount(id:String)
 
     suspend fun oneTapSignInWithGoogle(): OneTapSignInResponse

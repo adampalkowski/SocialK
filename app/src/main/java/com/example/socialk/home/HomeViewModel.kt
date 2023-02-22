@@ -8,6 +8,7 @@ import com.example.socialk.Main.Screen
 import com.example.socialk.model.Activity
 import com.example.socialk.model.User
 import com.example.socialk.util.Event
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,9 +19,14 @@ class HomeViewModel : ViewModel() {
     val navigateTo: LiveData<Event<Screen>> = _navigateTo
     private val _clicked_chat_activity = MutableLiveData<Activity>()
     val clicked_chat_activity: LiveData<Activity> = _clicked_chat_activity
+    private val _clicked_location_activity = MutableLiveData<String>()
+    val clicked_location_activity: LiveData<String> = _clicked_location_activity
 
     private val _showDialog = MutableStateFlow(false)
     val showDialog: StateFlow<Boolean> = _showDialog.asStateFlow()
+
+    private val _clicked_profile = MutableLiveData<String>()
+    val clicked_profile: LiveData<String> = _clicked_profile
 
     private val _activity = MutableLiveData<Activity?>()
     val activity: LiveData<Activity?> = _activity
@@ -42,6 +48,10 @@ class HomeViewModel : ViewModel() {
     fun setActivityLink(link:String){
         _activity_link.value=link
     }
+    fun handleGoToUserProfile(user_id:String){
+        _clicked_profile.value=user_id
+        _navigateTo.value = Event(Screen.UserProfile)
+    }
 
     fun handleGoToProfile( ) {
         _navigateTo.value = Event(Screen.Profile)
@@ -60,6 +70,10 @@ class HomeViewModel : ViewModel() {
         _navigateTo.value = Event(Screen.Chat)
     }
     fun handleGoToMap( ) {
+        _navigateTo.value = Event(Screen.Map)
+    }
+    fun handleGoToMapActivity(latLng: String ) {
+        _clicked_location_activity.value=latLng
         _navigateTo.value = Event(Screen.Map)
     }
     fun handleGoToChats( ) {

@@ -61,9 +61,12 @@ class UserProfileFragment : Fragment(){
                 }
             }
         }
-        //get the searched user from bundle
-        val user = arguments?.getSerializable("user") as User
 
+        val user:User? = arguments?.getSerializable("user") as User?
+        val user_id:String? = arguments?.getSerializable("user_id") as String?
+        if (user_id!=null){
+            userViewModel.getUser(user_id)
+        }
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {

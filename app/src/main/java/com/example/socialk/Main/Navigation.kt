@@ -37,7 +37,7 @@ fun Fragment.navigate(to: Screen, from: Screen,bundle: Bundle= Bundle.EMPTY) {
             findNavController().navigate(R.id.settings_fragment)
         }
         Screen.Map -> {
-            findNavController().navigate(R.id.map_fragment)
+            findNavController().navigate(R.id.map_fragment,args=bundle)
         }
         Screen.ChatCollection -> {
             findNavController().navigate(R.id.chats_collection_fragment)

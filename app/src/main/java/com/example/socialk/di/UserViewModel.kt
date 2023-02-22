@@ -44,6 +44,8 @@ class UserViewModel @Inject constructor(
 
     private val _isUserDeletedState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isUserDeletedState: State<Response<Void?>> = _isUserDeletedState
+    private val _isUserUpdated = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isUserUpdated: State<Response<Void?>> = _isUserUpdated
 
 
     private val _isInviteAddedState = mutableStateOf<Response<Void?>>(Response.Success(null))
@@ -365,6 +367,14 @@ class UserViewModel @Inject constructor(
             }
         }
 
+    }
+
+    fun profileChanges(id:String,firstAndLastName: String, description: String) {
+        viewModelScope.launch {
+            repo.updateUser(id,firstAndLastName, description =description ).collect { response ->
+                _isUserUpdated.value = response
+            }
+        }
     }
 
 }

@@ -49,7 +49,7 @@ sealed class EditProfileEvent {
     object GoToSettings : EditProfileEvent()
     object GoToEditProfile : EditProfileEvent()
     object GoToHome : EditProfileEvent()
-    object ConfirmChanges : EditProfileEvent()
+    class ConfirmChanges(val firstAndLastName:String,val description:String) : EditProfileEvent()
     object PickImage : EditProfileEvent()
 }
 
@@ -135,14 +135,6 @@ fun EditProfileScreen(
             )
             Spacer(modifier = Modifier.height(12.dp))
 
-            editField(
-                label = "Username",
-                maxLetters = 20,
-                onImeAction = { usernameFocusRequester.requestFocus() },
-                editTextState = usernameState,
-                modifier = Modifier.focusRequester(usernameFocusRequester)
-            )
-            Spacer(modifier = Modifier.height(12.dp))
 
             editField(
                 label = "Profile description",
@@ -153,10 +145,9 @@ fun EditProfileScreen(
             )
             Spacer(modifier = Modifier.height(12.dp))
             Button(
-                onClick = { onEvent(EditProfileEvent.ConfirmChanges) },
+                onClick = { onEvent(EditProfileEvent.ConfirmChanges(nameState.text,descriptionState.text)) },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = descriptionState.isValid &&
-                        usernameState.isValid && nameState.isValid
+                enabled = descriptionState.isValid && nameState.isValid
             ) {
                 Text(text = "Confirm changes")
             }

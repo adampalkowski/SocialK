@@ -1,5 +1,6 @@
 package com.example.socialk.create
 
+import android.util.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
@@ -96,6 +97,7 @@ fun CreateScreen(location:String?,
     onEvent: (CreateEvent) -> Unit,
     bottomNavEvent: (Destinations) -> Unit
 ) {
+    Log.d("createscreen","init"+location.toString())
     val openDialog = remember { mutableStateOf(false)  }
     var location= remember{ mutableStateOf(location)  }
     var latlng= remember{ mutableStateOf("")  }
@@ -192,6 +194,43 @@ fun CreateScreen(location:String?,
             },
             title = { Text(text = "Select time") }
         )
+    }
+
+    var isMapLoaded by remember { mutableStateOf(false) }
+
+    val cameraPositionState: CameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 11f)
+    }
+    var uiSettings by remember {
+        mutableStateOf(
+            MapUiSettings(
+                zoomControlsEnabled = false,
+                myLocationButtonEnabled = true,
+                indoorLevelPickerEnabled = true
+            )
+        )
+    }
+    var bitmap: BitmapDescriptor? =
+        loadIcon(LocalContext.current, UserData.user?.pictureUrl!!, R.drawable.ic_person)
+    var properties by remember {
+        mutableStateOf(MapProperties(mapType = MapType.NORMAL))
+    }
+    val pattern = "\\((-?\\d+\\.\\d+),(-?\\d+\\.\\d+)\\)".toRegex()
+    var latLng = LatLng(0.0,0.0)
+    var matchResult:MatchResult? =null
+    if(location.value!=null){
+        matchResult = pattern.find(location.value!!)
+    }else{
+
+    }
+
+    if (matchResult != null) {
+        val lat = matchResult.groupValues[1].toDouble()
+        val lng = matchResult.groupValues[2].toDouble()
+        latLng = LatLng(lat, lng)
+        latlng.value=lat.toString()+"/"+lng.toString()
+        cameraPositionState.position= CameraPosition.fromLatLngZoom(latLng, 13f)
+    } else {
     }
     Surface(
         modifier = Modifier
@@ -292,7 +331,7 @@ fun CreateScreen(location:String?,
                     title = "Location",
                     value = "Already Selected",
                     icon = R.drawable.ic_location_24)
-
+                Log.d("createscreen","val"+latlng.value)
             }else{
                 //CUSTOM LOCATION FIELD
                 EditTextField(hint = "Describe the location",
@@ -300,6 +339,7 @@ fun CreateScreen(location:String?,
                     onFocusClear = { hideKeyboard = false },textState=customLocationTextState,
                     modifier = Modifier, title = "Custom location",
                     icon = R.drawable.ic_edit_location, focusManager = focusManager, onClick = {})
+
             }
 
             //DESCRIPTION FIELD
@@ -334,6 +374,7 @@ fun CreateScreen(location:String?,
 
 
             CreateActivityButton(onClick = {
+                Log.d("createscreen","button"+latlng.value)
                 onEvent(
                     CreateEvent.CreateActivity(
                         title = activityTextState.text,
@@ -390,42 +431,7 @@ fun CreateScreen(location:String?,
             icon =R.drawable.ic_location_24,
             actionButtonText = "Delete"
         ){
-            var isMapLoaded by remember { mutableStateOf(false) }
 
-            val cameraPositionState: CameraPositionState = rememberCameraPositionState {
-                position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 11f)
-            }
-            var uiSettings by remember {
-                mutableStateOf(
-                    MapUiSettings(
-                        zoomControlsEnabled = false,
-                        myLocationButtonEnabled = true,
-                        indoorLevelPickerEnabled = true
-                    )
-                )
-            }
-            var bitmap: BitmapDescriptor? =
-                loadIcon(LocalContext.current, UserData.user?.pictureUrl!!, R.drawable.ic_person)
-            var properties by remember {
-                mutableStateOf(MapProperties(mapType = MapType.NORMAL))
-            }
-            val pattern = "\\((-?\\d+\\.\\d+),(-?\\d+\\.\\d+)\\)".toRegex()
-            var latLng = LatLng(0.0,0.0)
-            var matchResult:MatchResult? =null
-            if(location.value!=null){
-                matchResult = pattern.find(location.value!!)
-            }else{
-
-            }
-
-            if (matchResult != null) {
-                val lat = matchResult.groupValues[1].toDouble()
-                val lng = matchResult.groupValues[2].toDouble()
-                latLng = LatLng(lat, lng)
-                latlng.value=lat.toString()+"/"+lng.toString()
-                cameraPositionState.position= CameraPosition.fromLatLngZoom(latLng, 13f)
-            } else {
-            }
             Column() {
                 Card(
                     Modifier

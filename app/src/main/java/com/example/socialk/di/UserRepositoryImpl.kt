@@ -167,7 +167,15 @@ class UserRepositoryImpl @Inject constructor(
             emit(Response.Failure(e = SocialException("deleteUser exception", Exception())))
         }
     }
-
+    override suspend fun updateUser(id: String,firstAndLastName:String,description:String): Flow<Response<Void?>> = flow {
+        try {
+            emit(Response.Loading)
+            val deletion = usersRef.document(id).update("name",firstAndLastName,"description",description).await1()
+            emit(Response.Success(deletion))
+        } catch (e: Exception) {
+            emit(Response.Failure(e = SocialException("    override suspend fun updateUser(id: String,firstAndLastName:String,description:String): Flow<Response<Void?>> = flow {\n exception", Exception())))
+        }
+    }
     override suspend fun addUsernameToUser(id: String, username: String): Flow<Response<Void?>> =
         flow {
             try {
@@ -247,7 +255,11 @@ class UserRepositoryImpl @Inject constructor(
 
             if (imageUri != null) {
                 val fileName = user_id
-                storageRef.child("images/images/$fileName" + "_200x200").delete().await1()
+                try {
+                    storageRef.child("images/images/$fileName" + "_200x200").delete().await1()
+                }catch (e:StorageException){
+
+                }
                 val imageRef = storageRef.child("images/$fileName")
                 imageRef.putFile(imageUri).await1()
                 val reference = storageRef.child("images/images/$fileName" + "_200x200")

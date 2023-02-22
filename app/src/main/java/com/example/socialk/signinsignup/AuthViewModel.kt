@@ -62,7 +62,10 @@ class AuthViewModel @Inject constructor(
         val result=repo.signup(name=name, email = email,password= password )
         _signupFlow.value=result
     }
+    fun resetPassword(new_password:String){
+        repo.resetPassword(new_password)
 
+    }
     fun logout(){
         repo.logout()
         _loginFlow.value=null

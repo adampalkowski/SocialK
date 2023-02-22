@@ -85,7 +85,9 @@ class AuthRepositoryImpl @Inject constructor(
     override fun deleteAuth() {
         auth.currentUser?.delete()
     }
-
+    override fun resetPassword(new_password:String) {
+        auth.currentUser?.updatePassword(new_password)
+    }
     override suspend fun oneTapSignInWithGoogle(): OneTapSignInResponse {
         return try {
             val signInResult = oneTapClient.beginSignIn(signInRequest).await()

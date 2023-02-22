@@ -159,11 +159,17 @@ class MapFragment:Fragment() {
                     android.Manifest.permission.ACCESS_FINE_LOCATION)
             }
         }
-
+        var latlngInitial:String?=arguments?.getString("latlng")
+        var latLng:LatLng?=null
+        if (latlngInitial!=null){
+            val values=latlngInitial?.split("/")
+             latLng= LatLng(values.get(0).toDouble(),values?.get(1)?.toDouble())
+        }
+        Log.d("Mapfragment","got data"+latlngInitial)
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
-                    MapScreen(activityViewModel,onEvent = { event ->
+                    MapScreen(latLng,activityViewModel,onEvent = { event ->
                         when (event) {
                             is MapEvent.GoToProfile -> viewModel.handleGoToProfile()
                             is MapEvent.LogOut -> viewModel.handleLogOut()

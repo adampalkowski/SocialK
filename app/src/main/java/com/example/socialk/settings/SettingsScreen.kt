@@ -19,11 +19,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -33,11 +35,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.fragment.app.viewModels
 import com.example.socialk.R
+import com.example.socialk.components.CustomSocialDialog
 import com.example.socialk.components.ScreenHeading
 import com.example.socialk.components.SocialDialog
 import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
+import com.example.socialk.signinsignup.ConfirmPasswordState
+import com.example.socialk.signinsignup.Password
+import com.example.socialk.signinsignup.PasswordState
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.Ocean1
 import com.example.socialk.ui.theme.SocialTheme
@@ -52,7 +59,9 @@ sealed class SettingsEvent {
 
 @Composable
 fun SettingsScreen(viewModel: AuthViewModel?, onEvent: (SettingsEvent) -> Unit) {
-    val openDialog = remember { mutableStateOf(false)  }
+    val openDialogDeleteAccount = remember { mutableStateOf(false)  }
+    val openDialogResetPassword = remember { mutableStateOf(false)  }
+    val openDialogUpdateEmail = remember { mutableStateOf(false)  }
 
     Surface(
         modifier = Modifier
@@ -65,9 +74,9 @@ fun SettingsScreen(viewModel: AuthViewModel?, onEvent: (SettingsEvent) -> Unit) 
             Spacer(modifier = Modifier.height(12.dp))
             settingsDivider(text = "Account")
             settingsItem(
-                text = "Reset your password",
+                text = "Change your password",
                 icon = R.drawable.ic_reset_passwrod,
-                onClick = {})
+                onClick = {openDialogResetPassword.value=true})
             settingsItem(text = "Update email", icon = R.drawable.ic_mail, onClick = {})
             settingsItem(text = "Dark mode", icon = R.drawable.ic_dark_mode, onClick = {})
             settingsItem(text = "Notification", icon = R.drawable.ic_notification, onClick = {})
@@ -79,25 +88,63 @@ fun SettingsScreen(viewModel: AuthViewModel?, onEvent: (SettingsEvent) -> Unit) 
             settingsItem(
                 text = "Delete account",
                 icon = R.drawable.ic_delete_forever,
-                onClick = {openDialog.value=true })
+                onClick = {openDialogDeleteAccount.value=true })
         }
-        if(openDialog.value){
+        //delete account dialog
+        if(openDialogDeleteAccount.value){
             SocialDialog(
-                onDismiss = { openDialog.value=false },
+                onDismiss = { openDialogDeleteAccount.value=false },
                 onConfirm = {
                     viewModel?.deleteAccount(UserData.user!!.id)
                     viewModel?.deleteAuth()
                     onEvent(SettingsEvent.LogOut)
                             },
 
-                onCancel = { openDialog.value=false },
+                onCancel = { openDialogDeleteAccount.value=false },
                 title = "Delete account?",
                 info ="Confirm deleting the account, this will permanently remove he account and all the information connected with it" ,
                 icon =R.drawable.ic_delete,
                 actionButtonText = "Delete"
             )
         }
+        if(openDialogResetPassword.value){
+            val passwordState = remember { PasswordState() }
 
+            CustomSocialDialog(
+                onDismiss = { openDialogResetPassword.value=false },
+                onConfirm = {
+                    viewModel?.deleteAccount(UserData.user!!.id)
+                    viewModel?.deleteAuth()
+                    onEvent(SettingsEvent.LogOut)
+                },
+
+                onCancel = { openDialogResetPassword.value=false },
+                title = "Change password?",
+                info ="Set the new password to this account" ,
+                icon =R.drawable.ic_password,
+                actionButtonText = "Delete"
+            ){
+                Column() {
+                    Password(
+                        label = stringResource(id = R.string.confirm_password),
+                        passwordState = passwordState,
+                        onImeAction = { },
+                        modifier = Modifier
+                    )
+                    Row() {
+                        ClickableText(text = AnnotatedString("Dismiss")
+                            , style = TextStyle(color= SocialTheme.colors.textPrimary,
+                                fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
+                            ), onClick = { openDialogResetPassword.value=false})
+                        Spacer(modifier = Modifier.width(24.dp))
+                        ClickableText(text = AnnotatedString("Change"), style = TextStyle(color=SocialTheme.colors.textInteractive,
+                            fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
+                        ), onClick = {viewModel?.resetPassword(passwordState.text)  })
+                    }
+                }
+
+            }
+        }
     }
 }
 

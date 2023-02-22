@@ -37,6 +37,8 @@ class ActivityViewModel @Inject constructor(
 
     private val _activitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val activitiesListState: State<Response<List<Activity>>> = _activitiesListState
+    private val _userActivitiesState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
+    val userActivitiesState: State<Response<List<Activity>>> = _userActivitiesState
 
     private val _activityState = mutableStateOf<Response<Activity>>(Response.Loading)
     val activityState: State<Response<Activity>> = _activityState
@@ -201,7 +203,13 @@ class ActivityViewModel @Inject constructor(
 
         }
     }
-
+    fun getUserActivities(id: String) {
+        viewModelScope.launch {
+            repo.getUserActivities(id).collect { response ->
+                _userActivitiesState.value = response
+            }
+        }
+    }
     fun compareDates(date1: String, date2: String, deleteActivity: () -> Unit): Long {
         val format = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
         val d1 = format.parse(date1)

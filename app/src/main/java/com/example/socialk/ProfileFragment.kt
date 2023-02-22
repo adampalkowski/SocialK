@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
+import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.model.User
 import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.SocialTheme
@@ -18,6 +19,7 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class ProfileFragment :Fragment(){
     private val viewModel by viewModels<ProfileViewModel>()
+    private val activityViewModel by viewModels<ActivityViewModel>()
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -43,10 +45,11 @@ class ProfileFragment :Fragment(){
         if (user.name==null){
             user.name=user.email
         }
+        activityViewModel.getUserActivities(user.id)
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
-                    ProfileScreen(user,
+                    ProfileScreen(activityViewModel,user,
                         onEvent = { event ->
                             when (event) {
                                 is ProfileEvent.GoToProfile -> viewModel.handleGoToProfile()

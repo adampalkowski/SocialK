@@ -1,48 +1,55 @@
 package com.example.socialk.components
 
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
-import androidx.compose.foundation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
-import androidx.compose.material3.CardElevation
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.Center
-import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterStart
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.rememberAsyncImagePainter
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.socialk.R
 import com.example.socialk.chat.ChatButton
-import com.example.socialk.components.timepicker.SheetState
 import com.example.socialk.home.ActivityEvent
-import com.example.socialk.home.HomeEvent
 import com.example.socialk.model.Activity
-import com.example.socialk.ui.theme.*
-import kotlin.text.Typography
+import com.example.socialk.ui.theme.Inter
+import com.example.socialk.ui.theme.SocialTheme
+import com.google.android.gms.maps.model.LatLng
 
-sealed class ActivityItemEvent{
-    class LikedActivity(activity: Activity) : ActivityItemEvent(){val activity=activity}
-    class NotLikedActivity (activity: Activity): ActivityItemEvent(){val activity=activity}
-    class OpenActivityChat(activity: Activity): ActivityItemEvent(){val activity=activity}
+sealed class ActivityItemEvent {
+    class LikedActivity(activity: Activity) : ActivityItemEvent() {
+        val activity = activity
+    }
+
+    class NotLikedActivity(activity: Activity) : ActivityItemEvent() {
+        val activity = activity
+    }
+
+    class OpenActivityChat(activity: Activity) : ActivityItemEvent() {
+        val activity = activity
+    }
 }
 
 @Composable
@@ -56,6 +63,7 @@ fun ActivityItem(
     date: String,
     timePeriod: String,
     custom_location: String,
+    location: String,
     liked: Boolean,
     onEvent: (ActivityEvent) -> Unit
 ) {
@@ -70,11 +78,16 @@ fun ActivityItem(
     ) {
         Column() {
             //ACtivity top content
-            Row(modifier = Modifier, verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = rememberAsyncImagePainter(profilePictureUrl),
+            Row(modifier = Modifier.clickable(){onEvent(ActivityEvent.GoToProfile(activity.creator_id)) }, verticalAlignment = Alignment.CenterVertically) {
+
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(profilePictureUrl)
+                        .crossfade(true)
+                        .build(),
+                    placeholder = painterResource(R.drawable.ic_person),
+                    contentDescription = "image sent",
                     contentScale = ContentScale.Crop,
-                    contentDescription = null,
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
@@ -129,21 +142,32 @@ fun ActivityItem(
                         textAlign = TextAlign.Left
                     )
                 }
-                controls(onEvent = {event-> when(event){
-                    is ActivityItemEvent.LikedActivity->{liked.value=false
-                        onEvent(ActivityEvent.ActivityUnLiked(event.activity))
+                controls(onEvent = { event ->
+                    when (event) {
+                        is ActivityItemEvent.LikedActivity -> {
+                            liked.value = false
+                            onEvent(ActivityEvent.ActivityUnLiked(event.activity))
+                        }
+                        is ActivityItemEvent.NotLikedActivity -> {
+                            liked.value = true
+                            onEvent(ActivityEvent.ActivityLiked(event.activity))
+                        }
+                        is ActivityItemEvent.OpenActivityChat -> {
+                            onEvent(ActivityEvent.OpenActivityChat(event.activity))
+                        }
                     }
-                    is ActivityItemEvent.NotLikedActivity->{liked.value=true
-                        onEvent(ActivityEvent.ActivityLiked(event.activity))
-                    }
-                    is ActivityItemEvent.OpenActivityChat->{onEvent(ActivityEvent.OpenActivityChat(event.activity))}
-                } }, activity, liked.value)
+                }, activity, liked.value)
             }
 
             //DETAILS
             Spacer(modifier = Modifier.height(12.dp))
             //todo either custom location or latlng
-            ActivityDetailsBar(location = custom_location, date = date, timePeriod = timePeriod)
+            ActivityDetailsBar(    onEvent=onEvent,
+                location = location,
+                custom_location = custom_location,
+                date = date,
+                timePeriod = timePeriod
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Box(
                 modifier = Modifier
@@ -160,7 +184,12 @@ fun ActivityItem(
 
 
 @Composable
-fun ActivityDetailsBar(location: String, date: String, timePeriod: String) {
+fun ActivityDetailsBar(    onEvent: (ActivityEvent) -> Unit,
+    location: String?,
+    custom_location: String?,
+    date: String,
+    timePeriod: String
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -173,22 +202,50 @@ fun ActivityDetailsBar(location: String, date: String, timePeriod: String) {
                 .horizontalScroll(rememberScrollState())
                 .align(CenterStart), verticalAlignment = CenterVertically
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_location),
-                contentDescription = null,
-                tint = SocialTheme.colors.iconPrimary
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = location,
-                style = TextStyle(
-                    fontFamily = Inter,
-                    fontWeight = FontWeight.ExtraLight,
-                    fontSize = 12.sp
-                ),
-                color = SocialTheme.colors.textPrimary
-            )
-            Spacer(modifier = Modifier.width(24.dp))
+            if (custom_location == null || custom_location.isEmpty()) {
+                if (location == null || location.isEmpty()) {
+
+                } else {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_location),
+                        contentDescription = null,
+                        tint = SocialTheme.colors.iconPrimary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    ClickableText(
+                        text = AnnotatedString("See map"), onClick ={
+
+                            onEvent(ActivityEvent.GoToMap(location ))},
+                        style = TextStyle(
+                            fontFamily = Inter,
+                            fontWeight = FontWeight.ExtraLight,
+                            fontSize = 12.sp, color = SocialTheme.colors.textPrimary
+                        ),
+                    )
+                    Spacer(modifier = Modifier.width(24.dp))
+
+                }
+
+            } else {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_location),
+                    contentDescription = null,
+                    tint = SocialTheme.colors.iconPrimary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = custom_location,
+                    style = TextStyle(
+                        fontFamily = Inter,
+                        fontWeight = FontWeight.ExtraLight,
+                        fontSize = 12.sp
+                    ),
+                    color = SocialTheme.colors.textPrimary
+                )
+                Spacer(modifier = Modifier.width(24.dp))
+            }
+
+
             Icon(
                 painter = painterResource(id = R.drawable.ic_date),
                 contentDescription = null,

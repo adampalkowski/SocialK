@@ -41,7 +41,8 @@ fun ActivityDialog(onDismiss:()->Unit,onConfirm:(Int)->Unit,onCancel:(Int)->Unit
                      timePeriod = activity.start_time + " - " + activity.end_time,
                      custom_location = "ADJASDHKASDHASDJKASd",
                      liked =activity.participants_usernames.containsKey(UserData.user!!.id),
-                     onEvent = {}
+                     onEvent = {},
+                     location = activity.location
                  )
                 }
 

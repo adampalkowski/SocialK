@@ -3,6 +3,8 @@ package com.example.socialk
 import android.util.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.IconButton
@@ -23,8 +25,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import com.example.socialk.components.ActivityItem
 import com.example.socialk.components.BottomBar
+import com.example.socialk.di.ActivityViewModel
+import com.example.socialk.model.Response
 import com.example.socialk.model.User
+import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 import com.example.socialk.ui.theme.Typography
@@ -44,19 +50,9 @@ sealed class ProfileEvent {
 
 data class TabRowItem(
     val title: String,
-    val screen: @Composable () -> Unit,
+    val screen: @Composable () -> Unit
 )
-val tabRowItems = listOf(
-    TabRowItem(
-        title = "Live activities",
-        screen = { LiveActivities(text = "Live activities") },
-    ),
-    TabRowItem(
-        title = "Memories",
-        screen = { Memories(text = "Memories") },
-    ),
 
-)
 
 // PROFILE PICTURE, NAME, USERNAME BOX
 @Composable
@@ -72,7 +68,9 @@ fun profileInfo(profileUrl: String?, username: String, name: String) {
 
             Image(
                 painter = rememberAsyncImagePainter(profileUrl),
-                contentDescription = "profile image" , contentScale = ContentScale.Crop, modifier = Modifier
+                contentDescription = "profile image",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
             )
@@ -109,40 +107,84 @@ fun Memories(
     ) {
 
         Text(
-            text ="MEMORIEsMEMORIEsMEMORIEsMEMORIEsMEMORIEs",
-            style =TextStyle(fontSize = 100.sp),
-            color = SocialTheme.colors.textPrimary
-        )
-    }
-}
-//TODO : FINISH COMPONENT
-@Composable
-fun LiveActivities(
-    text: String,
-) {
-    Box(
-        modifier = Modifier
-        ,
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text ="AcitivtiesAcitivtiesAcitivtiesAcitivtiesAcitivtiesAcitivtiesAcitivtiesAcitivties",
-            style =TextStyle(fontSize = 100.sp),
+            text = "MEMORIEsMEMORIEsMEMORIEsMEMORIEsMEMORIEs",
+            style = TextStyle(fontSize = 100.sp),
             color = SocialTheme.colors.textPrimary
         )
     }
 }
 
+//TODO : FINISH COMPONENT
+@Composable
+fun LiveActivities(
+    text: String
+) {
+    Box(
+        modifier = Modifier,
+        contentAlignment = Alignment.Center,
+    ) {
+
+        Text(
+            text = "AcitivtiesAcitivtiesAcitivtiesAcitivtiesAcitivtiesAcitivtiesAcitivtiesAcitivties",
+            style = TextStyle(fontSize = 100.sp),
+            color = SocialTheme.colors.textPrimary
+        )
+    }
+}
+
+@Composable
+fun LiveActivitiesCurrentUser(
+    text: String, activityViewModel: ActivityViewModel
+) {
+    Box(
+        modifier = Modifier,
+    ) {
+        activityViewModel.userActivitiesState.value.let {
+            when (it) {
+                is Response.Success -> {
+                    Column() {
+                        it.data.forEach{activity->
+                            ActivityItem(
+                                activity =activity,
+                                username =activity.creator_username,
+                                profilePictureUrl =activity.creator_profile_picture,
+                                timeLeft =activity.time_left,
+                                title =activity.title,
+                                description =activity.description,
+                                date =activity.date,
+                                timePeriod =activity.start_time+"-"+activity.end_time,
+                                custom_location =activity.custom_location,
+                                location =activity.location,
+                                liked =activity.participants_usernames.containsKey(UserData.user!!.id),
+                                onEvent ={}
+                            )
+                        }
+                    }
+
+                    }
+                is Response.Failure -> {}
+                is Response.Loading -> {}
+            }
+
+
+        }
+
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun profileButton(onClick: () -> Unit, label: String, iconDrawable: Int) {
-    Card(modifier = Modifier.background(color=SocialTheme.colors.uiBackground),
-        border = BorderStroke(1.dp,color=SocialTheme.colors.uiFloated),
-        shape = RoundedCornerShape(12.dp), onClick =onClick) {
-        Box(modifier = Modifier
-            .background(color = SocialTheme.colors.uiBackground)
-            .padding(12.dp)) {
+    Card(
+        modifier = Modifier.background(color = SocialTheme.colors.uiBackground),
+        border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
+        shape = RoundedCornerShape(12.dp), onClick = onClick
+    ) {
+        Box(
+            modifier = Modifier
+                .background(color = SocialTheme.colors.uiBackground)
+                .padding(12.dp)
+        ) {
             Row(modifier = Modifier, verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     painter = painterResource(id = iconDrawable),
@@ -169,12 +211,12 @@ fun ScoreElement(label: String, value: Int) {
         Text(
             text = label, style = TextStyle(
                 fontSize = 14.sp, fontFamily = Inter, fontWeight = FontWeight.Normal
-            ),  color = SocialTheme.colors.textPrimary
+            ), color = SocialTheme.colors.textPrimary
         )
         Text(
             text = value.toString(), style = TextStyle(
                 fontSize = 14.sp, fontFamily = Inter, fontWeight = FontWeight.SemiBold
-            ),color = SocialTheme.colors.textPrimary
+            ), color = SocialTheme.colors.textPrimary
         )
     }
 }
@@ -218,7 +260,7 @@ fun ProfileScreenHeading(onClickBack: () -> Unit, title: String, onClickSettings
                 .align(Alignment.CenterEnd)
                 .background(color = SocialTheme.colors.uiBackground),
             border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
-            shape = RoundedCornerShape(16.dp),onClick = onClickSettings
+            shape = RoundedCornerShape(16.dp), onClick = onClickSettings
 
         ) {
             Box(
@@ -227,11 +269,11 @@ fun ProfileScreenHeading(onClickBack: () -> Unit, title: String, onClickSettings
                     .background(color = SocialTheme.colors.uiBackground),
                 contentAlignment = Alignment.Center
             ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_settings),
-                        tint = SocialTheme.colors.iconPrimary,
-                        contentDescription = null
-                    )
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_settings),
+                    tint = SocialTheme.colors.iconPrimary,
+                    contentDescription = null
+                )
             }
         }
 
@@ -240,7 +282,12 @@ fun ProfileScreenHeading(onClickBack: () -> Unit, title: String, onClickSettings
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun ProfileScreen(user:User,onEvent: (ProfileEvent) -> Unit, bottomNavEvent: (Destinations) -> Unit) {
+fun ProfileScreen(
+    activityViewModel: ActivityViewModel,
+    user: User,
+    onEvent: (ProfileEvent) -> Unit,
+    bottomNavEvent: (Destinations) -> Unit
+) {
     Surface(
         modifier = Modifier
             .fillMaxSize(), color = SocialTheme.colors.uiBackground
@@ -250,7 +297,8 @@ fun ProfileScreen(user:User,onEvent: (ProfileEvent) -> Unit, bottomNavEvent: (De
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp).verticalScroll(rememberScrollState())
+                .padding(12.dp)
+                .verticalScroll(rememberScrollState())
         ) {
 
             ProfileScreenHeading(
@@ -258,26 +306,24 @@ fun ProfileScreen(user:User,onEvent: (ProfileEvent) -> Unit, bottomNavEvent: (De
                 onClickSettings = { onEvent(ProfileEvent.GoToSettings) }, title = "Profile"
             )
             Spacer(modifier = Modifier.height(12.dp))
-            Log.d("UserProfileFragment",user.pictureUrl.toString())
+            Log.d("UserProfileFragment", user.pictureUrl.toString())
             //TODO:HARDCODED URL
             //PROFILE BOX
             profileInfo(
                 profileUrl = user
                     .pictureUrl,
-                username =user.username!!,
-                name =user.name!!
+                username = user.username!!,
+                name = user.name!!
             )
             Spacer(modifier = Modifier.height(12.dp))
             //BIBLIOGRAPHY
             Text(
                 modifier = Modifier.padding(start = 12.dp),
-                text = "Biblography very long textvery long textvery long textve\n" +
-                        "asdasdasdasdasdasdasdasfssdfgsdfg\n" +
-                        " textvery long textdfghghhdfghhdfghghvery long ",
+                text = user.description,
                 style = TextStyle(
                     fontSize = 16.sp, fontFamily = Inter, fontWeight = FontWeight.Light
                 ),
-                color =  SocialTheme.colors.textPrimary
+                color = SocialTheme.colors.textPrimary
             )
             Spacer(modifier = Modifier.height(16.dp))
             //SCORES
@@ -287,25 +333,35 @@ fun ProfileScreen(user:User,onEvent: (ProfileEvent) -> Unit, bottomNavEvent: (De
             ) {
                 ScoreElement(label = "Memories", value = 27)
                 ScoreElement(label = "Social Score", value = 12321213)
-                ScoreElement(label = "Friends", value = 12)
+                ScoreElement(label = "Friends", value = user.friends_ids.size)
             }
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                 profileButton(
                     label = "Edit profile",
                     iconDrawable = R.drawable.ic_edit_profile,
-                    onClick = {onEvent(ProfileEvent.GoToEditProfile)})
+                    onClick = { onEvent(ProfileEvent.GoToEditProfile) })
                 Spacer(modifier = Modifier.width(8.dp))
                 profileButton(label = "Groups", iconDrawable = R.drawable.ic_groups, onClick = {})
                 Spacer(modifier = Modifier.width(8.dp))
                 profileButton(
                     label = "Add friends",
                     iconDrawable = R.drawable.ic_add_person,
-                    onClick = {onEvent(ProfileEvent.GoToSearch)})
+                    onClick = { onEvent(ProfileEvent.GoToSearch) })
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+            val tabRowItems = listOf(
+                TabRowItem(
+                    title = "Live activities",
+                    screen = { LiveActivitiesCurrentUser(text = "Live activities", activityViewModel) },
+                ),
+                TabRowItem(
+                    title = "Memories",
+                    screen = { Memories(text = "Memories") },
+                ),
 
+                )
             TabRow(
                 selectedTabIndex = pagerState.currentPage,
                 contentColor = SocialTheme.colors.textPrimary,

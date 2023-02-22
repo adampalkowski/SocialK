@@ -37,12 +37,16 @@ import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
 import java.util.*
 
 sealed class ActivityEvent() {
     class OpenActivitySettings(activity: Activity) : ActivityEvent() {
         val activity = activity
+    }
+    class GoToProfile(user_id: String) : ActivityEvent() {
+        val user_id = user_id
     }
 
     class OpenActivityChat(activity: Activity) : ActivityEvent() {
@@ -56,6 +60,9 @@ sealed class ActivityEvent() {
     class ActivityUnLiked(activity: Activity) : ActivityEvent() {
         val activity = activity
     }
+    class GoToMap( latlng: String) : ActivityEvent() {
+        val latlng = latlng
+    }
 }
 
 sealed class HomeEvent {
@@ -63,6 +70,9 @@ sealed class HomeEvent {
     object LogOut : HomeEvent()
     object GoToMemories : HomeEvent()
     object GoToSettings : HomeEvent()
+    class GoToMap ( latlng: String): HomeEvent(){
+        val latlng=latlng
+    }
     class GoToChat(activity: Activity) : HomeEvent() {
         val activity = activity
     }
@@ -71,6 +81,9 @@ sealed class HomeEvent {
     }
     class ActivityUnLiked(activity: Activity) : HomeEvent() {
         val activity = activity
+    }
+    class GoToProfileWithID(user_id: String) : HomeEvent() {
+        val user_id = user_id
     }
 }
 
@@ -127,6 +140,14 @@ fun HomeScreen(
                             is ActivityEvent.ActivityUnLiked -> {
                                 Log.d("HomeScreen","dislike")
                                 onEvent(HomeEvent.ActivityUnLiked(it.activity))
+
+                            }
+                            is ActivityEvent.GoToMap -> {
+                                onEvent(HomeEvent.GoToMap(latlng = it.latlng))
+
+                            }
+                            is ActivityEvent.GoToProfile -> {
+                                onEvent(HomeEvent.GoToProfileWithID(user_id = it.user_id))
 
                             }
                             is ActivityEvent.OpenActivitySettings -> {
@@ -304,7 +325,8 @@ fun HomeScreenContent(
                                 liked= item.participants_usernames.containsKey(UserData.user!!.id!!),
                                 //todo add the time end
                                 timePeriod = item.start_time + " - " + item.end_time,
-                                custom_location = item.custom_location
+                                custom_location = item.custom_location,
+                                location=item.location
                             )
 
                         }

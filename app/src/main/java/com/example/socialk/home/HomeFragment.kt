@@ -24,7 +24,7 @@ import com.example.socialk.ui.theme.SocialTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class HomeFragment:Fragment() {
+class HomeFragment : Fragment() {
     private val viewModel by activityViewModels<HomeViewModel>()
     private val authViewModel by viewModels<AuthViewModel>()
     private val chatViewModel by viewModels<ChatViewModel>()
@@ -39,63 +39,87 @@ class HomeFragment:Fragment() {
 
         viewModel.navigateTo.observe(viewLifecycleOwner) { navigateToEvent ->
             navigateToEvent.getContentIfNotHandled()?.let { navigateTo ->
-                if(navigateTo==Screen.Chat){
+                if (navigateTo == Screen.Chat) {
                     val bundle = Bundle()
-                    bundle.putSerializable("activity",viewModel.clicked_chat_activity.value)
-                    navigate(navigateTo, Screen.Home,bundle)
+                    bundle.putSerializable("activity", viewModel.clicked_chat_activity.value)
+                    navigate(navigateTo, Screen.Home, bundle)
+                } else if (navigateTo == Screen.Map) {
+                    val bundle = Bundle()
+                    bundle.putSerializable("latlng", viewModel.clicked_location_activity.value)
+                    navigate(navigateTo, Screen.Home, bundle)
+                } else if (navigateTo == Screen.UserProfile) {
+                    val bundle = Bundle()
+                    bundle.putSerializable("user_id",viewModel.clicked_profile.value)
+                    navigate(navigateTo, Screen.Home, bundle)
                 }else{
-                    navigate(navigateTo, Screen.Home)
+                        navigate(navigateTo, Screen.Home)
 
+                    }
+                }
+            }
+            activityViewModel?.getActivitiesForUser(authViewModel?.currentUser?.uid)
+            activeUsersViewModel?.getActiveUsersForUser(authViewModel?.currentUser?.uid)
+            viewModel.activity_link.value.let {
+                if (it != null) {
+                    Log.d("HomeFragment", it.toString())
+                    activityViewModel.getActivity(it)
+                    viewModel.resetLink()
+                }
+            }
+
+
+            return ComposeView(requireContext()).apply {
+                setContent {
+
+                    SocialTheme {
+                        HomeScreen(activeUsersViewModel,
+                            activityViewModel,
+                            chatViewModel = chatViewModel,
+                            authViewModel,
+                            homeViewModel = viewModel,
+                            onEvent = { event ->
+                                when (event) {
+                                    is HomeEvent.GoToProfile -> viewModel.handleGoToProfile()
+                                    is HomeEvent.LogOut -> viewModel.handleLogOut()
+                                    is HomeEvent.GoToSettings -> viewModel.handleGoToSettings()
+                                    is HomeEvent.GoToMemories -> viewModel.handleGoToMemories()
+                                    is HomeEvent.GoToMap -> {
+                                        viewModel.handleGoToMapActivity(event.latlng)
+                                    }
+                                    is HomeEvent.GoToProfileWithID -> {
+                                        viewModel.handleGoToUserProfile(event.user_id)
+                                    }
+                                    is HomeEvent.GoToChat -> {
+                                        viewModel.handleGoToChat(event.activity)
+                                    }
+                                    is HomeEvent.ActivityLiked -> {
+                                        activityViewModel.likeActivity(
+                                            event.activity.id,
+                                            UserData.user!!
+                                        )
+                                    }
+                                    is HomeEvent.ActivityUnLiked -> {
+                                        activityViewModel.unlikeActivity(
+                                            event.activity.id,
+                                            UserData.user!!
+                                        )
+                                    }
+
+                                }
+                            },
+                            bottomNavEvent = { screen ->
+                                when (screen) {
+                                    is Home -> viewModel.handleGoToHome()
+                                    is com.example.socialk.Map -> viewModel.handleGoToMap()
+                                    is Chats -> viewModel.handleGoToChats()
+                                    is Profile -> viewModel.handleGoToProfile()
+                                    is Create -> viewModel.handleGoToCreate()
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
-        activityViewModel?.getActivitiesForUser(authViewModel?.currentUser?.uid)
-        activeUsersViewModel?.getActiveUsersForUser(authViewModel?.currentUser?.uid)
-        viewModel.activity_link.value.let {
-            if (it!=null){
-                Log.d("HomeFragment",it.toString())
-                activityViewModel.getActivity(it)
-                viewModel.resetLink()
-            }
-        }
 
-
-        return ComposeView(requireContext()).apply {
-            setContent {
-
-                SocialTheme {
-                    HomeScreen(activeUsersViewModel,activityViewModel, chatViewModel = chatViewModel,authViewModel, homeViewModel = viewModel,
-                        onEvent = { event ->
-                            when (event) {
-                                is HomeEvent.GoToProfile -> viewModel.handleGoToProfile()
-                                is HomeEvent.LogOut -> viewModel.handleLogOut()
-                                is HomeEvent.GoToSettings -> viewModel.handleGoToSettings()
-                                is HomeEvent.GoToMemories -> viewModel.handleGoToMemories()
-                                is HomeEvent.GoToChat -> {
-                                    viewModel.handleGoToChat(event.activity)
-                                }
-                                is HomeEvent.ActivityLiked -> {
-                                    activityViewModel.likeActivity(event.activity.id,UserData.user!!)
-                                }
-                                is HomeEvent.ActivityUnLiked -> {
-                                    activityViewModel.unlikeActivity(event.activity.id,UserData.user!!)
-                                }
-
-                            }
-                        },
-                        bottomNavEvent  ={screen->
-                            when (screen) {
-                                is Home -> viewModel.handleGoToHome()
-                                is com.example.socialk.Map -> viewModel.handleGoToMap()
-                                is Chats -> viewModel.handleGoToChats()
-                                is Profile ->viewModel.handleGoToProfile()
-                                is Create -> viewModel.handleGoToCreate()
-                            }
-                        }
-                    )
-                }
-            }
-        }
     }
-
-}

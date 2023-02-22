@@ -115,7 +115,23 @@ class ActivityRepositoryImpl @Inject constructor(
             emit(Response.Failure(e= SocialException("deleteActivity exception",Exception())))
         }
     }
+    override suspend fun getUserActivities(id: String): Flow<Response<List<Activity>>> =callbackFlow {
+        val snapshotListener = activitiesRef.whereEqualTo("creator_id",id).get().addOnSuccessListener { documents->
+            var activitiesList:List<Activity> = mutableListOf()
 
+            val response = if (documents != null) {
+                activitiesList =documents.map { it.toObject<Activity>() }
+                val ref=activitiesRef.toString()
+                val id= id
+                Response.Success(activitiesList)
+            } else {
+                Response.Failure(e= SocialException("",Exception()))
+            }
+            trySend(response).isSuccess
+        }
+        awaitClose {
+        }
+    }
     override suspend fun getActivitiesForUser(id: String): Flow<Response<List<Activity>>> =callbackFlow {
         val snapshotListener = activitiesRef.whereArrayContains("invited_users",id).get().addOnSuccessListener { documents->
             var activitiesList:List<Activity> = mutableListOf()
