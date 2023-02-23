@@ -41,6 +41,8 @@ class ActivityViewModel @Inject constructor(
     val moreActivitiesListState: State<Response<List<Activity>>> = _moreActivitiesListState
     private val _userActivitiesState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val userActivitiesState: State<Response<List<Activity>>> = _userActivitiesState
+    private val _userMoreActivitiesState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
+    val userMoreActivitiesState: State<Response<List<Activity>>> = _userMoreActivitiesState
 
     private val _activityState = mutableStateOf<Response<Activity>>(Response.Loading)
     val activityState: State<Response<Activity>> = _activityState
@@ -253,6 +255,13 @@ class ActivityViewModel @Inject constructor(
         viewModelScope.launch {
             repo.getUserActivities(id).collect { response ->
                 _userActivitiesState.value = response
+            }
+        }
+    }
+    fun getMoreUserActivities(id: String) {
+        viewModelScope.launch {
+            repo.getMoreUserActivities(id).collect { response ->
+                _userMoreActivitiesState.value = response
             }
         }
     }

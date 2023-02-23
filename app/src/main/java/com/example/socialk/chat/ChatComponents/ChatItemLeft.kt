@@ -1,0 +1,108 @@
+package com.example.socialk.chat.ChatComponents
+
+import android.util.Log
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Card
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import com.example.socialk.R
+import com.example.socialk.ui.theme.Inter
+import com.example.socialk.ui.theme.SocialTheme
+
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun ChatItemLeft(text_type:String,
+                 date: String,
+                 textMessage: String,
+                 onLongPress: () -> Unit,
+                 picture_url: String,
+                 onClick: () -> Unit
+) {
+    var itemClickedState by remember {
+        mutableStateOf(false)
+    }
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            if (itemClickedState) {
+                Text(
+                    text = date, color = SocialTheme.colors.iconPrimary,
+                    style = TextStyle(
+                        fontSize = 10.sp,
+                        fontFamily = Inter,
+                        fontWeight = FontWeight.ExtraLight,
+                    )
+                )
+            } else {
+
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = rememberAsyncImagePainter(picture_url),
+                    contentScale = ContentScale.Crop,
+                    contentDescription = "profile image",
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+
+                Card(
+                    shape = RoundedCornerShape(8.dp),
+                    backgroundColor = SocialTheme.colors.uiBackground,
+                    border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
+                    elevation = 0.dp, onClick = {
+                        onClick()
+                        (!itemClickedState).also { itemClickedState = it }
+                    }
+                ) {
+                    if (text_type.equals("uri")){
+                        Log.d("ImagePicker","display uri"+textMessage.toString())
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(textMessage)
+                                .crossfade(true)
+                                .build(),
+                            placeholder = painterResource(R.drawable.ic_photo_library),
+                            contentDescription = "image sent",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                        )
+                    }else{
+                        Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                            Text(
+                                text = textMessage,
+                                style = TextStyle(
+                                    fontFamily = Inter,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 14.sp
+                                ),
+                                color = SocialTheme.colors.textPrimary
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.width(24.dp))
+            }
+        }
+
+    }
+}

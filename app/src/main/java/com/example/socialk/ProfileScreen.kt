@@ -136,6 +136,7 @@ fun LiveActivities(
 fun LiveActivitiesCurrentUser(
     text: String, activityViewModel: ActivityViewModel
 ) {
+    //TODO GET MORE ACTIVITES NEVER FIRES->>>>
     Box(
         modifier = Modifier,
     ) {
@@ -168,7 +169,35 @@ fun LiveActivitiesCurrentUser(
 
 
         }
+        activityViewModel.moreActivitiesListState.value.let {
+            when (it) {
+                is Response.Success -> {
+                    Column() {
+                        it.data.forEach{activity->
+                            ActivityItem(
+                                activity =activity,
+                                username =activity.creator_username,
+                                profilePictureUrl =activity.creator_profile_picture,
+                                timeLeft =activity.time_left,
+                                title =activity.title,
+                                description =activity.description,
+                                date =activity.date,
+                                timePeriod =activity.start_time+"-"+activity.end_time,
+                                custom_location =activity.custom_location,
+                                location =activity.location,
+                                liked =activity.participants_usernames.containsKey(UserData.user!!.id),
+                                onEvent ={}
+                            )
+                        }
+                    }
 
+                }
+                is Response.Failure -> {}
+                is Response.Loading -> {}
+            }
+
+
+        }
     }
 }
 

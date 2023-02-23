@@ -29,8 +29,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import com.example.socialk.chat.ChatComponents.SendButton
 import com.example.socialk.chat.ChatEvent
-import com.example.socialk.chat.SendButton
 import com.example.socialk.components.ScreenHeading
 import com.example.socialk.create.ActivityTextFieldState
 import com.example.socialk.create.ActivityTextStateSaver
@@ -415,11 +415,3 @@ fun searchEditText(userViewModel: UserViewModel?,onEvent: (SearchEvent) -> Unit)
 }
 
 
-@Preview
-@Composable
-fun previewSearchScreen() {
-    SocialTheme() {
-        SearchScreen(onEvent = {}, userViewModel = null)
-
-    }
-}

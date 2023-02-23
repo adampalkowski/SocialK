@@ -177,10 +177,7 @@ class ChatFragment : Fragment() {
                         ChatScreen(viewModel,chat, chatViewModel,
                             onEvent = { event ->
                                 when (event) {
-                                    is ChatEvent.AskForPermission -> {
-                                        requestPermissionLauncher.launch(
-                                            android.Manifest.permission.ACCESS_FINE_LOCATION)
-                                    }
+
                                     is ChatEvent.GoBack ->activity?.onBackPressedDispatcher?.onBackPressed()
                                     is ChatEvent.SendMessage -> {
                                     //id and sent_time are set in view model
@@ -217,6 +214,10 @@ class ChatFragment : Fragment() {
                                         pickMedia.launch(PickVisualMediaRequest(
                                             ActivityResultContracts.PickVisualMedia.ImageOnly))
                                     }
+                                    is ChatEvent.AskForPermission -> {
+                                        requestPermissionLauncher.launch(
+                                            android.Manifest.permission.ACCESS_FINE_LOCATION)
+                                    }
                                 }
                             }
                         )
@@ -228,6 +229,12 @@ class ChatFragment : Fragment() {
                         chatViewModel.getMessages(user.friends_ids[UserData.user!!.id]!!,formattedDateTime)
 
                         chatViewModel.getFirstMessages(user.friends_ids[UserData.user!!.id]!!,formattedDateTime)
+                        if(user.friends_ids.containsKey(UserData.user!!.id)){
+                            chatViewModel.getChatCollection(user.friends_ids.get(UserData.user!!.id)!!)
+                        }else{
+                            activity?.onBackPressedDispatcher?.onBackPressed()
+                        }
+
                         ChatScreen(viewModel,user.friends_ids[UserData.user!!.id]!!,user, chatViewModel,
                             onEvent = { event ->
                                 when (event) {

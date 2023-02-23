@@ -11,6 +11,7 @@ interface ActivityRepository {
 
     suspend fun getActivity(id:String) : Flow<Response<Activity>>
     suspend fun getUserActivities(id: String): Flow<Response<List<Activity>>>
+    suspend fun getMoreUserActivities(id: String): Flow<Response<List<Activity>>>
     suspend fun likeActivity(id:String,user: User) : Flow<Response<Void?>>
     suspend fun unlikeActivity(id:String,user:User) : Flow<Response<Void?>>
 

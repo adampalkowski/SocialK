@@ -26,6 +26,7 @@ class ActivityRepositoryImpl @Inject constructor(
     private val messagessRef: CollectionReference,
 ):ActivityRepository{
     private var lastVisibleData: DocumentSnapshot? = null
+    private var lastVisibleDataForUserProfile: DocumentSnapshot? = null
 
     override suspend fun getActivity(id:String): Flow<Response<Activity>> = callbackFlow {
         activitiesRef.document(id).get().addOnSuccessListener {  documentSnapshot ->
@@ -111,21 +112,62 @@ class ActivityRepositoryImpl @Inject constructor(
         }
     }
     override suspend fun getUserActivities(id: String): Flow<Response<List<Activity>>> =callbackFlow {
-        val snapshotListener = activitiesRef.whereEqualTo("creator_id",id).get().addOnSuccessListener { documents->
-            var activitiesList:List<Activity> = mutableListOf()
+        val snapshotListener = activitiesRef.whereArrayContains("creator_id",id)
+            .orderBy("creation_time", Query.Direction.DESCENDING).limit(3).get().addOnCompleteListener { task->
+                var activitiesList:List<Activity> = mutableListOf()
+                if (task.isSuccessful) {
+                    val documents = task.result?.documents
+                    if (documents != null && documents.isNotEmpty()) {
+                        val newActivities = ArrayList<Activity>()
+                        for (document in documents) {
+                            val activity = document.toObject<Activity>()
+                            Log.d("ActivityRepositoryImpl",activity.toString())
 
-            val response = if (documents != null) {
-                activitiesList =documents.map { it.toObject<Activity>() }
-                val ref=activitiesRef.toString()
-                val id= id
-                Response.Success(activitiesList)
-            } else {
-                Response.Failure(e= SocialException("",Exception()))
+                            if (activity!=null){
+                                newActivities.add(activity)
+                            }
+                        }
+                        lastVisibleDataForUserProfile= documents[documents.size - 1]
+                        trySend(Response.Success(newActivities))
+
+                    }
+                } else {
+                    // There are no more messages to load
+                    trySend(Response.Failure(e=SocialException(message="failed to get more activities",e=Exception())))
+                }
+
             }
-            trySend(response).isSuccess
+        awaitClose {
+        }
+
+    }
+    override suspend fun getMoreUserActivities(id: String): Flow<Response<List<Activity>>> =callbackFlow {
+        val snapshotListener = activitiesRef.whereArrayContains("creator_id",id)  .orderBy("creation_time", Query.Direction.DESCENDING).startAfter(lastVisibleDataForUserProfile?.data?.get("creation_time")).get().addOnCompleteListener { task->
+            var activitiesList:List<Activity> = mutableListOf()
+            if (task.isSuccessful) {
+                val documents = task.result?.documents
+                if (documents != null && documents.isNotEmpty()) {
+                    val newActivities = ArrayList<Activity>()
+                    for (document in documents) {
+                        val activity = document.toObject<Activity>()
+                        if (activity!=null){
+                            newActivities.add(activity)
+                        }
+                    }
+                    lastVisibleDataForUserProfile= documents[documents.size - 1]
+                    trySend(Response.Success(newActivities))
+
+                }
+            } else {
+                // There are no more messages to load
+                trySend(Response.Failure(e=SocialException(message="failed to get more activities",e=Exception())))
+            }
+
         }
         awaitClose {
         }
+
+
     }
     override suspend fun getMoreActivitiesForUser(id: String): Flow<Response<List<Activity>>> =callbackFlow {
 
@@ -155,8 +197,8 @@ class ActivityRepositoryImpl @Inject constructor(
         }
     }
     override suspend fun getActivitiesForUser(id: String): Flow<Response<List<Activity>>> =callbackFlow {
-        Log.d("ActivityRepositoryImpl","getActivitiesForUser called")
-        val snapshotListener = activitiesRef.whereArrayContains("invited_users",id) .orderBy("creation_time", Query.Direction.DESCENDING).limit(5).get().addOnCompleteListener { task->
+        val snapshotListener = activitiesRef.whereArrayContains("invited_users",id)
+            .orderBy("creation_time", Query.Direction.DESCENDING).limit(5).get().addOnCompleteListener { task->
             var activitiesList:List<Activity> = mutableListOf()
             if (task.isSuccessful) {
                 val documents = task.result?.documents

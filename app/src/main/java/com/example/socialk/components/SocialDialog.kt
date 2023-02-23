@@ -66,7 +66,7 @@ fun SocialDialog(onDismiss:()->Unit,onConfirm:(Int)->Unit,onCancel:(Int)->Unit,
 
 @Composable
 fun CustomSocialDialog(onDismiss:()->Unit,onConfirm:(Int)->Unit,onCancel:(Int)->Unit,
-                 title:String,info:String,icon:Int,actionButtonText:String="Delete",actionButtonTextColor:Color=Color.Red,content:@Composable ()->Unit){
+                 title:String,info:String?,icon:Int,actionButtonText:String="Delete",actionButtonTextColor:Color=Color.Red,content:@Composable ()->Unit){
     Dialog(onDismissRequest =onDismiss) {
         Card(shape= RoundedCornerShape(16.dp)) {
             Box(modifier = Modifier.background(color=SocialTheme.colors.uiBackground).padding(24.dp)){
@@ -79,11 +79,16 @@ fun CustomSocialDialog(onDismiss:()->Unit,onConfirm:(Int)->Unit,onCancel:(Int)->
                         fontWeight = FontWeight.Medium, fontSize = 20.sp, fontFamily = Inter
                     )
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = info, style = TextStyle(
-                        fontSize = 14.sp, fontWeight = FontWeight.Normal , fontFamily = Inter
-                    )
-                    )
+                    if (info==null){
+
+                    }else{
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(text = info, style = TextStyle(
+                            fontSize = 14.sp, fontWeight = FontWeight.Normal , fontFamily = Inter
+                        )
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(24.dp))
                     Row(modifier = Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.SpaceEvenly) {
                         content()

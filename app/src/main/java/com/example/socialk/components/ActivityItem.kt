@@ -35,7 +35,7 @@ import coil.compose.AsyncImage
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.socialk.R
-import com.example.socialk.chat.ChatButton
+import com.example.socialk.chat.ChatComponents.ChatButton
 import com.example.socialk.home.ActivityEvent
 import com.example.socialk.model.Activity
 import com.example.socialk.ui.theme.Inter
