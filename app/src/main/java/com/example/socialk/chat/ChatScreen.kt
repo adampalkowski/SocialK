@@ -7,7 +7,9 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -38,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.MutableLiveData
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -45,21 +48,25 @@ import com.example.socialk.R
 import com.example.socialk.components.SocialDialog
 import com.example.socialk.create.ActivityTextFieldState
 import com.example.socialk.di.ChatViewModel
+import com.example.socialk.map.MapEvent
 import com.example.socialk.model.*
 import com.example.socialk.signinsignup.TextFieldState
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 sealed class ChatEvent {
     object GoToProfile : ChatEvent()
     object LogOut : ChatEvent()
+    object OpenLocationDialog : ChatEvent()
     object OpenGallery : ChatEvent()
     object GoToSettings : ChatEvent()
     object GoToHome : ChatEvent()
     object GoBack : ChatEvent()
     object GoToChatUserSettings : ChatEvent()
     object Highlight : ChatEvent()
+    object AskForPermission : ChatEvent()
     class SendMessage(message: String) : ChatEvent() {
         val message = message
     }
@@ -70,16 +77,40 @@ sealed class ChatEvent {
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class)
 @Composable
-fun ChatScreen(
+fun ChatScreen(viewModel:ChatCollectionViewModel,
     chat: Chat,
     chatViewModel: ChatViewModel,
     onEvent: (ChatEvent) -> Unit,
     textState: TextFieldState = remember { ActivityTextFieldState() }
 ) {
+
+
+
+
+    val permission_flow = viewModel.granted_permission.collectAsState()
+    val location_flow = viewModel.location.collectAsState()
+
+
+
+
     val isImageAddedToStorage by  chatViewModel.isImageAddedToStorageFlow.collectAsState()
     val openDialog = remember { mutableStateOf(false) }
+    val openLocationDialog = remember { mutableStateOf(false) }
+
+    val hasExecutedMoreMessages = remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
-    val data = remember { mutableStateOf(ArrayList<ChatMessage>()) }
+    val data = remember {
+        mutableStateOf(ArrayList<ChatMessage>())
+    }
+    val data_new = remember {
+        mutableStateOf(ArrayList<ChatMessage>())
+    }
+    val frist_data = remember {
+
+
+        mutableStateOf(ArrayList<ChatMessage>())
+    }
+    val valueExist = remember { mutableStateOf(false) }
     val added_data_state = remember { mutableStateOf(false) }
     var messageOptionsVisibility by remember { mutableStateOf(false) }
     var highlite_message by remember { mutableStateOf(false) }
@@ -101,7 +132,6 @@ fun ChatScreen(
                 .weight(1f)
                 .padding(horizontal = 12.dp)
         ) {
-
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -113,8 +143,7 @@ fun ChatScreen(
                     },
                 reverseLayout = true
             ) {
-
-                items(data.value) {
+                items(data.value!!) {
                     if (it.sender_id == UserData.user!!.id) {
                         if(it.message_type.equals("uri")){}
                         Spacer(modifier = Modifier.height(4.dp))
@@ -144,7 +173,75 @@ fun ChatScreen(
                     }
 
                 }
+                items(frist_data.value!!) {
+                    if (it.sender_id == UserData.user!!.id) {
+                        if(it.message_type.equals("uri")){}
+                        Spacer(modifier = Modifier.height(4.dp))
+                        ChatItemRight(text_type=it.message_type,
+                            textMessage = it.text,
+                            date = it.sent_time,
+                            onLongPress = { messageOptionsVisibility = true }, onClick = {
+                                if (highlite_message) {
+                                    openDialog.value = true
+                                    highlited_message_text = it.text
+                                }
+                            })
+                        Spacer(modifier = Modifier.height(4.dp))
+                    } else {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ChatItemLeft(text_type=it.message_type,
+                            textMessage = it.text,
+                            date = it.sent_time,
+                            onLongPress = { messageOptionsVisibility = true },
+                            picture_url = it.sender_picture_url, onClick = {
+                                if (highlite_message) {
+                                    openDialog.value = true
+                                }
+                            })
+                        Spacer(modifier = Modifier.height(8.dp))
 
+                    }
+
+                }
+                items(data_new.value!!) {
+                    if (it.sender_id == UserData.user!!.id) {
+                        if(it.message_type.equals("uri")){}
+                        Spacer(modifier = Modifier.height(4.dp))
+                        ChatItemRight(text_type=it.message_type,
+                            textMessage = it.text,
+                            date = it.sent_time,
+                            onLongPress = { messageOptionsVisibility = true }, onClick = {
+                                if (highlite_message) {
+                                    openDialog.value = true
+                                    highlited_message_text = it.text
+                                }
+                            })
+                        Spacer(modifier = Modifier.height(4.dp))
+                    } else {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ChatItemLeft(text_type=it.message_type,
+                            textMessage = it.text,
+                            date = it.sent_time,
+                            onLongPress = { messageOptionsVisibility = true },
+                            picture_url = it.sender_picture_url, onClick = {
+                                if (highlite_message) {
+                                    openDialog.value = true
+                                }
+                            })
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                    }
+
+                }
+                item{
+                    if(valueExist.value){
+                        LaunchedEffect(true ){
+                            chatViewModel.getMoreMessages(chat.id!!)
+                        }
+
+                    }
+
+                }
             }
 
             if (chat.highlited_message != null) {
@@ -267,6 +364,42 @@ fun ChatScreen(
         }
 
 
+        if (openLocationDialog.value) {
+            permission_flow.value.let {
+                if (it) {
+                    SocialDialog(
+                        onDismiss = {
+                            openLocationDialog.value = false
+                        },
+                        onConfirm = {
+                            openLocationDialog.value = false
+                        },
+                        onCancel = {
+                            openLocationDialog.value = false
+                        },
+                        title = "Share current location?",
+                        info = "Chat users will be able to see your location on map",
+                        icon = R.drawable.ic_location_24,
+                        actionButtonText = "Share"
+                    )
+                }else{
+                    SocialDialog(
+                        onDismiss = {  openLocationDialog.value = false },
+                        onConfirm = { openLocationDialog.value = false
+                            onEvent(ChatEvent.AskForPermission) },
+                        onCancel = {  openLocationDialog.value = false },
+                        title = "Location access",
+                        info = "To access the map please share your location",
+                        icon = R.drawable.ic_location_24,
+                        actionButtonText = "Share",
+                        actionButtonTextColor = SocialTheme.colors.textInteractive
+                    )
+                }
+                }
+            }
+
+
+
         ChatScreenBottomInputs(modifier = Modifier, keyboardController, onEvent = {
             when (it) {
                 is ChatEvent.SendMessage -> {
@@ -277,6 +410,9 @@ fun ChatScreen(
                 }
                 is ChatEvent.Highlight -> {
                     highlite_message = !highlite_message
+                }
+                is ChatEvent.OpenLocationDialog -> {
+                    openLocationDialog.value = true
                 }
                 is ChatEvent.OpenGallery -> {
                     onEvent(ChatEvent.OpenGallery)
@@ -300,10 +436,30 @@ fun ChatScreen(
             }
         }
     }
+    chatViewModel.firstMessagesState.value.let {
+        when (it) {
+            is Response.Success -> {
+                frist_data.value=it.data
+                valueExist.value=true
+            }
+            is Response.Loading -> {}
+            is Response.Failure -> {}
+        }
+    }
     chatViewModel.messagesState.value.let {
         when (it) {
             is Response.Success -> {
-                data.value = it.data
+                data.value=it.data
+            }
+            is Response.Loading -> {}
+            is Response.Failure -> {}
+        }
+    }
+    chatViewModel.moreMessagesState.value.let {
+        when (it) {
+            is Response.Success -> {
+                Log.d("ACTTTTTTT","State"+it.data.size)
+                data_new.value=it.data
             }
             is Response.Loading -> {}
             is Response.Failure -> {}
@@ -335,7 +491,7 @@ fun ChatScreenBottomInputs(
             if (!chatTextFieldFocused) {
 
                 Spacer(modifier = Modifier.width(12.dp))
-                ChatButton(onEvent = {}, R.drawable.ic_pin_drop)
+                ChatButton(onEvent = {onEvent(ChatEvent.OpenLocationDialog)}, R.drawable.ic_pin_drop)
                 Spacer(modifier = Modifier.width(6.dp))
                 ChatButton(
                     onEvent = { onEvent(ChatEvent.OpenGallery) },
@@ -751,28 +907,45 @@ fun ChatButton(
         }
     }
 }
+fun LazyListState.isScrolledToEnd() = layoutInfo.visibleItemsInfo.lastOrNull()?.index == layoutInfo.totalItemsCount - 1
 
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun ChatScreen(
+fun ChatScreen(viewModel:ChatCollectionViewModel,chat_id:String,
     user: User,
     chatViewModel: ChatViewModel,
     onEvent: (ChatEvent) -> Unit,
     textState: TextFieldState = remember { ActivityTextFieldState() }
 ) {
+    val permission_flow = viewModel.granted_permission.collectAsState()
+    val location_flow = viewModel.location.collectAsState()
+
+    val scrollState = rememberLazyListState()
     val openDialog = remember { mutableStateOf(false) }
     var highlite_message by remember { mutableStateOf(false) }
     var highlited_message_text by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
-    val data = remember { mutableStateOf(ArrayList<ChatMessage>()) }
+    val data = remember {
+        mutableStateOf(ArrayList<ChatMessage>())
+    }
+    val data_new = remember {
+        mutableStateOf(ArrayList<ChatMessage>())
+    }
+    val frist_data = remember {
+
+
+        mutableStateOf(ArrayList<ChatMessage>())
+    }
+    val valueExist = remember { mutableStateOf(false)}
+        val more_data = remember { mutableStateOf(ArrayList<ChatMessage>()) }
     val added_data_state = remember { mutableStateOf(false) }
     var messageOptionsVisibility by remember { mutableStateOf(false) }
     Column(modifier = Modifier.fillMaxSize()) {
         ChatScreenTopBar(user, onEvent = onEvent)
         Divider()
 
-        LazyColumn(
+        LazyColumn(  state = scrollState,
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 12.dp)
@@ -785,10 +958,11 @@ fun ChatScreen(
             reverseLayout = true
         ) {
 
-            items(data.value) {
+            items(data.value!!) {
                 if (it.sender_id == UserData.user!!.id) {
+                    if(it.message_type.equals("uri")){}
                     Spacer(modifier = Modifier.height(4.dp))
-                    ChatItemRight(text_type = it.message_type,
+                    ChatItemRight(text_type=it.message_type,
                         textMessage = it.text,
                         date = it.sent_time,
                         onLongPress = { messageOptionsVisibility = true }, onClick = {
@@ -800,24 +974,98 @@ fun ChatScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                 } else {
                     Spacer(modifier = Modifier.height(8.dp))
-                    ChatItemLeft(text_type = it.message_type,
+                    ChatItemLeft(text_type=it.message_type,
                         textMessage = it.text,
                         date = it.sent_time,
                         onLongPress = { messageOptionsVisibility = true },
                         picture_url = it.sender_picture_url, onClick = {
                             if (highlite_message) {
                                 openDialog.value = true
-                                highlited_message_text = it.text
                             }
-                        }
-                    )
+                        })
                     Spacer(modifier = Modifier.height(8.dp))
 
                 }
 
             }
+            items(frist_data.value!!) {
+                if (it.sender_id == UserData.user!!.id) {
+                    if(it.message_type.equals("uri")){}
+                    Spacer(modifier = Modifier.height(4.dp))
+                    ChatItemRight(text_type=it.message_type,
+                        textMessage = it.text,
+                        date = it.sent_time,
+                        onLongPress = { messageOptionsVisibility = true }, onClick = {
+                            if (highlite_message) {
+                                openDialog.value = true
+                                highlited_message_text = it.text
+                            }
+                        })
+                    Spacer(modifier = Modifier.height(4.dp))
+                } else {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ChatItemLeft(text_type=it.message_type,
+                        textMessage = it.text,
+                        date = it.sent_time,
+                        onLongPress = { messageOptionsVisibility = true },
+                        picture_url = it.sender_picture_url, onClick = {
+                            if (highlite_message) {
+                                openDialog.value = true
+                            }
+                        })
+                    Spacer(modifier = Modifier.height(8.dp))
 
+                }
+
+            }
+            items(data_new.value!!) {
+                if (it.sender_id == UserData.user!!.id) {
+                    if(it.message_type.equals("uri")){}
+                    Spacer(modifier = Modifier.height(4.dp))
+                    ChatItemRight(text_type=it.message_type,
+                        textMessage = it.text,
+                        date = it.sent_time,
+                        onLongPress = { messageOptionsVisibility = true }, onClick = {
+                            if (highlite_message) {
+                                openDialog.value = true
+                                highlited_message_text = it.text
+                            }
+                        })
+                    Spacer(modifier = Modifier.height(4.dp))
+                } else {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ChatItemLeft(text_type=it.message_type,
+                        textMessage = it.text,
+                        date = it.sent_time,
+                        onLongPress = { messageOptionsVisibility = true },
+                        picture_url = it.sender_picture_url, onClick = {
+                            if (highlite_message) {
+                                openDialog.value = true
+                            }
+                        })
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                }
+
+            }
+            item{
+                if(valueExist.value){
+                    LaunchedEffect(true ){
+                        chatViewModel.getMoreMessages(chat_id)
+                    }
+
+                }
+
+            }
         }
+        // observer when reached end of list
+        val endOfListReached by remember {
+            derivedStateOf {
+                scrollState.isScrolledToEnd()
+            }
+        }
+
+
         Divider()
 
         if (openDialog.value) {
@@ -850,21 +1098,41 @@ fun ChatScreen(
 
     }
 
-    chatViewModel.messagesState.value.let {
-        when (it) {
-            is Response.Success -> {
-                data.value = it.data
+        chatViewModel.firstMessagesState.value.let {
+            when (it) {
+                is Response.Success -> {
+                    frist_data.value=it.data
+                    valueExist.value=true
+                }
+                is Response.Loading -> {}
+                is Response.Failure -> {}
             }
-            is Response.Loading -> {}
-            is Response.Failure -> {}
         }
-    }
+        chatViewModel.messagesState.value.let {
+            when (it) {
+                is Response.Success -> {
+                    data.value=it.data
+                }
+                is Response.Loading -> {}
+                is Response.Failure -> {}
+            }
+        }
+        chatViewModel.moreMessagesState.value.let {
+            when (it) {
+                is Response.Success -> {
+                    Log.d("ACTTTTTTT","State"+it.data.size)
+                    data_new.value=it.data
+                }
+                is Response.Loading -> {}
+                is Response.Failure -> {}
+            }
+        }
 }
 
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun ChatScreen(
+fun ChatScreen(viewModel:ChatCollectionViewModel,chat_id: String,
     activity: Activity,
     chatViewModel: ChatViewModel,
     onEvent: (ChatEvent) -> Unit,
@@ -872,8 +1140,19 @@ fun ChatScreen(
 ) {   val isImageAddedToStorage by  chatViewModel.isImageAddedToStorageFlow.collectAsState()
     val openDialog = remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
-    val data = remember { mutableStateOf(ArrayList<ChatMessage>()) }
-    val added_data_state = remember { mutableStateOf(false) }
+    val data = remember {
+        mutableStateOf(ArrayList<ChatMessage>())
+    }
+    val data_new = remember {
+        mutableStateOf(ArrayList<ChatMessage>())
+    }
+    val frist_data = remember {
+
+
+        mutableStateOf(ArrayList<ChatMessage>())
+    }
+    val valueExist = remember { mutableStateOf(false)}
+        val added_data_state = remember { mutableStateOf(false) }
     var messageOptionsVisibility by remember { mutableStateOf(false) }
     var highlite_message by remember { mutableStateOf(false) }
     var highlited_message_text by remember { mutableStateOf("") }
@@ -894,10 +1173,11 @@ fun ChatScreen(
             reverseLayout = true
         ) {
 
-            items(data.value) {
+            items(data.value!!) {
                 if (it.sender_id == UserData.user!!.id) {
+                    if(it.message_type.equals("uri")){}
                     Spacer(modifier = Modifier.height(4.dp))
-                    ChatItemRight(text_type = it.message_type,
+                    ChatItemRight(text_type=it.message_type,
                         textMessage = it.text,
                         date = it.sent_time,
                         onLongPress = { messageOptionsVisibility = true }, onClick = {
@@ -909,23 +1189,89 @@ fun ChatScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                 } else {
                     Spacer(modifier = Modifier.height(8.dp))
-                    ChatItemLeft(text_type = it.message_type,
+                    ChatItemLeft(text_type=it.message_type,
                         textMessage = it.text,
                         date = it.sent_time,
                         onLongPress = { messageOptionsVisibility = true },
                         picture_url = it.sender_picture_url, onClick = {
                             if (highlite_message) {
                                 openDialog.value = true
-                                highlited_message_text = it.text
                             }
-                        }
-                    )
+                        })
                     Spacer(modifier = Modifier.height(8.dp))
 
                 }
 
             }
+            items(frist_data.value!!) {
+                if (it.sender_id == UserData.user!!.id) {
+                    if(it.message_type.equals("uri")){}
+                    Spacer(modifier = Modifier.height(4.dp))
+                    ChatItemRight(text_type=it.message_type,
+                        textMessage = it.text,
+                        date = it.sent_time,
+                        onLongPress = { messageOptionsVisibility = true }, onClick = {
+                            if (highlite_message) {
+                                openDialog.value = true
+                                highlited_message_text = it.text
+                            }
+                        })
+                    Spacer(modifier = Modifier.height(4.dp))
+                } else {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ChatItemLeft(text_type=it.message_type,
+                        textMessage = it.text,
+                        date = it.sent_time,
+                        onLongPress = { messageOptionsVisibility = true },
+                        picture_url = it.sender_picture_url, onClick = {
+                            if (highlite_message) {
+                                openDialog.value = true
+                            }
+                        })
+                    Spacer(modifier = Modifier.height(8.dp))
 
+                }
+
+            }
+            items(data_new.value!!) {
+                if (it.sender_id == UserData.user!!.id) {
+                    if(it.message_type.equals("uri")){}
+                    Spacer(modifier = Modifier.height(4.dp))
+                    ChatItemRight(text_type=it.message_type,
+                        textMessage = it.text,
+                        date = it.sent_time,
+                        onLongPress = { messageOptionsVisibility = true }, onClick = {
+                            if (highlite_message) {
+                                openDialog.value = true
+                                highlited_message_text = it.text
+                            }
+                        })
+                    Spacer(modifier = Modifier.height(4.dp))
+                } else {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ChatItemLeft(text_type=it.message_type,
+                        textMessage = it.text,
+                        date = it.sent_time,
+                        onLongPress = { messageOptionsVisibility = true },
+                        picture_url = it.sender_picture_url, onClick = {
+                            if (highlite_message) {
+                                openDialog.value = true
+                            }
+                        })
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                }
+
+            }
+            item{
+                if(valueExist.value){
+                    LaunchedEffect(true ){
+                        chatViewModel.getMoreMessages(chat_id)
+                    }
+
+                }
+
+            }
         }
         Divider()
 
@@ -971,10 +1317,30 @@ fun ChatScreen(
             }
         }
     }
+    chatViewModel.firstMessagesState.value.let {
+        when (it) {
+            is Response.Success -> {
+                frist_data.value=it.data
+                valueExist.value=true
+            }
+            is Response.Loading -> {}
+            is Response.Failure -> {}
+        }
+    }
     chatViewModel.messagesState.value.let {
         when (it) {
             is Response.Success -> {
-                data.value = it.data
+                data.value=it.data
+            }
+            is Response.Loading -> {}
+            is Response.Failure -> {}
+        }
+    }
+    chatViewModel.moreMessagesState.value.let {
+        when (it) {
+            is Response.Success -> {
+                Log.d("ACTTTTTTT","State"+it.data.size)
+                data_new.value=it.data
             }
             is Response.Loading -> {}
             is Response.Failure -> {}

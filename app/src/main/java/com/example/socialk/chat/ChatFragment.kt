@@ -1,6 +1,8 @@
 package com.example.socialk.chat
 
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -8,6 +10,8 @@ import android.view.ViewGroup
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -15,11 +19,16 @@ import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.di.UserViewModel
+import com.example.socialk.map.MapEvent
 import com.example.socialk.model.*
 import com.example.socialk.ui.theme.SocialTheme
+import com.google.android.gms.location.*
+import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.AndroidEntryPoint
+import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 
 /*
@@ -57,6 +66,19 @@ class ChatFragment : Fragment() {
     private val viewModel by viewModels<ChatCollectionViewModel>()
     private val userViewModel by activityViewModels<UserViewModel>()
     private val chatViewModel by viewModels<ChatViewModel>()
+    private  var fusedLocationClient: FusedLocationProviderClient?=null
+    private var locationCallback: LocationCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            val locationList = locationResult.locations
+            if (locationList.isNotEmpty()) {
+                //The last location in the list is the newest
+                val location = locationList.last()
+                viewModel.setLocation(LatLng(location.latitude,location.longitude))
+
+            }
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -67,6 +89,65 @@ class ChatFragment : Fragment() {
                 navigate(navigateTo, Screen.Chat)
             }
         }
+
+
+
+        fusedLocationClient= LocationServices.getFusedLocationProviderClient(activity?.applicationContext!!)
+        if (ActivityCompat.checkSelfPermission(
+                activity?.applicationContext!!,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                activity?.applicationContext!!,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+
+
+        }
+        fusedLocationClient!!.requestLocationUpdates(
+            LocationRequest(),
+            locationCallback,
+            Looper.getMainLooper())
+        val requestPermissionLauncher =
+            registerForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { isGranted: Boolean ->
+                if (isGranted) {
+                    // Permission is granted. Continue the action or workflow in your
+                    // app.\
+                    viewModel.permissionGranted()
+                } else {
+                    // Explain to the user that the feature is unavailable because the
+                    // feature requires a permission that the user has denied. At the
+                    // same time, respect the user's decision. Don't link to system
+                    // settings in an effort to convince the user to change their
+                    // decision.
+                }
+
+            }
+        when {
+            ContextCompat.checkSelfPermission(
+                activity?.applicationContext!!,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                viewModel.permissionGranted()
+            }
+            shouldShowRequestPermissionRationale(   android.Manifest.permission.ACCESS_FINE_LOCATION) -> {
+                // In an educational UI, explain to the user why your app requires this
+                // permission for a specific feature to behave as expected, and what
+                // features are disabled if it's declined. In this UI, include a
+                // "cancel" or "no thanks" button that lets the user continue
+                // using your app without granting the permission.
+
+            }
+            else -> {
+                // You can directly ask for the permission.
+                // The registered ActivityResultCallback gets the result of this request.
+                requestPermissionLauncher.launch(
+                    android.Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+        }
+
         val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             // Callback is invoked after the user selects a media item or closes the
             // photo picker.
@@ -86,10 +167,20 @@ class ChatFragment : Fragment() {
 
                         val chat = arguments?.getSerializable("chat") as Chat
 
-                        chatViewModel.getMessages(chat.id!!)
-                        ChatScreen(chat, chatViewModel,
+
+                        val currentDateTime = Calendar.getInstance().time
+                        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                        val formattedDateTime = dateFormat.format(currentDateTime)
+                        chatViewModel.getMessages(chat.id!!,formattedDateTime)
+
+                        chatViewModel.getFirstMessages(chat.id!!,formattedDateTime)
+                        ChatScreen(viewModel,chat, chatViewModel,
                             onEvent = { event ->
                                 when (event) {
+                                    is ChatEvent.AskForPermission -> {
+                                        requestPermissionLauncher.launch(
+                                            android.Manifest.permission.ACCESS_FINE_LOCATION)
+                                    }
                                     is ChatEvent.GoBack ->activity?.onBackPressedDispatcher?.onBackPressed()
                                     is ChatEvent.SendMessage -> {
                                     //id and sent_time are set in view model
@@ -131,9 +222,13 @@ class ChatFragment : Fragment() {
                         )
                     } else if (arguments?.getSerializable("user") != null) {
                         val user = arguments?.getSerializable("user") as User
-                        chatViewModel.getMessages(user.friends_ids[UserData.user!!.id]!!)
+                        val currentDateTime = Calendar.getInstance().time
+                        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                        val formattedDateTime = dateFormat.format(currentDateTime)
+                        chatViewModel.getMessages(user.friends_ids[UserData.user!!.id]!!,formattedDateTime)
 
-                        ChatScreen(user, chatViewModel,
+                        chatViewModel.getFirstMessages(user.friends_ids[UserData.user!!.id]!!,formattedDateTime)
+                        ChatScreen(viewModel,user.friends_ids[UserData.user!!.id]!!,user, chatViewModel,
                             onEvent = { event ->
                                 when (event) {
                                     is ChatEvent.GoBack ->activity?.onBackPressedDispatcher?.onBackPressed()
@@ -151,6 +246,27 @@ class ChatFragment : Fragment() {
                                             )
                                         )
                                     }
+                                    is ChatEvent.SendImage -> {
+                                    //id and sent_time are set in view model
+                                    //we have URI
+                                    //add uri to storage and resize it
+                                    //get the url and add it to the message
+                                    chatViewModel.sendImage(user.friends_ids[UserData.user!!.id]!!,     ChatMessage(
+                                        text = event.message.toString(),
+                                        sender_picture_url = UserData.user?.pictureUrl!!,
+                                        sent_time = "",
+                                        sender_id = UserData.user!!.id,
+                                        message_type = "uri",
+                                        id = ""
+                                    ),event.message)
+
+
+
+                                }
+                                    is ChatEvent.OpenGallery -> {
+                                        pickMedia.launch(PickVisualMediaRequest(
+                                            ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                    }
 
                                 }
                             }
@@ -160,8 +276,13 @@ class ChatFragment : Fragment() {
                     }else{
                         val activity = arguments?.getSerializable("activity") as Activity
 
-                        chatViewModel.getMessages(activity.id!!)
-                        ChatScreen(activity, chatViewModel,
+                        val currentDateTime = Calendar.getInstance().time
+                        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                        val formattedDateTime = dateFormat.format(currentDateTime)
+                        chatViewModel.getMessages(activity.id!!,formattedDateTime)
+
+                        chatViewModel.getFirstMessages(activity.id!!,formattedDateTime)
+                        ChatScreen(viewModel,activity.id!!,activity, chatViewModel,
                             onEvent = { event ->
                                 when (event) {
                                     is ChatEvent.GoBack ->getActivity()?.onBackPressedDispatcher?.onBackPressed()
@@ -178,6 +299,27 @@ class ChatFragment : Fragment() {
                                                 id = ""
                                             )
                                         )
+                                    }
+                                    is ChatEvent.SendImage -> {
+                                        //id and sent_time are set in view model
+                                        //we have URI
+                                        //add uri to storage and resize it
+                                        //get the url and add it to the message
+                                        chatViewModel.sendImage(activity.id!!,     ChatMessage(
+                                            text = event.message.toString(),
+                                            sender_picture_url = UserData.user?.pictureUrl!!,
+                                            sent_time = "",
+                                            sender_id = UserData.user!!.id,
+                                            message_type = "uri",
+                                            id = ""
+                                        ),event.message)
+
+
+
+                                    }
+                                    is ChatEvent.OpenGallery -> {
+                                        pickMedia.launch(PickVisualMediaRequest(
+                                            ActivityResultContracts.PickVisualMedia.ImageOnly))
                                     }
 
                                 }

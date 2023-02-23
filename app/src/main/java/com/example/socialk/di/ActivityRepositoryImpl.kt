@@ -2,14 +2,8 @@ package com.example.socialk.di
 
 import android.util.Log
 import com.example.socialk.ActiveUser
-import com.example.socialk.model.Activity
-import com.example.socialk.model.Response
-import com.example.socialk.model.SocialException
-import com.example.socialk.model.User
-import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
+import com.example.socialk.model.*
+import com.google.firebase.firestore.*
 import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.firestore.model.Document
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,6 +25,7 @@ class ActivityRepositoryImpl @Inject constructor(
     private val chatCollectionsRef: CollectionReference,
     private val messagessRef: CollectionReference,
 ):ActivityRepository{
+    private var lastVisibleData: DocumentSnapshot? = null
 
     override suspend fun getActivity(id:String): Flow<Response<Activity>> = callbackFlow {
         activitiesRef.document(id).get().addOnSuccessListener {  documentSnapshot ->
@@ -132,20 +127,58 @@ class ActivityRepositoryImpl @Inject constructor(
         awaitClose {
         }
     }
-    override suspend fun getActivitiesForUser(id: String): Flow<Response<List<Activity>>> =callbackFlow {
-        val snapshotListener = activitiesRef.whereArrayContains("invited_users",id).get().addOnSuccessListener { documents->
+    override suspend fun getMoreActivitiesForUser(id: String): Flow<Response<List<Activity>>> =callbackFlow {
+
+        val snapshotListener = activitiesRef.whereArrayContains("invited_users",id)  .orderBy("creation_time", Query.Direction.DESCENDING).startAfter(lastVisibleData?.data?.get("creation_time")).get().addOnCompleteListener { task->
             var activitiesList:List<Activity> = mutableListOf()
+            if (task.isSuccessful) {
+                val documents = task.result?.documents
+                if (documents != null && documents.isNotEmpty()) {
+                    val newActivities = ArrayList<Activity>()
+                    for (document in documents) {
+                        val activity = document.toObject<Activity>()
+                        if (activity!=null){
+                            newActivities.add(activity)
+                        }
+                    }
+                    lastVisibleData= documents[documents.size - 1]
+                    trySend(Response.Success(newActivities))
 
-
-            val response = if (documents != null) {
-                activitiesList =documents.map { it.toObject<Activity>() }
-                val ref=activitiesRef.toString()
-                val id= id
-                Response.Success(activitiesList)
+                }
             } else {
-                Response.Failure(e= SocialException("",Exception()))
+                // There are no more messages to load
+                trySend(Response.Failure(e=SocialException(message="failed to get more activities",e=Exception())))
             }
-            trySend(response).isSuccess
+
+        }
+        awaitClose {
+        }
+    }
+    override suspend fun getActivitiesForUser(id: String): Flow<Response<List<Activity>>> =callbackFlow {
+        Log.d("ActivityRepositoryImpl","getActivitiesForUser called")
+        val snapshotListener = activitiesRef.whereArrayContains("invited_users",id) .orderBy("creation_time", Query.Direction.DESCENDING).limit(5).get().addOnCompleteListener { task->
+            var activitiesList:List<Activity> = mutableListOf()
+            if (task.isSuccessful) {
+                val documents = task.result?.documents
+                if (documents != null && documents.isNotEmpty()) {
+                    val newActivities = ArrayList<Activity>()
+                    for (document in documents) {
+                        val activity = document.toObject<Activity>()
+                        Log.d("ActivityRepositoryImpl",activity.toString())
+
+                        if (activity!=null){
+                            newActivities.add(activity)
+                        }
+                    }
+                    lastVisibleData= documents[documents.size - 1]
+                    trySend(Response.Success(newActivities))
+
+                }
+            } else {
+                // There are no more messages to load
+                trySend(Response.Failure(e=SocialException(message="failed to get more activities",e=Exception())))
+            }
+
         }
         awaitClose {
         }

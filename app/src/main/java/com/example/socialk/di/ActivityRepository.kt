@@ -20,6 +20,7 @@ interface ActivityRepository {
     suspend fun deleteActivity(id:String) : Flow<Response<Void?>>
 
     suspend fun getActivitiesForUser(id:String) : Flow<Response<List<Activity>>>
+    suspend fun getMoreActivitiesForUser(id:String) : Flow<Response<List<Activity>>>
 
     suspend fun getActiveUsers(id:String) : Flow<Response<List<ActiveUser>>>
 

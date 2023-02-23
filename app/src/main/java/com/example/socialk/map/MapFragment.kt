@@ -90,19 +90,14 @@ class MapFragment:Fragment() {
                 if(navigateTo==Screen.Create){
                     viewModel.clicked_location.value.let {
                         val bundle = Bundle()
-
                         bundle.putString("location",it.toString())
                         Log.d("mapscreen","go to location"+it.toString())
                         navigate(navigateTo, Screen.Map,bundle)
-
                     }
-
 
                 }else{
                     navigate(navigateTo, Screen.Map)
-
                 }
-
             }
         }
         fusedLocationClient= LocationServices.getFusedLocationProviderClient(activity?.applicationContext!!)

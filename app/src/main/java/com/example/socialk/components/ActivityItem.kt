@@ -1,12 +1,13 @@
 package com.example.socialk.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
+import android.util.Log.e
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
@@ -14,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterStart
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
@@ -28,7 +30,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
+import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.socialk.R
 import com.example.socialk.chat.ChatButton
@@ -78,7 +82,10 @@ fun ActivityItem(
     ) {
         Column() {
             //ACtivity top content
-            Row(modifier = Modifier.clickable(){onEvent(ActivityEvent.GoToProfile(activity.creator_id)) }, verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.clickable() { onEvent(ActivityEvent.GoToProfile(activity.creator_id)) },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
 
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
@@ -89,7 +96,7 @@ fun ActivityItem(
                     contentDescription = "image sent",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
@@ -162,7 +169,8 @@ fun ActivityItem(
             //DETAILS
             Spacer(modifier = Modifier.height(12.dp))
             //todo either custom location or latlng
-            ActivityDetailsBar(    onEvent=onEvent,
+            ActivityDetailsBar(
+                onEvent = onEvent, activity.participants_profile_pictures,
                 location = location,
                 custom_location = custom_location,
                 date = date,
@@ -184,7 +192,8 @@ fun ActivityItem(
 
 
 @Composable
-fun ActivityDetailsBar(    onEvent: (ActivityEvent) -> Unit,
+fun ActivityDetailsBar(
+    onEvent: (ActivityEvent) -> Unit, participants_pictures: HashMap<String, String>,
     location: String?,
     custom_location: String?,
     date: String,
@@ -197,13 +206,99 @@ fun ActivityDetailsBar(    onEvent: (ActivityEvent) -> Unit,
             .background(color = Color.Transparent)
     ) {
 
-        Row(
+        LazyRow(
             modifier = Modifier
-                .horizontalScroll(rememberScrollState())
-                .align(CenterStart), verticalAlignment = CenterVertically
+                .align(CenterStart),
+            verticalAlignment = CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy((-10).dp)
         ) {
-            if (custom_location == null || custom_location.isEmpty()) {
-                if (location == null || location.isEmpty()) {
+
+            items(participants_pictures.values.toList().take(4)) {
+                AsyncImage(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape),
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(it)
+                        .crossfade(true)
+                        .build(),
+                    placeholder = painterResource(R.drawable.ic_person),
+                    contentDescription = "participant picture",
+                    contentScale = ContentScale.Crop,
+
+                    )
+            }
+            if (participants_pictures.values.toList().size > 4) {
+                item {
+                    Card(modifier = Modifier.size(32.dp), shape = CircleShape) {
+                        AsyncImage(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape),
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(participants_pictures.values.toList().get(4))
+                                .crossfade(true)
+                                .build(),
+                            placeholder = painterResource(R.drawable.ic_person),
+                            contentDescription = "participant picture",
+                            contentScale = ContentScale.Crop,
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.5f))
+                        ) {
+                            // Content
+                            Text(
+                                modifier = Modifier.align(Center),
+                                textAlign = TextAlign.Center,
+                                text = "+"+(participants_pictures.values.toList().size-4).toString(),
+                                style = TextStyle(
+                                    fontFamily = Inter,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Normal
+                                ),
+                                color = SocialTheme.colors.textSecondary,
+
+                                )
+                        }
+
+                    }
+
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.width(32.dp))
+            }
+            item {
+
+
+                if (custom_location == null || custom_location.isEmpty()) {
+                    if (location == null || location.isEmpty()) {
+
+                    } else {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_location),
+                            contentDescription = null,
+                            tint = SocialTheme.colors.iconPrimary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        ClickableText(
+                            text = AnnotatedString("See map"),
+                            onClick = {
+
+                                onEvent(ActivityEvent.GoToMap(location))
+                            },
+                            style = TextStyle(
+                                fontFamily = Inter,
+                                fontWeight = FontWeight.ExtraLight,
+                                fontSize = 12.sp, color = SocialTheme.colors.textPrimary
+                            ),
+                        )
+                        Spacer(modifier = Modifier.width(24.dp))
+
+                    }
 
                 } else {
                     Icon(
@@ -212,29 +307,47 @@ fun ActivityDetailsBar(    onEvent: (ActivityEvent) -> Unit,
                         tint = SocialTheme.colors.iconPrimary
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    ClickableText(
-                        text = AnnotatedString("See map"), onClick ={
-
-                            onEvent(ActivityEvent.GoToMap(location ))},
+                    Text(
+                        text = custom_location,
                         style = TextStyle(
                             fontFamily = Inter,
                             fontWeight = FontWeight.ExtraLight,
-                            fontSize = 12.sp, color = SocialTheme.colors.textPrimary
+                            fontSize = 12.sp
                         ),
+                        color = SocialTheme.colors.textPrimary
                     )
                     Spacer(modifier = Modifier.width(24.dp))
-
                 }
 
-            } else {
+
+
+
+
+
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_location),
+                    painter = painterResource(id = R.drawable.ic_date),
                     contentDescription = null,
                     tint = SocialTheme.colors.iconPrimary
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = custom_location,
+                    text = date,
+                    style = TextStyle(
+                        fontFamily = Inter,
+                        fontWeight = FontWeight.ExtraLight,
+                        fontSize = 12.sp
+                    ),
+                    color = SocialTheme.colors.textPrimary
+                )
+                Spacer(modifier = Modifier.width(24.dp))
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_timer),
+                    contentDescription = null,
+                    tint = SocialTheme.colors.iconPrimary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = timePeriod,
                     style = TextStyle(
                         fontFamily = Inter,
                         fontWeight = FontWeight.ExtraLight,
@@ -244,40 +357,6 @@ fun ActivityDetailsBar(    onEvent: (ActivityEvent) -> Unit,
                 )
                 Spacer(modifier = Modifier.width(24.dp))
             }
-
-
-            Icon(
-                painter = painterResource(id = R.drawable.ic_date),
-                contentDescription = null,
-                tint = SocialTheme.colors.iconPrimary
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = date,
-                style = TextStyle(
-                    fontFamily = Inter,
-                    fontWeight = FontWeight.ExtraLight,
-                    fontSize = 12.sp
-                ),
-                color = SocialTheme.colors.textPrimary
-            )
-            Spacer(modifier = Modifier.width(24.dp))
-            Icon(
-                painter = painterResource(id = R.drawable.ic_timer),
-                contentDescription = null,
-                tint = SocialTheme.colors.iconPrimary
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = timePeriod,
-                style = TextStyle(
-                    fontFamily = Inter,
-                    fontWeight = FontWeight.ExtraLight,
-                    fontSize = 12.sp
-                ),
-                color = SocialTheme.colors.textPrimary
-            )
-            Spacer(modifier = Modifier.width(24.dp))
         }
     }
 

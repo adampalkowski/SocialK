@@ -487,7 +487,7 @@ fun MapActivityItem(
             //DETAILS
             Spacer(modifier = Modifier.height(12.dp))
             //todo either custom location or latlng
-            ActivityDetailsBar(custom_location = null,location = null, date = date, timePeriod = timePeriod, onEvent = {})
+            ActivityDetailsBar(custom_location = null,location = null, date = date, timePeriod = timePeriod, onEvent = {}, participants_pictures = activity.participants_profile_pictures)
             Spacer(modifier = Modifier.height(8.dp))
             Box(
                 modifier = Modifier

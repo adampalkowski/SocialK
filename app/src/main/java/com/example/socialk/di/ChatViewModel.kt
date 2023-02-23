@@ -2,6 +2,7 @@ package com.example.socialk.di
 
 import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
@@ -40,8 +41,13 @@ class ChatViewModel @Inject constructor(
     private val _chatCollectionsState = mutableStateOf<Response<ArrayList<Chat>>>(Response.Loading)
     val chatCollectionsState: State<Response<ArrayList<Chat>>> = _chatCollectionsState
 
+
     private val _messagesState = mutableStateOf<Response<ArrayList<ChatMessage>>>(Response.Loading)
     val messagesState: State<Response<ArrayList<ChatMessage>>> = _messagesState
+    private val _firstMessagesState = mutableStateOf<Response<ArrayList<ChatMessage>>>(Response.Loading)
+    val firstMessagesState: State<Response<ArrayList<ChatMessage>>> = _firstMessagesState
+    private val _moreMessagesState = mutableStateOf<Response<ArrayList<ChatMessage>>>(Response.Loading)
+    val moreMessagesState: State<Response<ArrayList<ChatMessage>>> = _moreMessagesState
     private val _addedMessagesState = mutableStateOf<Response<ArrayList<ChatMessage>>>(Response.Loading)
     val addedMessagesState: State<Response<ArrayList<ChatMessage>>> = _addedMessagesState
 
@@ -180,32 +186,51 @@ class ChatViewModel @Inject constructor(
     }
 
 
-    fun getMessages(id: String) {
+    fun getMessages(id: String,current_time:String) {
         viewModelScope.launch {
-            repo.getMessages(id).collect{response->
+            repo.getMessages(id,current_time).collect{response->
                 when(response){
                     is Response.Success->{
-                        Log.d("ChatViewModel","viewmodel response"+response.data.toString())
-
                         _messagesState.value=response
-                       /* if(alreadyRead){
-                            Log.d("TAGGG","Already read")
 
-                            _addedMessagesState.value=response
-                            _messagesState.value=Response.Loading
-                        }else{
-
-                            alreadyRead = true
-                        }*/
                     }
                 }
 
             }
 
         }
-
-
     }
+    fun getFirstMessages(id: String,current_time:String) {
+        viewModelScope.launch {
+            repo.getFirstMessages(id,current_time).collect{response->
+                when(response){
+                    is Response.Success->{
+                        _firstMessagesState.value=response
+
+                    }
+                }
+
+            }
+
+        }
+    }
+
+    fun getMoreMessages(id: String){
+        viewModelScope.launch {
+            repo.getMoreMessages(id).collect{response->
+                when(response){
+                    is Response.Success->{
+                        Log.d("ChatViewModel","getMoreMessages response"+response.data.size.toString())
+                        _moreMessagesState.value=response
+
+                    }
+                }
+
+            }
+
+        }
+    }
+
     fun addMessage(
         chat_collection_id: String,
         message: ChatMessage

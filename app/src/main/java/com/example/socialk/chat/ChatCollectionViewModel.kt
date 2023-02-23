@@ -8,14 +8,25 @@ import com.example.socialk.Main.Screen
 import com.example.socialk.model.Chat
 import com.example.socialk.model.User
 import com.example.socialk.util.Event
+import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 class ChatCollectionViewModel :ViewModel(){
     private val _navigateTo = MutableLiveData<Event<Screen>>()
     val navigateTo: LiveData<Event<Screen>> = _navigateTo
-
+    private val _granted_permission = MutableStateFlow<Boolean>(false)
+    val granted_permission: StateFlow<Boolean> = _granted_permission
     private val _chat = MutableLiveData<Chat>()
     val chat: LiveData<Chat> = _chat
-
+    private val _location = MutableStateFlow<LatLng?>(null)
+    val location: StateFlow<LatLng?> = _location
+    fun setLocation(location: LatLng){
+        _location.value=location
+    }
+    fun permissionGranted(){
+        _granted_permission.value=true
+    }
     fun handleGoToProfile( ) {
         _navigateTo.value = Event(Screen.Profile)
     }

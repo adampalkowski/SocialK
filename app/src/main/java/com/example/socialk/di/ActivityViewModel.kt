@@ -37,6 +37,8 @@ class ActivityViewModel @Inject constructor(
 
     private val _activitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val activitiesListState: State<Response<List<Activity>>> = _activitiesListState
+    private val _moreActivitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
+    val moreActivitiesListState: State<Response<List<Activity>>> = _moreActivitiesListState
     private val _userActivitiesState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val userActivitiesState: State<Response<List<Activity>>> = _userActivitiesState
 
@@ -81,7 +83,51 @@ class ActivityViewModel @Inject constructor(
             }
         }
     }
+    fun getMoreActivitiesForUser(id: String?) {
+        if (id == null) {
+            _moreActivitiesListState.value = Response.Failure(
+                SocialException(
+                    "getActivitiesForUser error id is null",
+                    Exception()
+                )
+            )
+        } else {
+            viewModelScope.launch {
+                val list_without_removed_activites: ArrayList<Activity> = ArrayList()
+                repo.getMoreActivitiesForUser(id).collect { response ->
+                    when (response) {
+                        is Response.Success -> {
+                            response.data.forEach {
+                                list_without_removed_activites.add(it)
+                                val time_left: String = calculateTimeLeft(
+                                    it.date,
+                                    it.start_time,
+                                    deleteActivity = { event ->
+                                        Log.d("activityViewModel", "delete activity")
+                                        deleteActivity(it.id)
+                                        list_without_removed_activites.remove(it)
+                                    })
+                                it.time_left = time_left
 
+
+                                _moreActivitiesListState.value =
+                                    Response.Success(list_without_removed_activites as List<Activity>)
+                            }
+                        }
+                        is Response.Failure -> {
+                            _moreActivitiesListState.value = response
+                        }
+                        is Response.Loading -> {
+                            _moreActivitiesListState.value = response
+                        }
+                    }
+
+
+                }
+            }
+        }
+
+    }
     fun getActivitiesForUser(id: String?) {
         if (id == null) {
             _activitiesListState.value = Response.Failure(
@@ -108,7 +154,7 @@ class ActivityViewModel @Inject constructor(
                                     })
                                 it.time_left = time_left
 
-
+                                Log.d("ActivityRepositoryImpl","list"+list_without_removed_activites.toString())
                                 _activitiesListState.value =
                                     Response.Success(list_without_removed_activites as List<Activity>)
                             }
