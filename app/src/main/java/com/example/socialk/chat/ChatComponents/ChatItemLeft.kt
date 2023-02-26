@@ -1,13 +1,16 @@
 package com.example.socialk.chat.ChatComponents
 
+import android.media.MediaDrm.OnEventListener
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,7 +31,9 @@ import com.example.socialk.R
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 
-
+sealed class ChatItemEvent(){
+    class OpenLocation(val latLng:String):ChatItemEvent()
+}
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ChatItemLeft(text_type:String,
@@ -35,7 +41,7 @@ fun ChatItemLeft(text_type:String,
                  textMessage: String,
                  onLongPress: () -> Unit,
                  picture_url: String,
-                 onClick: () -> Unit
+                 onClick: () -> Unit,onEvent:(ChatItemEvent)->Unit
 ) {
     var itemClickedState by remember {
         mutableStateOf(false)
@@ -86,7 +92,7 @@ fun ChatItemLeft(text_type:String,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                         )
-                    }else{
+                    }else if(text_type.equals("text")){
                         Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                             Text(
                                 text = textMessage,
@@ -98,11 +104,30 @@ fun ChatItemLeft(text_type:String,
                                 color = SocialTheme.colors.textPrimary
                             )
                         }
+                    }else if(text_type.equals("latLng")){
+                        Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(painter = painterResource(id = R.drawable.ic_location_24), tint = SocialTheme.colors.iconPrimary, contentDescription =null )
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                ClickableText(
+                                    text = AnnotatedString("Shared location") ,
+                                    style = TextStyle(
+                                        fontFamily = Inter,
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 14.sp,
+                                    ),
+                                    onClick = {
+                                        onEvent(ChatItemEvent.OpenLocation(textMessage))
+                                    }
+                                )
+                            }
+
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.width(24.dp))
             }
         }
-
     }
 }

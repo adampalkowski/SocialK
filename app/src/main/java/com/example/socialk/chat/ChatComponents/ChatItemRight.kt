@@ -1,13 +1,12 @@
 package com.example.socialk.chat.ChatComponents
 
 import android.util.Log
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,7 +29,14 @@ import com.example.socialk.ui.theme.SocialTheme
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ChatItemRight(text_type:String, date: String, textMessage: String, onLongPress: () -> Unit, onClick: () -> Unit) {
+fun ChatItemRight(
+    text_type: String,
+    date: String,
+    textMessage: String,
+    onLongPress: () -> Unit,
+    onClick: () -> Unit,
+    onEvent:(ChatItemEvent)->Unit
+) {
     var itemClickedState by remember {
         mutableStateOf(false)
     }
@@ -57,8 +64,8 @@ fun ChatItemRight(text_type:String, date: String, textMessage: String, onLongPre
                 }
             ) {
 
-                if (text_type.equals("uri")){
-                    Log.d("ImagePicker","display uri"+textMessage.toString())
+                if (text_type.equals("uri")) {
+                    Log.d("ImagePicker", "display uri" + textMessage.toString())
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(textMessage)
@@ -69,7 +76,27 @@ fun ChatItemRight(text_type:String, date: String, textMessage: String, onLongPre
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                     )
-                }else{
+                } else if(text_type.equals("latLng")){
+                    Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(painter = painterResource(id = R.drawable.ic_location_24), tint = SocialTheme.colors.textSecondary, contentDescription =null )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            ClickableText(
+                                text = AnnotatedString("Shared location") ,
+                                style = TextStyle(
+                                    fontFamily = Inter,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 14.sp,
+                                    color=SocialTheme.colors.textSecondary
+                                ),
+                                onClick = {
+                                    onEvent(ChatItemEvent.OpenLocation(textMessage))
+                                }
+                            )
+                        }
+
+                    }
+                }else {
                     Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                         Text(
                             text = textMessage,

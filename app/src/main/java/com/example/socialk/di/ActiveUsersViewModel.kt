@@ -10,8 +10,12 @@ import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
 import com.example.socialk.model.SocialException
 import com.example.socialk.model.UserData
+import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.auth.FirebaseUser
 import com.marosseleng.compose.material3.datetimepickers.time.domain.noSeconds
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.LocalDate
@@ -31,13 +35,23 @@ class ActiveUsersViewModel @Inject constructor(
     private val _activeUsersListState = mutableStateOf<Response<List<ActiveUser>>>(Response.Loading)
     val activeUsersListState: State<Response<List<ActiveUser>>> = _activeUsersListState
 
-    private val _isActiveUsersAddedState = mutableStateOf<Response<Void?>?>(Response.Success(null))
-    val isActiveUsersAddedState: State<Response<Void?>?> = _isActiveUsersAddedState
 
+    private val _isActiveUsersAddedState= MutableStateFlow<Response<Boolean>?>(null)
+    val isActiveUsersAddedState: StateFlow<Response<Boolean>?> = _isActiveUsersAddedState
     private val _isActiveUsersDeletedState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isActiveUsersDeletedState: State<Response<Void?>> = _isActiveUsersDeletedState
 
+    private val _granted_permission = MutableStateFlow<Boolean>(false)
+    val granted_permission: StateFlow<Boolean> = _granted_permission
 
+    private val _location = MutableStateFlow<LatLng?>(null)
+    val location: StateFlow<LatLng?> = _location
+    fun setLocation(location: LatLng){
+        _location.value=location
+    }
+    fun permissionGranted(){
+        _granted_permission.value=true
+    }
     fun getActiveUsersForUser(id: String?) {
         if (id == null) {
             _activeUsersListState.value = Response.Failure(
@@ -147,11 +161,12 @@ class ActiveUsersViewModel @Inject constructor(
 
     fun addActiveUser(activeUser: ActiveUser) {
         viewModelScope.launch {
-            activeUser.invited_users.add(UserData.user!!.id)
-            repo.addActiveUser(activeUser).collect { response ->
-                _isActiveUsersAddedState.value = response
-            }
+            _isActiveUsersAddedState.value=Response.Loading
+            val result= repo.addActiveUser(activeUser)
+            _isActiveUsersAddedState.value=result
         }
+
+
     }
 
     fun activeUserAdded() {

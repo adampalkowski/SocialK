@@ -49,7 +49,7 @@ fun CreateClickableTextField(
                 color = SocialTheme.colors.iconSecondary
             )
             Spacer(modifier = Modifier.weight(1f))
-            ClickableText(text = AnnotatedString(value), style = TextStyle(fontSize = 18.sp, fontFamily = Inter,
+            ClickableText(text = AnnotatedString(value), style = TextStyle(fontSize = 16.sp, fontFamily = Inter,
                 fontWeight = FontWeight.SemiBold), onClick =onClick)
         }
 

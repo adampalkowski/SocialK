@@ -210,26 +210,27 @@ fun ActivityDetailsBar(
             modifier = Modifier
                 .align(CenterStart),
             verticalAlignment = CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy((-10).dp)
+
         ) {
+            item {
+                Row(      horizontalArrangement = Arrangement.spacedBy((-10).dp)) {
+                    participants_pictures.values.toList().take(4).reversed().forEachIndexed { index, it ->
+                        AsyncImage(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .zIndex(participants_pictures.values.toList().size - index.toFloat()),
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(it)
+                                .crossfade(true)
+                                .build(),
+                            placeholder = painterResource(R.drawable.ic_person),
+                            contentDescription = "participant picture",
+                            contentScale = ContentScale.Crop,
 
-            items(participants_pictures.values.toList().take(4)) {
-                AsyncImage(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape),
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(it)
-                        .crossfade(true)
-                        .build(),
-                    placeholder = painterResource(R.drawable.ic_person),
-                    contentDescription = "participant picture",
-                    contentScale = ContentScale.Crop,
-
-                    )
-            }
-            if (participants_pictures.values.toList().size > 4) {
-                item {
+                            )}
+                }
+                if (participants_pictures.values.toList().size > 4) {
                     Card(modifier = Modifier.size(32.dp), shape = CircleShape) {
                         AsyncImage(
                             modifier = Modifier
@@ -264,9 +265,12 @@ fun ActivityDetailsBar(
                         }
 
                     }
-
                 }
+
+
+
             }
+
 
             item {
                 Spacer(modifier = Modifier.width(32.dp))

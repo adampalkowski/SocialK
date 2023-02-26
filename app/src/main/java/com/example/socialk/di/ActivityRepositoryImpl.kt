@@ -242,15 +242,19 @@ class ActivityRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun addActiveUser(activeUser: ActiveUser): Flow<Response<Void?>> = flow {
-        try {
-            emit(Response.Loading)
-            val activityId=activeUser.id
-            val addition = activeUsersRef.document(activeUser.creator_id).set(activeUser).await()
-            emit(Response.Success(addition))
+    override suspend fun addActiveUser(activeUser: ActiveUser): Response<Boolean>   {
+        return try {
+            val result = activeUsersRef.document(activeUser.creator_id).set(activeUser).await()
 
-        }catch (e:Exception){
-            emit(Response.Failure(e= SocialException("addActiveUser",Exception())))
+            com.example.socialk.model.Response.Success(true)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            com.example.socialk.model.Response.Failure(
+                com.example.socialk.model.SocialException(
+                    "signIn error",
+                    e
+                )
+            )
         }
     }
 

@@ -13,6 +13,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.socialk.model.Chat
 import com.example.socialk.model.ChatMessage
 import com.example.socialk.model.Response
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -31,13 +32,25 @@ class ChatViewModel @Inject constructor(
 
     val _chatCollectionStateFlow = MutableStateFlow<Chat>(Chat())
 
-    private val _chatCollectionState = mutableStateOf<Response<Chat>>(Response.Loading)
-    val chatCollectionState: State<Response<Chat>> = _chatCollectionState
+    private val _chatCollectionState = MutableStateFlow<Response<Chat>>(Response.Loading)
+    val chatCollectionState: StateFlow<Response<Chat>> = _chatCollectionState
 
     private val _uri = MutableLiveData<Uri>()
     val uri: LiveData<Uri> = _uri
     private val _uriReceived = mutableStateOf(false)
     val uriReceived: State<Boolean> = _uriReceived
+    private val _granted_permission = MutableStateFlow<Boolean>(false)
+    val granted_permission: StateFlow<Boolean> = _granted_permission
+
+    private val _location = MutableStateFlow<LatLng?>(null)
+    val location: StateFlow<LatLng?> = _location
+    fun setLocation(location: LatLng){
+        _location.value=location
+    }
+    fun permissionGranted(){
+        _granted_permission.value=true
+    }
+
     private val _chatCollectionsState = mutableStateOf<Response<ArrayList<Chat>>>(Response.Loading)
     val chatCollectionsState: State<Response<ArrayList<Chat>>> = _chatCollectionsState
 
@@ -248,7 +261,9 @@ class ChatViewModel @Inject constructor(
                 _addMessageState.value=response
             }
 
-            repo.updateChatCollectionRecentMessage(chat_collection_id, recent_message = message.text, recent_message_time = message.sent_time).collect{
+            repo.updateChatCollectionRecentMessage(chat_collection_id, recent_message =
+            if (message.message_type.equals("latLng")){"shared location"}else{  message.text}
+          , recent_message_time = message.sent_time).collect{
                     response->
                 _addMessageState.value=response
             }

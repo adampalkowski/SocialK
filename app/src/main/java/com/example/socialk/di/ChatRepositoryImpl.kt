@@ -43,7 +43,7 @@ class ChatRepositoryImpl @Inject constructor(
                     )
                 )
             }
-            trySend(response as Response<Chat>).isSuccess
+            trySend(response as Response<Chat>)
         }
         awaitClose() {
 

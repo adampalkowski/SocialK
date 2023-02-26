@@ -279,6 +279,57 @@ fun MapScreen(latLngInitial: LatLng?,activityViewModel:ActivityViewModel,
                                     is Response.Failure ->{}
                                 }
                             }
+                            activityViewModel.moreActivitiesListState.value.let {
+                                when(it){
+                                    is Response.Success ->{
+                                        it.data.forEach {activity->
+                                            if(activity.location.isNotEmpty()){
+                                                val values=activity.location.split("/")
+                                                val latLng= LatLng(values.get(0).toDouble(),values.get(1).toDouble())
+                                                MarkerInfoWindow(
+                                                    state = MarkerState(
+                                                        position = latLng
+                                                    ), icon = loadIcon(LocalContext.current, activity.creator_profile_picture, R.drawable.ic_person)
+                                                ) {
+                                                    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                                                        androidx.compose.material3.Card(
+                                                            shape = RoundedCornerShape(
+                                                                16.dp
+                                                            )
+                                                        ) {
+                                                            Box(modifier = Modifier.background(color = SocialTheme.colors.uiBackground),) {
+                                                                MapActivityItem(
+                                                                    activity = activity,
+                                                                    username = activity.creator_username,
+                                                                    profilePictureUrl = activity.creator_profile_picture,
+                                                                    timeLeft = activity.time_left,
+                                                                    title = activity.title,
+                                                                    description = activity.description,
+                                                                    date = activity.date,
+                                                                    timePeriod = activity.start_time + "-" + activity.end_time,
+                                                                    custom_location = activity.custom_location,
+                                                                    liked = activity.participants_usernames.containsKey(
+                                                                        UserData.user!!.id
+                                                                    ),
+                                                                    onEvent = {}
+                                                                )
+
+                                                            }}
+
+
+                                                        Spacer(modifier = Modifier.height(4.dp))
+                                                    }
+
+                                                }
+                                            }
+
+                                        }
+
+                                    }
+                                    is Response.Loading ->{}
+                                    is Response.Failure ->{}
+                                }
+                            }
                             location_picked_flow.value.let {
                                 if (it == null) {
                                 } else {

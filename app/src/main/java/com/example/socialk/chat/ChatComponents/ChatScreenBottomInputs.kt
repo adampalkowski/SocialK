@@ -124,7 +124,7 @@ fun ChatScreenBottomInputs(
             if (!chatTextFieldFocused) {
                 if (!textSendAvailable) {
                     Spacer(modifier = Modifier.width(6.dp))
-                    ChatButton(onEvent = {}, R.drawable.ic_person_waving)
+                    ChatButton(onEvent = {onEvent(ChatEvent.LiveInvite)}, R.drawable.ic_person_waving)
                 } else {
                     Spacer(modifier = Modifier.width(6.dp))
                     SendButton(

@@ -287,8 +287,8 @@ fun HomeScreenContent(
                                     ActiveUserItem(
                                         //TODO onclick of the active user
                                         onClick = {},
-                                        profileUrl = ActiveUser.pictureUrl,
-                                        username = ActiveUser.username
+                                        profileUrls = ActiveUser.participants_profile_pictures,
+                                        usernames = ActiveUser.participants_usernames
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                 }

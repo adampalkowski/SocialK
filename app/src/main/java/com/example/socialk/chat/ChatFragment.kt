@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.ComposeView
@@ -15,12 +16,16 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import com.example.socialk.ActiveUser
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
+import com.example.socialk.create.LiveEvent
+import com.example.socialk.create.calculateDestroyTime
+import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.di.UserViewModel
-import com.example.socialk.map.MapEvent
 import com.example.socialk.model.*
+import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.SocialTheme
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
@@ -64,8 +69,10 @@ and call for messages with collection_id to then read the values and put them in
 @AndroidEntryPoint
 class ChatFragment : Fragment() {
     private val viewModel by viewModels<ChatCollectionViewModel>()
+    private val activeUsersViewModel by viewModels<ActiveUsersViewModel>()
     private val userViewModel by activityViewModels<UserViewModel>()
     private val chatViewModel by viewModels<ChatViewModel>()
+    private val authViewModel by viewModels<AuthViewModel>()
     private  var fusedLocationClient: FusedLocationProviderClient?=null
     private var locationCallback: LocationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
@@ -73,7 +80,8 @@ class ChatFragment : Fragment() {
             if (locationList.isNotEmpty()) {
                 //The last location in the list is the newest
                 val location = locationList.last()
-                viewModel.setLocation(LatLng(location.latitude,location.longitude))
+                chatViewModel.setLocation(LatLng(location.latitude,location.longitude))
+                activeUsersViewModel.setLocation(LatLng(location.latitude,location.longitude))
 
             }
         }
@@ -115,7 +123,8 @@ class ChatFragment : Fragment() {
                 if (isGranted) {
                     // Permission is granted. Continue the action or workflow in your
                     // app.\
-                    viewModel.permissionGranted()
+                    chatViewModel.permissionGranted()
+                    activeUsersViewModel.permissionGranted()
                 } else {
                     // Explain to the user that the feature is unavailable because the
                     // feature requires a permission that the user has denied. At the
@@ -130,7 +139,8 @@ class ChatFragment : Fragment() {
                 activity?.applicationContext!!,
                 android.Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED -> {
-                viewModel.permissionGranted()
+                chatViewModel.permissionGranted()
+                activeUsersViewModel.permissionGranted()
             }
             shouldShowRequestPermissionRationale(   android.Manifest.permission.ACCESS_FINE_LOCATION) -> {
                 // In an educational UI, explain to the user why your app requires this
@@ -158,107 +168,119 @@ class ChatFragment : Fragment() {
                 Log.d("PhotoPicker", "No media selected")
             }
         }
+        val currentDateTime = Calendar.getInstance().time
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val formattedDateTime = dateFormat.format(currentDateTime)
+
+        var chat_id :String?=null
+        if ( arguments?.getSerializable("chat")!=null){
+            val init_chat:Chat = arguments?.getSerializable("chat")as Chat
+            chat_id=init_chat.id
+        }else if ( arguments?.getSerializable("user")!=null){
+            val init_user:User =  arguments?.getSerializable("user")as User
+            chat_id=init_user.friends_ids.get(UserData.user!!.id)
+        }else if( arguments?.getSerializable("activity")!=null){
+            val init_activity:Activity = arguments?.getSerializable("activity")as Activity
+            chat_id=init_activity.id
+        }
+
+
+
+
+        if (chat_id!=null){
+            chatViewModel.getChatCollection(chat_id)
+            chatViewModel.getMessages(chat_id,formattedDateTime)
+            chatViewModel.getFirstMessages(chat_id,formattedDateTime)
+        }else{
+            Toast.makeText(activity,"Can't load in chat",Toast.LENGTH_SHORT).show()
+            activity?.onBackPressedDispatcher?.onBackPressed()
+        }
+
+
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
+                    ChatScreen(   activeUsersViewModel,viewModel,chatViewModel,
+                        onEvent = { event ->
+                            when (event) {
 
-                    if (arguments?.getSerializable("chat") != null) {
+                                is ChatEvent.GoBack ->activity?.onBackPressedDispatcher?.onBackPressed()
+                                is ChatEvent.CreateActiveUser -> {
+                                    val uuid: UUID = UUID.randomUUID()
+                                    val id:String = uuid.toString()
+                                    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                                    val current = LocalDateTime.now().format(formatter)
 
-
-                        val chat = arguments?.getSerializable("chat") as Chat
-
-
-                        val currentDateTime = Calendar.getInstance().time
-                        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                        val formattedDateTime = dateFormat.format(currentDateTime)
-                        chatViewModel.getMessages(chat.id!!,formattedDateTime)
-
-                        chatViewModel.getFirstMessages(chat.id!!,formattedDateTime)
-                        ChatScreen(viewModel,chat, chatViewModel,
-                            onEvent = { event ->
-                                when (event) {
-
-                                    is ChatEvent.GoBack ->activity?.onBackPressedDispatcher?.onBackPressed()
-                                    is ChatEvent.SendMessage -> {
-                                    //id and sent_time are set in view model
-                                        chatViewModel.addMessage(
-                                            chat.id!!,
-                                            ChatMessage(
-                                                text = event.message,
-                                                sender_picture_url = UserData.user?.pictureUrl!!,
-                                                sent_time ="",
-                                                sender_id = UserData.user!!.id,
-                                                message_type = "text",
-                                                id = ""
-                                            )
+                                    //todo what if current user is null
+                                    val participants_profile_pictures: java.util.HashMap<String, String> = hashMapOf()
+                                    val participants_usernames: java.util.HashMap<String, String> = hashMapOf()
+                                    val destroyTime:String= calculateDestroyTime( event.start_time,event.time_length)
+                                    participants_profile_pictures[authViewModel.currentUser!!.uid]=UserData.user!!.pictureUrl!!
+                                    participants_usernames[authViewModel.currentUser!!.uid]=UserData.user!!.username!!
+                                    activeUsersViewModel.addActiveUser(
+                                        ActiveUser(id=id,
+                                            creator_id = if (authViewModel.currentUser==null){""}else{ authViewModel.currentUser!!.uid.toString()},
+                                            participants_profile_pictures = participants_profile_pictures,
+                                            participants_usernames =  participants_usernames,
+                                            latLng = event.latLng,
+                                            time_end = "",
+                                            time_length = event.time_length,
+                                            time_start = event.start_time,
+                                            create_time = current,
+                                            invited_users = ArrayList<String>(UserData.user!!.friends_ids.keys),
+                                            destroy_time=destroyTime,
                                         )
-                                    }
-                                    is ChatEvent.SendImage -> {
-                                        //id and sent_time are set in view model
-                                        //we have URI
-                                        //add uri to storage and resize it
-                                        //get the url and add it to the message
-                                        chatViewModel.sendImage(chat.id!!,     ChatMessage(
-                                            text = event.message.toString(),
-                                            sender_picture_url = UserData.user?.pictureUrl!!,
-                                            sent_time = "",
-                                            sender_id = UserData.user!!.id,
-                                            message_type = "uri",
-                                            id = ""
-                                        ),event.message)
-
-
-
-                                    }
-                                    is ChatEvent.OpenGallery -> {
-                                        pickMedia.launch(PickVisualMediaRequest(
-                                            ActivityResultContracts.PickVisualMedia.ImageOnly))
-                                    }
-                                    is ChatEvent.AskForPermission -> {
-                                        requestPermissionLauncher.launch(
-                                            android.Manifest.permission.ACCESS_FINE_LOCATION)
-                                    }
+                                    )
                                 }
-                            }
-                        )
-                    } else if (arguments?.getSerializable("user") != null) {
-                        val user = arguments?.getSerializable("user") as User
-                        val currentDateTime = Calendar.getInstance().time
-                        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                        val formattedDateTime = dateFormat.format(currentDateTime)
-                        chatViewModel.getMessages(user.friends_ids[UserData.user!!.id]!!,formattedDateTime)
 
-                        chatViewModel.getFirstMessages(user.friends_ids[UserData.user!!.id]!!,formattedDateTime)
-                        if(user.friends_ids.containsKey(UserData.user!!.id)){
-                            chatViewModel.getChatCollection(user.friends_ids.get(UserData.user!!.id)!!)
-                        }else{
-                            activity?.onBackPressedDispatcher?.onBackPressed()
-                        }
-
-                        ChatScreen(viewModel,user.friends_ids[UserData.user!!.id]!!,user, chatViewModel,
-                            onEvent = { event ->
-                                when (event) {
-                                    is ChatEvent.GoBack ->activity?.onBackPressedDispatcher?.onBackPressed()
-                                    is ChatEvent.SendMessage -> {
-                                        chatViewModel.addMessage(
-                                            user.friends_ids[UserData.user!!.id]!!,
-                                            //todo set sender picture_url
-                                            ChatMessage(
-                                                text = event.message,
-                                                sender_picture_url = "",
-                                                sent_time = "",
-                                                sender_id = UserData.user!!.id,
-                                                message_type = "text",
-                                                id = ""
-                                            )
+                                is ChatEvent.ShareLocation ->{
+                                    chatViewModel.addMessage(
+                                        chat_id!!,
+                                        ChatMessage(
+                                            text = event.latLng.latitude.toString()+"/"+event.latLng.longitude.toString(),
+                                            sender_picture_url = UserData.user?.pictureUrl!!,
+                                            sent_time ="",
+                                            sender_id = UserData.user!!.id,
+                                            message_type = "latLng",
+                                            id = ""
                                         )
-                                    }
-                                    is ChatEvent.SendImage -> {
+                                    )
+                                }
+                                is ChatEvent.SendMessage -> {
+                                    //id and sent_time are set in view model
+                                    chatViewModel.addMessage(
+                                        chat_id!!,
+                                        ChatMessage(
+                                            text = event.message,
+                                            sender_picture_url = UserData.user?.pictureUrl!!,
+                                            sent_time ="",
+                                            sender_id = UserData.user!!.id,
+                                            message_type = "text",
+                                            id = ""
+                                        )
+                                    )
+                                }
+
+                                is ChatEvent.SendLive -> {
+                                    //id and sent_time are set in view model
+                                    chatViewModel.addMessage(
+                                        chat_id!!,
+                                        ChatMessage(
+                                            text = UserData.user!!.id,
+                                            sender_picture_url = UserData.user?.pictureUrl!!,
+                                            sent_time ="",
+                                            sender_id = UserData.user!!.id,
+                                            message_type = "live",
+                                            id = ""
+                                        )
+                                    )
+                                }
+                                is ChatEvent.SendImage -> {
                                     //id and sent_time are set in view model
                                     //we have URI
                                     //add uri to storage and resize it
                                     //get the url and add it to the message
-                                    chatViewModel.sendImage(user.friends_ids[UserData.user!!.id]!!,     ChatMessage(
+                                    chatViewModel.sendImage(chat_id!!,     ChatMessage(
                                         text = event.message.toString(),
                                         sender_picture_url = UserData.user?.pictureUrl!!,
                                         sent_time = "",
@@ -270,69 +292,18 @@ class ChatFragment : Fragment() {
 
 
                                 }
-                                    is ChatEvent.OpenGallery -> {
-                                        pickMedia.launch(PickVisualMediaRequest(
-                                            ActivityResultContracts.PickVisualMedia.ImageOnly))
-                                    }
-
+                                is ChatEvent.OpenGallery -> {
+                                    pickMedia.launch(PickVisualMediaRequest(
+                                        ActivityResultContracts.PickVisualMedia.ImageOnly))
+                                }
+                                is ChatEvent.AskForPermission -> {
+                                    requestPermissionLauncher.launch(
+                                        android.Manifest.permission.ACCESS_FINE_LOCATION)
                                 }
                             }
-                        )
+                        }
+                    )
 
-
-                    }else{
-                        val activity = arguments?.getSerializable("activity") as Activity
-
-                        val currentDateTime = Calendar.getInstance().time
-                        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                        val formattedDateTime = dateFormat.format(currentDateTime)
-                        chatViewModel.getMessages(activity.id!!,formattedDateTime)
-
-                        chatViewModel.getFirstMessages(activity.id!!,formattedDateTime)
-                        ChatScreen(viewModel,activity.id!!,activity, chatViewModel,
-                            onEvent = { event ->
-                                when (event) {
-                                    is ChatEvent.GoBack ->getActivity()?.onBackPressedDispatcher?.onBackPressed()
-                                    is ChatEvent.SendMessage -> {
-                                        chatViewModel.addMessage(
-                                            activity.id!!,
-                                            //todo set sender picture_url
-                                            ChatMessage(
-                                                text = event.message,
-                                                sender_picture_url = UserData.user?.pictureUrl!!,
-                                                sent_time = "",
-                                                sender_id = UserData.user!!.id,
-                                                message_type = "text",
-                                                id = ""
-                                            )
-                                        )
-                                    }
-                                    is ChatEvent.SendImage -> {
-                                        //id and sent_time are set in view model
-                                        //we have URI
-                                        //add uri to storage and resize it
-                                        //get the url and add it to the message
-                                        chatViewModel.sendImage(activity.id!!,     ChatMessage(
-                                            text = event.message.toString(),
-                                            sender_picture_url = UserData.user?.pictureUrl!!,
-                                            sent_time = "",
-                                            sender_id = UserData.user!!.id,
-                                            message_type = "uri",
-                                            id = ""
-                                        ),event.message)
-
-
-
-                                    }
-                                    is ChatEvent.OpenGallery -> {
-                                        pickMedia.launch(PickVisualMediaRequest(
-                                            ActivityResultContracts.PickVisualMedia.ImageOnly))
-                                    }
-
-                                }
-                            }
-                        )
-                    }
 
                 }
 
