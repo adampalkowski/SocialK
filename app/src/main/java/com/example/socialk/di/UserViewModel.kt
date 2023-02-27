@@ -33,6 +33,10 @@ class UserViewModel @Inject constructor(
     private val _friendState = MutableStateFlow<Response<ArrayList<User>>>(Response.Loading)
     val friendState: StateFlow<Response<ArrayList<User>>> = _friendState
 
+    private val _friendMoreState = MutableStateFlow<Response<ArrayList<User>>>(Response.Loading)
+    val friendMoreState: StateFlow<Response<ArrayList<User>>> = _friendMoreState
+
+
     private val _isUserAddedState = mutableStateOf<Response<Void?>?>(Response.Success(null))
     val isUserAddedState: State<Response<Void?>?> = _isUserAddedState
 
@@ -112,7 +116,14 @@ class UserViewModel @Inject constructor(
             }
         }
     }
+    fun getMoreFriends(id: String) {
+        viewModelScope.launch {
+            repo.getMoreFriends(id).collect { response ->
+                _friendMoreState.value = response
 
+            }
+        }
+    }
     fun acceptInvite(current_user: User, user: User, chat: Chat) {
         viewModelScope.launch {
             repo.acceptInvite(current_user, user, chat).collect { response ->

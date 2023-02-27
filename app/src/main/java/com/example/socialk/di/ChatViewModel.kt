@@ -59,6 +59,8 @@ class ChatViewModel @Inject constructor(
     val messagesState: State<Response<ArrayList<ChatMessage>>> = _messagesState
     private val _firstMessagesState = mutableStateOf<Response<ArrayList<ChatMessage>>>(Response.Loading)
     val firstMessagesState: State<Response<ArrayList<ChatMessage>>> = _firstMessagesState
+    private val _groupsState = MutableStateFlow<Response<ArrayList<Chat>>>(Response.Loading)
+    val groupsState: StateFlow<Response<ArrayList<Chat>>> = _groupsState
     private val _moreMessagesState = mutableStateOf<Response<ArrayList<ChatMessage>>>(Response.Loading)
     val moreMessagesState: State<Response<ArrayList<ChatMessage>>> = _moreMessagesState
     private val _addedMessagesState = mutableStateOf<Response<ArrayList<ChatMessage>>>(Response.Loading)
@@ -120,6 +122,15 @@ class ChatViewModel @Inject constructor(
             repo.getChatCollection(id).collect{
                 response->
                 _chatCollectionState.value=response
+            }
+        }
+    }
+
+    fun getGroups(id: String) {
+        viewModelScope.launch {
+            repo.getGroups(id).collect{
+                    response->
+                _groupsState.value=response
             }
         }
     }

@@ -39,6 +39,7 @@ import java.time.format.DateTimeFormatter
 sealed class ChatCollectionEvent {
     object GoToProfile : ChatCollectionEvent()
     object LogOut : ChatCollectionEvent()
+    object GoToGroup : ChatCollectionEvent()
     object GoToSettings : ChatCollectionEvent()
     object GoToAddPeople : ChatCollectionEvent()
     object GoToSearch : ChatCollectionEvent()
@@ -152,26 +153,51 @@ fun ChatCollectionScreen(
                 .fillMaxWidth()
                 .padding(24.dp), contentAlignment = Alignment.TopEnd
         ) {
-            Card(
-                modifier = Modifier
-                    .size(56.dp),
-                border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
-                shape = RoundedCornerShape(16.dp),
-                onClick = { onEvent(ChatCollectionEvent.GoToSearch) }
-            ) {
-                Box(
+            Row(){
+                Card(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(color = SocialTheme.colors.uiBackground),
-                    contentAlignment = Alignment.Center
+                        .size(56.dp),
+                    border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
+                    shape = RoundedCornerShape(16.dp),
+                    onClick = { onEvent(ChatCollectionEvent.GoToGroup) }
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_add_person),
-                        tint = SocialTheme.colors.iconPrimary,
-                        contentDescription = null
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(color = SocialTheme.colors.uiBackground),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_group_add),
+                            tint = SocialTheme.colors.iconPrimary,
+                            contentDescription = null
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Card(
+                    modifier = Modifier
+                        .size(56.dp),
+                    border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
+                    shape = RoundedCornerShape(16.dp),
+                    onClick = { onEvent(ChatCollectionEvent.GoToSearch) }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(color = SocialTheme.colors.uiBackground),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_add_person),
+                            tint = SocialTheme.colors.iconPrimary,
+                            contentDescription = null
+                        )
+                    }
                 }
             }
+            
+          
         }
 
 
@@ -215,7 +241,8 @@ fun chatItem(
                     placeholder = painterResource(R.drawable.ic_person),
                     contentDescription = "image sent",
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier .size(48.dp)
+                    modifier = Modifier
+                        .size(48.dp)
                         .clip(CircleShape)
                 )
 
@@ -224,7 +251,9 @@ fun chatItem(
                 Row(horizontalArrangement = Arrangement.SpaceBetween) {
 
 
-                    Column(modifier=Modifier.weight(1f).padding(end=12.dp)) {
+                    Column(modifier= Modifier
+                        .weight(1f)
+                        .padding(end = 12.dp)) {
                         Text(
                             text = if (name != null) {
                                 if(name.length>20){

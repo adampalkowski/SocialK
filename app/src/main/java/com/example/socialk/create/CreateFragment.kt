@@ -43,7 +43,15 @@ class CreateFragment : Fragment() {
         activityViewModel.activityAdded()
         viewModel.navigateTo.observe(viewLifecycleOwner) { navigateToEvent ->
             navigateToEvent.getContentIfNotHandled()?.let { navigateTo ->
-                navigate(navigateTo, Screen.Create)
+                if (navigateTo==Screen.FriendsPicker){
+                    val bundle=Bundle()
+                    bundle.putSerializable("activity",viewModel.created_activity.value)
+                    navigate(navigateTo, Screen.Create,bundle)
+
+                }else{
+                    navigate(navigateTo, Screen.Create)
+
+                }
             }
 
         }
@@ -72,66 +80,46 @@ class CreateFragment : Fragment() {
                             is CreateEvent.GoToActivity -> viewModel.handleGoToActivity()
                             is CreateEvent.GoToMap -> viewModel.handleGoToMap()
                             is CreateEvent.CreateActivity -> {
+
                                 val uuid: UUID = UUID.randomUUID()
                                 val id: String = uuid.toString()
-                                //todo what if current user is null
-                                val userList: List<User> =event.invited_users
-
-                                val userIdList: ArrayList<String> = arrayListOf()
                                 val participants_profile_pictures: HashMap<String,String> = hashMapOf()
                                 val participants_usernames: HashMap<String,String> = hashMapOf()
-                                for (user in userList) {
-                                    userIdList.add(user.id.toString())
-                                }
                                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
                                 val current = LocalDateTime.now().format(formatter)
-                                userIdList.add(authViewModel.currentUser!!.uid.toString())
+
                                 participants_profile_pictures[authViewModel.currentUser!!.uid]=UserData.user!!.pictureUrl!!
                                 participants_usernames[authViewModel.currentUser!!.uid]=UserData.user!!.username!!
-                                Log.d("CreateFragment",event.location)
-                                activityViewModel.addActivity(
-                                    Activity(
-                                        id = id,
-                                        creator_id = if (authViewModel.currentUser == null) {
-                                            ""
-                                        } else {
-                                            authViewModel.currentUser!!.uid.toString()
-                                        },
-                                        title = event.title,
-                                        date = event.date,
-                                        start_time = event.start_time,
-                                        time_length = event.time_length,
-                                        creator_name =UserData.user!!.name!! ,
-                                        creator_profile_picture = UserData.user!!.pictureUrl!! ,
-                                        creator_username = UserData.user!!.username!! ,
-                                        description= event.description,
-                                        time_left = "",
-                                        custom_location = event.custom_location,
-                                        end_time = "",latLng="",minUserCount=if(event.min.equals("")){0}else{event.min.toInt()},maxUserCount=if(event.max.equals("")){0}else{event.max.toInt()},
-                                        disableChat = false, disableMemories = false, likes = 0,
-                                        invited_users = userIdList,
-                                        participants_profile_pictures =participants_profile_pictures ,
-                                        participants_usernames =participants_usernames,
-                                        creation_time = current,
-                                        location=event.location
-                                    )
+
+                                val activity=Activity(
+                                    id = id,
+                                    creator_id = if (authViewModel.currentUser == null) {
+                                        ""
+                                    } else {
+                                        authViewModel.currentUser!!.uid.toString()
+                                    },
+                                    title = event.title,
+                                    date = event.date,
+                                    start_time = event.start_time,
+                                    time_length = event.time_length,
+                                    creator_name =UserData.user!!.name!! ,
+                                    creator_profile_picture = UserData.user!!.pictureUrl!! ,
+                                    creator_username = UserData.user!!.username!! ,
+                                    description= event.description,
+                                    time_left = "",
+                                    custom_location = event.custom_location,
+                                    end_time = "",latLng="",minUserCount=if(event.min.equals("")){0}else{event.min.toInt()},maxUserCount=if(event.max.equals("")){0}else{event.max.toInt()},
+                                    disableChat = false, disableMemories = false, likes = 0,
+                                    invited_users = arrayListOf(),
+                                    participants_profile_pictures =participants_profile_pictures ,
+                                    participants_usernames =participants_usernames,
+                                    creation_time = current,
+                                    location=event.location
                                 )
 
-                                val chat = Chat(create_date = current,
-                                    owner_id =id,
-                                    id =id,
-                                    chat_name =event.title,
-                                    chat_picture = UserData.user!!.pictureUrl!! ,
-                                    recent_message =null,
-                                    recent_message_time =current,
-                                    type ="activity",
-                                    members = arrayListOf(UserData.user!!.id),
-                                    user_one_username =null,
-                                    user_two_username =null,
-                                    user_one_profile_pic =null,
-                                    user_two_profile_pic = null,
-                                highlited_message = "")
-                                chatViewModel.addChatCollection(chat)
+                                viewModel.handleGoToFriendsPicker(activity)
+
+
 
                             }
                         }

@@ -6,7 +6,9 @@ import com.example.socialk.await1
 import com.example.socialk.model.*
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentChange
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.storage.StorageException
 import com.google.firebase.storage.StorageReference
@@ -29,7 +31,7 @@ class UserRepositoryImpl @Inject constructor(
     private val storageRef: StorageReference,
     private val resStorage: StorageReference,
 ) : UserRepository {
-
+    private var lastVisibleDataFriends:DocumentSnapshot?=null
     override suspend fun getUser(id: String): Flow<Response<User>> = callbackFlow {
         trySend(Response.Loading)
         val registration = usersRef.document(id).addSnapshotListener { snapshot, exception ->
@@ -318,43 +320,61 @@ class UserRepositoryImpl @Inject constructor(
     ): Flow<Response<String>> {
         TODO("Not yet implemented")
     }
+    override suspend fun getMoreFriends(id: String): Flow<Response<ArrayList<User>>> = callbackFlow {
 
-    override suspend fun getFriends(id: String): Flow<Response<ArrayList<User>>> = callbackFlow {
-        val registration =
-            usersRef.whereArrayContains( "friends_ids_list",id).limit(9).get().addOnSuccessListener { documents ->
-                var userList: ArrayList<User> = ArrayList()
+        val snapshotListener = usersRef.whereArrayContains("friends_ids_list",id).startAfter(lastVisibleDataFriends).get().addOnCompleteListener { task->
+            var activitiesList:List<User> = mutableListOf()
+            if (task.isSuccessful) {
+                val documents = task.result?.documents
+                if (documents != null && documents.isNotEmpty()) {
+                    val newActivities = ArrayList<User>()
+                    for (document in documents) {
+                        val activity = document.toObject<User>()
+                        if (activity!=null){
+                            newActivities.add(activity)
+                        }
+                    }
+                    lastVisibleDataFriends= documents[documents.size - 1]
+                    trySend(Response.Success(newActivities))
 
-                val response = if (documents != null) {
-                    userList = documents.map { it.toObject<User>() } as ArrayList<User>
-                    Log.d("UserRepositoyImpl","User list"+userList.toString())
-                    trySend(Response.Success(userList))
-                } else {
-                    trySend(
-                        Response.Failure(
-                            e = SocialException(
-                                "getUser by name document null",
-                                Exception()
-                            )
-                        )
-                    )
                 }
-
-            }.addOnFailureListener { exception ->
-                channel.close(exception)
-                trySend(
-                    Response.Failure(
-                        e = SocialException(
-                            "get user by name document doesnt exist",
-                            Exception()
-                        )
-                    )
-                )
+            } else {
+                // There are no more messages to load
+                trySend(Response.Failure(e=SocialException(message="failed to get more activities",e=Exception())))
             }
 
-        awaitClose() {
-
         }
+        awaitClose {
+        }
+    }
+    override suspend fun getFriends(id: String): Flow<Response<ArrayList<User>>> = callbackFlow {
 
+        val snapshotListener =    usersRef.whereArrayContains( "friends_ids_list",id).limit(5).get().addOnCompleteListener { task->
+                var activitiesList:List<User> = mutableListOf()
+                if (task.isSuccessful) {
+                    val documents = task.result?.documents
+                    if (documents != null && documents.isNotEmpty()) {
+                        val newActivities = ArrayList<User>()
+                        for (document in documents) {
+                            val activity = document.toObject<User>()
+
+
+                            if (activity!=null){
+                                newActivities.add(activity)
+                            }
+                        }
+                        lastVisibleDataFriends= documents[documents.size - 1]
+                        trySend(Response.Success(newActivities))
+
+                    }
+                } else {
+                    // There are no more messages to load
+                    trySend(Response.Failure(e=SocialException(message="failed to get more activities",e=Exception())))
+                }
+
+            }
+        awaitClose {
+        }
     }
 
     override suspend fun addInvitedIDs(

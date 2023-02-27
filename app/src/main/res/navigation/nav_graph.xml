@@ -25,6 +25,11 @@
         android:label="Welcome">
     </fragment>
     <fragment
+        android:id="@+id/create_group_fragment"
+        android:name="com.example.socialk.CreateGroupFragment"
+        android:label="CreateGroup">
+    </fragment>
+    <fragment
         android:id="@+id/sign_in_fragment"
         android:name="com.example.socialk.signinsignup.SignInFragment"
         android:label="SignIn">
@@ -84,6 +89,12 @@
         android:name="com.example.socialk.EditProfileFragment"
         android:label=
             "EditProfile">
+    </fragment>
+    <fragment
+        android:id="@+id/friends_picker_fragment"
+        android:name="com.example.socialk.create.FriendPicker.FriendsPickerFragment"
+        android:label=
+            "FriendsPicker">
     </fragment>
     <fragment
         android:id="@+id/search_fragment"

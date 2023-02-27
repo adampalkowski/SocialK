@@ -50,7 +50,8 @@ sealed class ProfileEvent {
 
 data class TabRowItem(
     val title: String,
-    val screen: @Composable () -> Unit
+    val screen: @Composable () -> Unit,
+    val icon: Int
 )
 
 
@@ -384,10 +385,12 @@ fun ProfileScreen(
                 TabRowItem(
                     title = "Live activities",
                     screen = { LiveActivitiesCurrentUser(text = "Live activities", activityViewModel) },
+                    icon=R.drawable.ic_checklist
                 ),
                 TabRowItem(
                     title = "Memories",
                     screen = { Memories(text = "Memories") },
+                    icon=R.drawable.ic_camera
                 ),
 
                 )
@@ -398,10 +401,10 @@ fun ProfileScreen(
 
             ) {
                 tabRowItems.forEachIndexed { index, item ->
-                    Tab(
+                    androidx.compose.material.LeadingIconTab(
                         selected = pagerState.currentPage == index,
                         onClick = { coroutineScope.launch { pagerState.animateScrollToPage(index) } },
-
+                        icon = { Icon(painter = painterResource(id = item.icon), contentDescription =null )},
                         text = {
                             Text(
                                 text = item.title,

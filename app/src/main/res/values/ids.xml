@@ -10,6 +10,7 @@
     <item name="chats_collection_fragment" type="id" />
     <item name="map_fragment" type="id" />
     <item name="memories_fragment" type="id" />
+    <item name="friends_picker_fragment" type="id" />
     <item name="live_fragment" type="id" />
     <item name="event_fragment" type="id" />
     <item name="edit_profile_fragment" type="id" />
@@ -17,4 +18,5 @@
     <item name="pick_username_fragment" type="id" />
     <item name="chat_fragment" type="id" />
     <item name="user_profile_fragment" type="id" />
+    <item name="create_group_fragment" type="id" />
 </resources>

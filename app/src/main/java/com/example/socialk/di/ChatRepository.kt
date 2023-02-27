@@ -41,6 +41,7 @@ interface ChatRepository {
     suspend fun getMessages(chat_collection_id: String,current_time:String): Flow<Response<ArrayList<ChatMessage>>>
     suspend fun getMoreMessages(chat_collection_id: String): Flow<Response<ArrayList<ChatMessage>>>
     suspend fun getFirstMessages(chat_collection_id: String,current_time:String): Flow<Response<ArrayList<ChatMessage>>>
+    suspend fun getGroups(id: String): Flow<Response<ArrayList<Chat>>>
     suspend fun getChatCollections(user_id: String): Flow<Response<ArrayList<Chat>>>
     suspend fun addMessage(chat_collection_id: String, message: ChatMessage): Flow<Response<Void?>>
     suspend fun deleteMessage(chat_collection_id: String,message_id: String): Flow<Response<Void?>>

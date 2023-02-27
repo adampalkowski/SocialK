@@ -29,6 +29,7 @@ class ChatRepositoryImpl @Inject constructor(
     private val resStorage: StorageReference,
 ) : ChatRepository {
     private var lastVisibleData: DocumentSnapshot? = null
+    private var lastVisibleDataGroup: DocumentSnapshot? = null
     private  var loaded_messages: ArrayList<ChatMessage> = ArrayList()
     override suspend fun getChatCollection(id: String): Flow<Response<Chat>> = callbackFlow {
         chatCollectionsRef.document(id).get().addOnSuccessListener { documentSnapshot ->
@@ -336,6 +337,37 @@ class ChatRepositoryImpl @Inject constructor(
             awaitClose{
             }
         }
+
+    override suspend fun getGroups(id: String): Flow<Response<ArrayList<Chat>>> =
+        callbackFlow {
+
+            val callback= chatCollectionsRef.whereEqualTo("type","group").whereArrayContains("members",id).limit(6)
+                .get().addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        val documents = task.result?.documents
+                        if (documents != null && documents.isNotEmpty()) {
+                            val newMessages = ArrayList<Chat>()
+                            for (document in documents) {
+                                val message = document.toObject<Chat>()
+                                if (message!=null){
+                                    newMessages.add(message)
+                                }
+                            }
+                            lastVisibleDataGroup= documents[documents.size - 1]
+                            trySend(Response.Success(newMessages))
+
+                        }
+                    } else {
+                        // There are no more messages to load
+                        trySend(Response.Failure(e=SocialException(message="failed to get more messages",e=Exception())))
+                    }
+
+                }
+
+            awaitClose{
+            }
+        }
+
     override suspend fun getMessages(chat_collection_id: String,current_time:String): Flow<Response<ArrayList<ChatMessage>>> =
         callbackFlow {
             var messages: ArrayList<ChatMessage> = ArrayList()

@@ -22,7 +22,7 @@ data class Activity(
     val disableChat:Boolean,
     val disableMemories:Boolean,
     val likes:Int,
-    val invited_users:ArrayList<String>,
+    var invited_users:ArrayList<String>,
     val participants_profile_pictures:HashMap<String,String>,
     val participants_usernames:HashMap<String,String>,
     val creation_time:String,

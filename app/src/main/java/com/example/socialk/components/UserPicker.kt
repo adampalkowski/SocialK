@@ -1,15 +1,16 @@
 package com.example.socialk.components
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Icon
+import androidx.compose.material.*
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -18,39 +19,116 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.example.socialk.R
 import com.example.socialk.create.CreateEvent
 import com.example.socialk.create.Divider
+import com.example.socialk.di.ChatViewModel
 import com.example.socialk.di.UserViewModel
+import com.example.socialk.model.Chat
 import com.example.socialk.model.Response
 import com.example.socialk.model.User
+import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
-import java.util.ArrayList
+import com.example.socialk.ui.theme.Typography
+
+@Composable
+fun GroupPicker(modifier: Modifier, chatViewModel: ChatViewModel,    onEvent: (CreateEvent) -> Unit,) {
+    val groups_flow = chatViewModel.groupsState.collectAsState()
+    Box(
+        modifier = modifier
+
+    ) {
+        Column {
+            Spacer(modifier = Modifier.height(12.dp))
+            //TOP ROW INFORMATON
+            Row(
+                modifier = Modifier.padding(horizontal = 24.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_groups),
+                    contentDescription = null,
+                    tint = SocialTheme.colors.iconSecondary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Groups",
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 16.sp,
+                    color = SocialTheme.colors.iconSecondary
+                )
+                Spacer(modifier = Modifier.weight(1f))
+
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            //GRID PICKER
+            Divider()
+            LazyRow(
+                modifier = Modifier
+                    .height(48.dp)
+                    .fillMaxWidth()
+                    .background(color = Color(0xFFF4F4F4)),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                item {
+                    Spacer(modifier = Modifier.width(24.dp))
+                }
+                groups_flow.value.let {
+                    when (it) {
+                        is Response.Success -> {
+                            items(it.data) {
+                                GroupPickerItem(chat = it, onEvent = onEvent)
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                        }
+                        is Response.Loading -> {}
+                        is Response.Failure -> {}
+                    }
+                }
+                item {
+                    Spacer(modifier = Modifier.width(48.dp))
+                }
+            }
+            Divider()
+
+        }
+
+
+    }
+}
 
 
 @Composable
-fun UserPicker(modifier: Modifier, onEvent: (CreateEvent) -> Unit, userViewModel: UserViewModel,selected_list:List<User>) {
+fun UserPicker(
+    modifier: Modifier,
+    onEvent: (CreateEvent) -> Unit,
+    userViewModel: UserViewModel,
 
-
+) {
+    val checkedState = remember { mutableStateOf(false) }
 
     val friends_flow = userViewModel.friendState.collectAsState()
-    var friends_list = ArrayList<User>()
+    val more_friends_flow = userViewModel.friendMoreState.collectAsState()
     Box(
         modifier = modifier
-            .height(400.dp)
-            .padding(vertical = 6.dp)
+
     ) {
         Column() {
-
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            //TOP ROW INFORMATON
             Row(
                 modifier = Modifier.padding(horizontal = 24.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -62,7 +140,7 @@ fun UserPicker(modifier: Modifier, onEvent: (CreateEvent) -> Unit, userViewModel
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Select group",
+                    text = "Friends",
                     fontFamily = Inter,
                     fontWeight = FontWeight.Normal,
                     fontSize = 16.sp,
@@ -76,37 +154,77 @@ fun UserPicker(modifier: Modifier, onEvent: (CreateEvent) -> Unit, userViewModel
                     fontSize = 16.sp,
                     color = SocialTheme.colors.textInteractive
                 )
+                Switch(
+                    checked = checkedState.value, colors = SwitchDefaults.colors(
+                        checkedThumbColor = SocialTheme.colors.textPrimary,
+                        checkedTrackColor = SocialTheme.colors.textPrimary,
+                        disabledCheckedTrackColor = SocialTheme.colors.iconPrimary,
+                        disabledCheckedThumbColor = SocialTheme.colors.iconPrimary,
+                        disabledUncheckedThumbColor = SocialTheme.colors.iconPrimary,
+                        disabledUncheckedTrackColor = SocialTheme.colors.iconPrimary,
+                        uncheckedThumbColor = SocialTheme.colors.iconPrimary,
+                        uncheckedTrackColor = SocialTheme.colors.iconPrimary
+                    ),
+
+                    onCheckedChange = {
+                        onEvent(CreateEvent.AllFriendsSelected)
+                        checkedState.value = it }
+                )
+
             }
-            Spacer(modifier = Modifier.height(12.dp))
-            Row (modifier= Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)){
-                selected_list.reversed().forEach {
-                    SelectedName(it = it)
-                    Spacer(modifier = Modifier.width(12.dp))
+
+            Spacer(modifier = Modifier.height(8.dp))
+            AnimatedVisibility(
+                visible = !checkedState.value,
+                enter = slideInHorizontally(),
+                exit = slideOutHorizontally()
+            ) {
+                //GRID PICKER
+                Divider()
+                LazyColumn() {
+                    //todo paginate the friends and groups
+                    friends_flow.value.let {
+                        when (it) {
+                            is Response.Success -> {
+                                items(it.data) {
+
+                                    UserPickerItem(user = it, onEvent = onEvent)
+                                    Divider()
+                                }
+                                item{
+                                    Button(onClick = { userViewModel.getMoreFriends(UserData.user!!.id)}) {
+                                        Text("asdsad")
+                                    }
+                                }
+
+                            }
+                            is Response.Loading -> {}
+                            is Response.Failure -> {}
+                        }
+                    }
+                    more_friends_flow.value.let {
+                        when (it) {
+                            is Response.Success -> {
+                                items(it.data) {
+
+                                    UserPickerItem(user = it, onEvent = onEvent)
+                                    Divider()
+                                }
+                                item {
+                                    Spacer(modifier = Modifier.height(48.dp))
+                                }
+
+                            }
+                            is Response.Loading -> {}
+                            is Response.Failure -> {}
+                        }
+                    }
                 }
             }
 
+
             Spacer(modifier = Modifier.height(12.dp))
 
-            LazyHorizontalGrid(rows = GridCells.Fixed(3)) {
-                friends_flow.value.let {
-                 when(it){
-                     is Response.Success->{
-                         items(it.data) {
-                            UserItem(user = it, onEvent = onEvent
-
-                            )
-                        }
-
-                     }
-                     is Response.Loading->{}
-                     is Response.Failure->{}
-                 }
-                 }
-            }
-            Spacer(modifier = Modifier.height(12.dp))
             Divider()
         }
 
@@ -120,10 +238,20 @@ fun SelectedName(it: User) {
         shape = RoundedCornerShape(4.dp),
         border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated)
     ) {
-        Box(modifier= Modifier
-            .background(color = SocialTheme.colors.uiBackground)
-            .padding(4.dp)){
-            Text(text = it.username.toString(), style = TextStyle(fontFamily = Inter, fontWeight = FontWeight.Light, fontSize = 10.sp), color = SocialTheme.colors.textPrimary)
+        Box(
+            modifier = Modifier
+                .background(color = SocialTheme.colors.uiBackground)
+                .padding(4.dp)
+        ) {
+            Text(
+                text = it.username.toString(),
+                style = TextStyle(
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.Light,
+                    fontSize = 10.sp
+                ),
+                color = SocialTheme.colors.textPrimary
+            )
         }
 
     }
@@ -131,61 +259,131 @@ fun SelectedName(it: User) {
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun UserItem(user: User, onEvent: (CreateEvent) -> Unit) {
+fun GroupPickerItem(chat: Chat, onEvent: (CreateEvent) -> Unit) {
     var selected: Boolean by rememberSaveable {
         mutableStateOf(false)
     }
-    Row() {
+    Card(
+        shape = RoundedCornerShape(6.dp), onClick = {
+            if (!selected) {
+                onEvent(CreateEvent.GroupSelected(chat))
+            } else {
+                onEvent(CreateEvent.GroupUnSelected(chat))
+            }
+            selected = !selected  },
+        border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated)
+    ) {
         Box(
             modifier = Modifier
-                .padding(6.dp)
-                .widthIn(40.dp, 120.dp)
+                .background(color = SocialTheme.colors.uiBackground)
+                .padding(vertical = 8.dp, horizontal = 12.dp)
         ) {
-            Card(
-                elevation = if (selected) {
-                    2.dp
-                } else {
-                    0.dp
-                },border = if(selected){BorderStroke(1.dp,color=SocialTheme.colors.uiFloated)}else{
-                    BorderStroke(0.dp,color=SocialTheme.colors.uiBackground)
-                },
-                shape = RoundedCornerShape(12.dp),
-                onClick = {
-                    if(!selected){onEvent(CreateEvent.UserSelected(user))}else{onEvent(CreateEvent.UserUnSelected(user))}
-                    selected = !selected
+            Row(verticalAlignment = Alignment.CenterVertically){
+                Text(
+                    text = chat.chat_name.toString(),
+                    style = TextStyle(
+                        fontFamily = Inter,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp
+                    ),color=SocialTheme.colors.textPrimary.copy(alpha = 0.6f)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Checkbox(modifier = Modifier.size(20.dp),
+                    checked = selected,
+                    colors = androidx.compose.material3.CheckboxDefaults.colors(
+                        checkedColor = Color.Black.copy(alpha = 0.8f),
+                        uncheckedColor = Color.Black.copy(alpha = 0.8f)
+                    ),
+                    onCheckedChange = {
+                        if (!selected) {
+                            onEvent(CreateEvent.GroupSelected(chat))
+                        } else {
+                            onEvent(CreateEvent.GroupUnSelected(chat))
+                        }
+                        selected = !selected })
+            }
 
-                }) {
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = SocialTheme.colors.uiBackground
-                        )
-                        .padding(8.dp)
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Image(
-                            painter = rememberAsyncImagePainter(user.pictureUrl),
-                            contentDescription = "profile image",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = user.username.toString(),
-                            color = SocialTheme.colors.textPrimary,
-                            textAlign = TextAlign.Center,
-                            style = TextStyle(
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Light,
-                                fontFamily = Inter
-                            )
-                        )
+
+        }
+    }
+
+}
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun UserPickerItem(user: User, onEvent: (CreateEvent) -> Unit) {
+    var selected: Boolean by rememberSaveable {
+        mutableStateOf(false)
+    }
+    Card(
+        modifier = Modifier
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(0.dp),
+        elevation = 0.dp,
+        onClick = {
+            if (!selected) {
+                onEvent(CreateEvent.UserSelected(user))
+            } else {
+                onEvent(CreateEvent.UserUnSelected(user))
+            }
+            selected = !selected
+        }) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = if (selected) {
+                        SocialTheme.colors.uiBackground
+                    } else {
+                        //todo hardcoded color
+                        Color(0xFFF4F4F4)
                     }
-                }
+                )
+                .padding(horizontal = 24.dp, vertical = 12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AsyncImage(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape),
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(user.pictureUrl)
+                        .crossfade(true)
+                        .build(),
+                    placeholder = painterResource(R.drawable.ic_person),
+                    contentDescription = "user picture",
+                    contentScale = ContentScale.Crop,
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = user.username.toString(),
+                    style = TextStyle(
+                        fontFamily = Inter,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    ),
+                    color = SocialTheme.colors.textPrimary
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Checkbox(
+                    checked = selected,
+                    colors = androidx.compose.material3.CheckboxDefaults.colors(
+                        checkedColor = Color.Black.copy(alpha = 0.8f),
+                        uncheckedColor = Color.Black.copy(alpha = 0.8f)
+                    ),
+                    onCheckedChange = {
+                        if (!selected) {
+                            onEvent(CreateEvent.UserSelected(user))
+                        } else {
+                            onEvent(CreateEvent.UserUnSelected(user))
+                        }
+                        selected = !selected })
             }
         }
-
     }
+
+
 }
+

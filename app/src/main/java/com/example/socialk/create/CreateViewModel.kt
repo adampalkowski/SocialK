@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.socialk.Main.Screen
+import com.example.socialk.model.Activity
 import com.example.socialk.util.Event
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +14,8 @@ import kotlinx.coroutines.flow.StateFlow
 class CreateViewModel : ViewModel() {
     private val _navigateTo = MutableLiveData<Event<Screen>>()
     val navigateTo: LiveData<Event<Screen>> = _navigateTo
-
+    private val _created_activity = MutableLiveData<Activity>()
+    val created_activity: LiveData<Activity> = _created_activity
     fun handleGoToProfile( ) {
         _navigateTo.value = Event(Screen.Profile)
     }
@@ -22,6 +24,10 @@ class CreateViewModel : ViewModel() {
     }
     fun handleGoToSettings( ) {
         _navigateTo.value = Event(Screen.Settings)
+    }
+    fun handleGoToFriendsPicker(activity: Activity) {
+        _created_activity.value=activity
+        _navigateTo.value = Event(Screen.FriendsPicker)
     }
     fun handleGoToHome( ) {
         _navigateTo.value = Event(Screen.Home)

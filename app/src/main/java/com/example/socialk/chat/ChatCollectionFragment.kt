@@ -47,6 +47,7 @@ class ChatCollectionFragment:Fragment() {
                                 is ChatCollectionEvent.LogOut -> viewModel.handleLogOut()
                                 is ChatCollectionEvent.GoToSettings -> viewModel.handleGoToSettings()
                                 is ChatCollectionEvent.GoToSearch -> viewModel.handleGoToSearch()
+                                is ChatCollectionEvent.GoToGroup -> viewModel.handleGoToCreateGroup()
                                 is ChatCollectionEvent.GoToChat -> viewModel.handleGoToChat(event.chat)
                             }
                         },

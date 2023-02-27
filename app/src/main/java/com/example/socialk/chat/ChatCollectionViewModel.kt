@@ -21,6 +21,9 @@ class ChatCollectionViewModel :ViewModel(){
     fun handleGoToProfile( ) {
         _navigateTo.value = Event(Screen.Profile)
     }
+    fun handleGoToCreateGroup( ) {
+        _navigateTo.value = Event(Screen.CreateGroup)
+    }
     fun handleLogOut( ) {
         _navigateTo.value = Event(Screen.Welcome)
     }

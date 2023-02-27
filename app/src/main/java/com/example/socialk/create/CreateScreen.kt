@@ -37,6 +37,7 @@ import com.example.socialk.components.UserPicker
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.UserViewModel
 import com.example.socialk.map.loadIcon
+import com.example.socialk.model.Chat
 import com.example.socialk.model.Response
 import com.example.socialk.model.User
 import com.example.socialk.model.UserData
@@ -50,6 +51,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 import com.marosseleng.compose.material3.datetimepickers.date.domain.DatePickerShapes
 import com.marosseleng.compose.material3.datetimepickers.date.ui.dialog.DatePickerDialog
+import com.marosseleng.compose.material3.datetimepickers.time.domain.TimePickerColors
 import com.marosseleng.compose.material3.datetimepickers.time.domain.noSeconds
 import com.marosseleng.compose.material3.datetimepickers.time.ui.dialog.TimePickerDialog
 import java.time.LocalDate
@@ -58,6 +60,7 @@ import java.util.*
 
 sealed class CreateEvent {
     object GoToProfile : CreateEvent()
+    object AllFriendsSelected : CreateEvent()
     object LogOut : CreateEvent()
     object GoToSettings : CreateEvent()
     object GoToHome : CreateEvent()
@@ -72,7 +75,12 @@ sealed class CreateEvent {
     class UserUnSelected(user: User) : CreateEvent() {
         val user = user
     }
-
+    class GroupSelected(chat: Chat) : CreateEvent() {
+        val chat = chat
+    }
+    class GroupUnSelected(chat: Chat) : CreateEvent() {
+        val chat = chat
+    }
     data class CreateActivity(
         val title: String,
         val date: String,
@@ -101,18 +109,7 @@ fun CreateScreen(location:String?,
     val openDialog = remember { mutableStateOf(false)  }
     var location= remember{ mutableStateOf(location)  }
     var latlng= remember{ mutableStateOf("")  }
-    val _selected_list = rememberSaveable { mutableStateOf(listOf<User>()) }
-    val selected_list by remember{ _selected_list }
-    fun addUser(user: User) {
-        val newList = ArrayList(selected_list)
-        newList.add(user)
-        _selected_list.value = newList
-    }
-    fun removeUser(user: User) {
-        val newList = ArrayList(selected_list)
-        newList.remove(user)
-        _selected_list.value = newList
-    }
+
     val activityTextState by rememberSaveable(stateSaver = ActivityTextStateSaver) {
         mutableStateOf(ActivityTextFieldState())
     }
@@ -248,7 +245,6 @@ fun CreateScreen(location:String?,
 
             activityPickerCreate(isSystemInDarkTheme(), onEvent = { event -> onEvent(event) })
             Spacer(modifier = Modifier.height(12.dp))
-
             EditTextField(hint = "What are you planning?",
                 hideKeyboard = hideKeyboard,
                 onFocusClear = { hideKeyboard = false },
@@ -307,17 +303,6 @@ fun CreateScreen(location:String?,
                 icon = R.drawable.ic_hourglass
             )
 
-            //User picker field
-            UserPicker(
-                modifier = Modifier.fillMaxWidth(),
-                onEvent =     {event->
-                    when(event){
-                    is CreateEvent.UserSelected->{addUser(event.user)}
-                    is CreateEvent.UserUnSelected->{removeUser(event.user)}
-                }},
-                userViewModel = userViewModel,
-                selected_list=selected_list
-            )
 
             if(location.value!=null){
                 //LOCATON FIELD
@@ -349,9 +334,6 @@ fun CreateScreen(location:String?,
                 modifier = Modifier, title = "Description",
                 icon = R.drawable.ic_description, focusManager = focusManager, onClick = {})
 
-
-
-
             RequirementsField(
                 modifier = Modifier,
                 onClick = {
@@ -361,15 +343,7 @@ fun CreateScreen(location:String?,
                 value = locationState,
                 icon = R.drawable.ic_checklist
             )
-            ConfigureField(
-                modifier = Modifier,
-                onClick = {
-                    focusManager.clearFocus()
-                },
-                title = "Configure",
-                value = locationState,
-                icon = R.drawable.ic_settings
-            )
+
             Spacer(modifier = Modifier.height(48.dp))
 
 
@@ -381,7 +355,7 @@ fun CreateScreen(location:String?,
                         date = dateState.toString(),
                         start_time = timeState.toString(),
                         time_length = timeLengthState.toString(),
-                        invited_users = selected_list,
+                        invited_users = arrayListOf(),
                         description=descriptionTextState.text,
                         custom_location=customLocationTextState.text,
                         min=minTextState.text,
@@ -395,7 +369,8 @@ fun CreateScreen(location:String?,
             Spacer(modifier = Modifier.height(64.dp))
 
         }
-        if (!isKeyboardOpen) {
+
+        if (!  activityTextState.isFocused &&!descriptionTextState.isFocused && !customLocationTextState.isFocused ) {
             BottomBar(
                 onTabSelected = { screen -> bottomNavEvent(screen) },
                 currentScreen = Create
@@ -827,7 +802,6 @@ fun EditTextField(
     }
 
     if (hideKeyboard) {
-
         focusManager.clearFocus()
         // Call onFocusClear to reset hideKeyboard state to false
         onFocusClear()
@@ -843,10 +817,8 @@ fun DatePicker(onDismissRequest: () -> Unit, onDateChange: (LocalDate) -> Unit) 
         onDateChange = onDateChange,
         // Optional but recommended parameter to provide the title for the dialog
         title = { Text(text = "Select date") },
-        textContentColor = SocialTheme.colors.textPrimary,
         containerColor = SocialTheme.colors.uiBackground,
         titleContentColor = SocialTheme.colors.textPrimary,
-        iconContentColor = SocialTheme.colors.iconPrimary,
         shapes = object : DatePickerShapes {
             override val currentMonthDaySelected: Shape
                 get() = RoundedCornerShape(8.dp)

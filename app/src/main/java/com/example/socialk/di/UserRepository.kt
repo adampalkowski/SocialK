@@ -21,6 +21,7 @@ interface UserRepository {
     suspend fun deleteProfilePictureFromStorage(user_id:String,picture_url:String): Flow<Response<Void?>>
     suspend fun getProfilePictureFromStorage(user_id:String,picture_url:String): Flow<Response<String>>
     suspend fun getFriends(id:String): Flow<Response<ArrayList<User>>>
+    suspend fun getMoreFriends(id:String): Flow<Response<ArrayList<User>>>
 
 
     suspend fun addInvitedIDs(

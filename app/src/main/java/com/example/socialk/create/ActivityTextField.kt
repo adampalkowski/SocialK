@@ -1,6 +1,7 @@
 package com.example.socialk.create
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
@@ -60,7 +61,6 @@ fun ActivityTextField(hint:String,
         ),
         keyboardOptions = KeyboardOptions.Default.copy(
             imeAction = imeAction
-        ),
-        )
+        ) , keyboardActions = KeyboardActions (onDone = {focusManager.clearFocus()}) )
 
 }
