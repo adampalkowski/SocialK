@@ -185,6 +185,7 @@ fun HomeScreen(
             is Response.Failure->{
 
             }
+         else->{}
         }
     }
     activityDialog(activity =homeViewModel?.activity?.value , activityDialogState =showDialogState,onEvent={
@@ -218,6 +219,7 @@ fun HomeScreen(
                     activityViewModel?.getActivitiesForUser(viewModel?.currentUser!!.uid)
 
                 }
+                else->{}
 
             }
         },
@@ -295,6 +297,7 @@ fun HomeScreenContent(
                             }
                         }
                     }
+                    else->{}
                 }
             }
             //divider bettwen active users and activities
@@ -314,7 +317,7 @@ fun HomeScreenContent(
                         //display activities
                         Log.d("homescreen", it.data.toString())
                         items(it.data) { item ->
-                            ActivityItem(
+                            SwipableActivity(
                                 activity = item,
                                 onEvent = activityEvent,
                                 username = item.creator_username,
@@ -333,6 +336,7 @@ fun HomeScreenContent(
                         }
                         activitiesExist.value=true
                         }
+                    else->{}
                 }
             }
             activityViewModel?.moreActivitiesListState?.value.let {
@@ -360,6 +364,7 @@ fun HomeScreenContent(
 
                         }
                     }
+                    else->{}
                 }
             }
             item {
@@ -448,10 +453,8 @@ fun cardnotHighlited(text: String, onEvent: () -> Unit) {
             horizontalArrangement = Arrangement.Center
         ) {
             Text(
-                text = text, fontSize = 14.sp, color = Color(0xffB0B0B0), style = TextStyle(
-                    fontFamily = Inter,
-                    fontWeight = FontWeight.Medium
-                ), textAlign = TextAlign.Center
+                text = text, color = Color(0xffB0B0B0), style =  com.example.socialk.ui.theme.Typography.body2
+                , textAlign = TextAlign.Center
             )
         }
     }
@@ -468,10 +471,9 @@ fun cardHighlited(isDark: Boolean, text: String) {
     ) {
         Text(
             text = text,
-            fontSize = 14.sp,
             color = if (isDark) Color.White else Color(0xFF25232A),
             modifier = Modifier,
-            style = TextStyle(fontFamily = Inter, fontWeight = FontWeight.SemiBold),
+            style =  com.example.socialk.ui.theme.Typography.body1,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(4.dp))

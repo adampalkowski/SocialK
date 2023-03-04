@@ -158,7 +158,7 @@ class MapFragment:Fragment() {
         var latLng:LatLng?=null
         if (latlngInitial!=null){
             val values=latlngInitial?.split("/")
-             latLng= LatLng(values.get(0).toDouble(),values?.get(1)?.toDouble())
+             latLng= LatLng(values?.get(0)?.toDouble()!!,values?.get(1)?.toDouble()!!)
         }
         Log.d("Mapfragment","got data"+latlngInitial)
         return ComposeView(requireContext()).apply {

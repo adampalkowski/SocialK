@@ -60,7 +60,7 @@ class FriendsPickerFragment : Fragment() {
         }
 
         var group_name: String? = arguments?.getString("group_name")
-        Toast.makeText(activity,group_name,Toast.LENGTH_LONG).show()
+
         val type: String = if (activityCreated != null) {
             "activity"
         } else if (group_name != null) {

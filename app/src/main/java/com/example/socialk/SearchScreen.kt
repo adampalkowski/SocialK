@@ -124,6 +124,7 @@ fun SearchScreen(userViewModel:UserViewModel?,onEvent: (SearchEvent) -> Unit) {
                                 is Response.Failure->{
 
                                 }
+                        else->{}
                     }
                 }
 
@@ -196,6 +197,7 @@ fun SearchScreen(userViewModel:UserViewModel?,onEvent: (SearchEvent) -> Unit) {
             is Response.Success ->{
 
             }
+            else->{}
         }
     }
 
@@ -406,6 +408,7 @@ fun searchEditText(userViewModel: UserViewModel?,onEvent: (SearchEvent) -> Unit)
                         "Failed to find user with given username",Toast.LENGTH_LONG).show()
 
                 }
+                else->{}
 
             }
         }

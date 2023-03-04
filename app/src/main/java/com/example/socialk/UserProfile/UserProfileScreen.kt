@@ -84,6 +84,7 @@ fun UserProfileScreen(
             }
             is Response.Failure -> {}
             is Response.Loading -> {}
+            else->{}
         }
     }
     Surface(

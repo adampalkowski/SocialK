@@ -2,15 +2,13 @@ package com.example.socialk.components
 
 import android.util.Log.e
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -23,11 +21,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -40,7 +40,9 @@ import com.example.socialk.home.ActivityEvent
 import com.example.socialk.model.Activity
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
+import com.example.socialk.ui.theme.Typography
 import com.google.android.gms.maps.model.LatLng
+import kotlin.math.roundToInt
 
 sealed class ActivityItemEvent {
     class LikedActivity(activity: Activity) : ActivityItemEvent() {
@@ -55,9 +57,61 @@ sealed class ActivityItemEvent {
         val activity = activity
     }
 }
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+ fun SwipableActivity( activity: Activity,
+                                username: String,
+                                profilePictureUrl: String,
+                                timeLeft: String,
+                                title: String,
+                                description: String,
+                                date: String,
+                                timePeriod: String,
+                                custom_location: String,
+                                location: String,
+                                liked: Boolean,
+                                onEvent: (ActivityEvent) -> Unit) {
+    val squareSize = 129.dp
+    val swipeableState = rememberSwipeableState(0)
+    val sizePx = with(LocalDensity.current) { squareSize.toPx() }
+    val anchors = mapOf(0f to 0, sizePx to 1,
+        -sizePx to -1
+    )// Maps anchor points (in px) to states
+
+    Box(
+        modifier = Modifier
+            .swipeable(
+                state = swipeableState,
+                anchors = anchors,
+                thresholds = { _, _ -> FractionalThreshold(1.2f) },
+                orientation = Orientation.Horizontal,
+                velocityThreshold =  1000.dp
+            )
+            .background(Color.LightGray)
+    ) {
+        ActivityItem(modifier=   Modifier.background(color=SocialTheme.colors.uiBackground)
+            .offset { IntOffset(swipeableState.offset.value.roundToInt(), 0) },
+            activity = activity,
+            username =username ,
+            profilePictureUrl =profilePictureUrl ,
+            timeLeft = timeLeft,
+            title = title,
+            description =description ,
+            date = date,
+            timePeriod =timePeriod ,
+            custom_location = custom_location,
+            location = location,
+            liked =liked ,
+            onEvent =onEvent
+        )
+
+    }
+    swipeableState
+
+}
 
 @Composable
-fun ActivityItem(
+fun ActivityItem(modifier:Modifier=Modifier,
     activity: Activity,
     username: String,
     profilePictureUrl: String,
@@ -75,7 +129,7 @@ fun ActivityItem(
 
     var liked = rememberSaveable { mutableStateOf(liked) }
     Box(
-        modifier = Modifier
+        modifier = modifier
             .padding(start = 12.dp)
             .padding(end = 12.dp)
             .padding(vertical = 12.dp)
@@ -169,7 +223,7 @@ fun ActivityItem(
             //DETAILS
             Spacer(modifier = Modifier.height(12.dp))
             //todo either custom location or latlng
-            ActivityDetailsBar(
+            ActivityDetailsBar(min=activity.minUserCount,max=activity.maxUserCount,
                 onEvent = onEvent, activity.participants_profile_pictures,
                 location = location,
                 custom_location = custom_location,
@@ -192,7 +246,7 @@ fun ActivityItem(
 
 
 @Composable
-fun ActivityDetailsBar(
+fun ActivityDetailsBar(min:Int,max:Int,
     onEvent: (ActivityEvent) -> Unit, participants_pictures: HashMap<String, String>,
     location: String?,
     custom_location: String?,
@@ -276,15 +330,18 @@ fun ActivityDetailsBar(
                 Spacer(modifier = Modifier.width(32.dp))
             }
             item {
-
+            //two cases
+                // one custom location exists then write text
+                // two lat lng location exists then display button to preview location
 
                 if (custom_location == null || custom_location.isEmpty()) {
                     if (location == null || location.isEmpty()) {
 
                     } else {
+                        //latlng location
                         Icon(
                             painter = painterResource(id = R.drawable.ic_location),
-                            contentDescription = null,
+                            contentDescription = "location icon",
                             tint = SocialTheme.colors.iconPrimary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -305,19 +362,16 @@ fun ActivityDetailsBar(
                     }
 
                 } else {
+                    //custom location 
                     Icon(
                         painter = painterResource(id = R.drawable.ic_location),
-                        contentDescription = null,
+                        contentDescription = "custom location icon",
                         tint = SocialTheme.colors.iconPrimary
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = custom_location,
-                        style = TextStyle(
-                            fontFamily = Inter,
-                            fontWeight = FontWeight.ExtraLight,
-                            fontSize = 12.sp
-                        ),
+                        style = Typography.h6,
                         color = SocialTheme.colors.textPrimary
                     )
                     Spacer(modifier = Modifier.width(24.dp))

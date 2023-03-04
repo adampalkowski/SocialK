@@ -74,7 +74,8 @@ fun BottomDialog(state:ModalBottomSheetState=rememberModalBottomSheetState(Modal
             sheetContentColor = SocialTheme.colors.textPrimary, scrimColor = Color(0x7E313131),
             sheetContent = {
                 if (displayParticipants.value){
-                    DisplayParticipants(activity,onEvent={event->when(event){is BottomDialogEvent.GoBack->{displayParticipants.value=false}} })
+                    DisplayParticipants(activity,onEvent={event->when(event){is BottomDialogEvent.GoBack->{displayParticipants.value=false}
+                        else->{}} })
                 }else{
                     ActivitySettingsContent(LocalContext.current,clipboardManager,displayParticipants, onEvent ={ event->
                         when(event){
@@ -84,6 +85,7 @@ fun BottomDialog(state:ModalBottomSheetState=rememberModalBottomSheetState(Modal
                             is BottomDialogEvent.HideBottomDialog->{
                                 coroutineScope.launch { state.hide() }
                             }
+                            else->{}
                         }
                     }, activity =activity)
                     if(openDialog.value){

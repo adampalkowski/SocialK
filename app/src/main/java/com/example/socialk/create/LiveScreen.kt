@@ -114,6 +114,7 @@ fun LiveScreen (activeUsersViewModel:ActiveUsersViewModel,onEvent: (LiveEvent) -
             is Response.Failure-> Box(modifier = Modifier.fillMaxSize()){
                 androidx.compose.material3.Text(text = "FAILURE", fontSize = 50.sp)
             }
+            else->{}
         }
     }
 }
@@ -193,8 +194,9 @@ fun LiveScreenContent(activeUsersViewModel:ActiveUsersViewModel,onEvent: (LiveEv
             icon = R.drawable.ic_my_location,onEvent={
                 when(it){
                     is LiveEvent.SetCurrentLocation->{
-                        currentLocation.value=it.latLng}
+                        currentLocation.value=it.latLng}      else->{}
                 }
+
             },activeUsersViewModel)
 
         Spacer(modifier = Modifier.height(48.dp))

@@ -17,6 +17,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 import com.example.socialk.signinsignup.TextFieldState
+import com.example.socialk.ui.theme.SocialTheme
 
 
 @Composable
@@ -57,7 +58,8 @@ fun ActivityTextField(hint:String,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent,
-            errorIndicatorColor = Color.Transparent
+            errorIndicatorColor = Color.Transparent,
+            cursorColor = SocialTheme.colors.textPrimary
         ),
         keyboardOptions = KeyboardOptions.Default.copy(
             imeAction = imeAction

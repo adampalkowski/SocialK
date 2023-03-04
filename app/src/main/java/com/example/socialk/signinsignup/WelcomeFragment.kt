@@ -44,6 +44,7 @@ class WelcomeFragment:Fragment() {
                             is WelcomeEvent.ContinueWithGoogle->authViewModel.oneTapSignIn()
                             is WelcomeEvent.GoToHome->viewModel.handleGoToHome()
                             is WelcomeEvent.PickUsername->viewModel.handleGoToPickUsername()
+                            else->{}
                         }
                     }   , navigateToHome = {viewModel.handleGoToHome()})
                 }

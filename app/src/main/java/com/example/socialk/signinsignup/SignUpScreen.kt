@@ -87,6 +87,7 @@ fun SignUp(userViewModel:UserViewModel,viewModel: AuthViewModel?,onNavigationEve
                             val context = LocalContext.current
                             Toast.makeText(context,"Failed to validate user code 102",Toast.LENGTH_LONG).show()
                         }
+                        else->{}
                     }
                 }
             }
@@ -97,6 +98,7 @@ fun SignUp(userViewModel:UserViewModel,viewModel: AuthViewModel?,onNavigationEve
                 val context = LocalContext.current
                 Toast.makeText(context,it.e.message,Toast.LENGTH_LONG).show()
             }
+            else->{}
         }
     }
 }

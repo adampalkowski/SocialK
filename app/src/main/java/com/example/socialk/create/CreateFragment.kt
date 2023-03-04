@@ -122,6 +122,7 @@ class CreateFragment : Fragment() {
 
 
                             }
+                            else->{}
                         }
                     },
                         bottomNavEvent = { screen ->
@@ -130,6 +131,7 @@ class CreateFragment : Fragment() {
                                 is Map -> viewModel.handleGoToMap()
                                 is Chats -> viewModel.handleGoToChats()
                                 is Profile -> viewModel.handleGoToProfile()
+                                else->{}
                             }
                         })
                 }

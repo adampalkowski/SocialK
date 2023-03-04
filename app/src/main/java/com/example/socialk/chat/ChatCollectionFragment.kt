@@ -49,6 +49,7 @@ class ChatCollectionFragment:Fragment() {
                                 is ChatCollectionEvent.GoToSearch -> viewModel.handleGoToSearch()
                                 is ChatCollectionEvent.GoToGroup -> viewModel.handleGoToCreateGroup()
                                 is ChatCollectionEvent.GoToChat -> viewModel.handleGoToChat(event.chat)
+                                else->{}
                             }
                         },
                         bottomNavEvent  ={screen->
@@ -58,6 +59,7 @@ class ChatCollectionFragment:Fragment() {
                                 is Chats -> viewModel.handleGoToChats()
                                 is Profile ->viewModel.handleGoToProfile()
                                 is Create -> viewModel.handleGoToCreate()
+                                else->{}
                             }
                         },chatViewModel=chatViewModel
                     )

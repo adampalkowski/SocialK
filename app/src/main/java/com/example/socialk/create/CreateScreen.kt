@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -335,13 +337,12 @@ fun CreateScreen(location:String?,
                 icon = R.drawable.ic_description, focusManager = focusManager, onClick = {})
 
             RequirementsField(
-                modifier = Modifier,
-                onClick = {
-                    focusManager.clearFocus()
-                }, minState =minTextState, maxState =maxTextState ,
+                modifier = Modifier,        hideKeyboard = hideKeyboard,
+                onFocusClear = { hideKeyboard = false },
+                onClick = {    }, minState =minTextState, maxState =maxTextState ,
                 title = "Participants limits",
                 value = locationState,
-                icon = R.drawable.ic_checklist
+                icon = R.drawable.ic_checklist ,focusManager = focusManager
             )
 
             Spacer(modifier = Modifier.height(48.dp))
@@ -392,6 +393,7 @@ fun CreateScreen(location:String?,
             is Response.Failure -> Box(modifier = Modifier.fillMaxSize()) {
                 Text(text = "FAILURE", fontSize = 50.sp)
             }
+            else->{}
         }
     }
     if(openDialog.value){
@@ -553,6 +555,9 @@ fun LocationField(modifier: Modifier.Companion, onClick: () -> Unit, title: Stri
 fun RequirementsField(
     onClick: (Int) -> Unit,
     modifier: Modifier,
+    hideKeyboard: Boolean = false,
+    onFocusClear: () -> Unit = {},
+    focusManager: FocusManager,
     title: String,
     value: String = "value",minState:TextFieldState,maxState:TextFieldState,
     icon: Int
@@ -593,20 +598,26 @@ fun RequirementsField(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(6.dp))
-                RequirementsNumberField("Min", numberState = minState)
+                RequirementsNumberField("Min", numberState = minState,focusManager=focusManager)
             }
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(6.dp))
-                RequirementsNumberField("Max", numberState = maxState)
+                RequirementsNumberField("Max", numberState = maxState,focusManager=focusManager)
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
         Divider()
     }
+    if (hideKeyboard) {
+        focusManager.clearFocus()
+        // Call onFocusClear to reset hideKeyboard state to false
+        onFocusClear()
+    }
 }
+
 
 @Composable
 fun ConfigureSwitchItem() {
@@ -639,6 +650,7 @@ fun ConfigureSwitchItem() {
 fun ConfigureField(
     onClick: (Int) -> Unit,
     modifier: Modifier,
+
     title: String,
     value: String = "value",
     icon: Int
@@ -684,7 +696,9 @@ fun ConfigureField(
 }
 
 @Composable
-fun RequirementsNumberField(hint: String,numberState:TextFieldState) {
+fun RequirementsNumberField(hint: String    ,numberState:TextFieldState,
+                            focusManager: FocusManager,
+                            imeAction: ImeAction = ImeAction.Done) {
 
     Card(
         modifier = Modifier
@@ -698,11 +712,17 @@ fun RequirementsNumberField(hint: String,numberState:TextFieldState) {
     ) {
         Box(modifier = Modifier.background(color = SocialTheme.colors.uiBackground)) {
             TextField(
-                modifier = Modifier,
+                modifier = Modifier     .onFocusChanged { focusState ->
+                    numberState.onFocusChange(focusState.isFocused)
+                    if (!focusState.isFocused) {
+                        numberState.enableShowErrors()
+                    }
+                },
                 textStyle = TextStyle(fontSize = 14.sp),
                 value = numberState.text,
                 onValueChange = {
                     if (it.length < 4) {
+
                         numberState.text = it
                     }
                 },
@@ -717,10 +737,12 @@ fun RequirementsNumberField(hint: String,numberState:TextFieldState) {
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent,
-                    errorIndicatorColor = Color.Transparent
+                    errorIndicatorColor = Color.Transparent,
+                    cursorColor = SocialTheme.colors.textPrimary
                 ),
-                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-            )
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    imeAction = imeAction
+                ) , keyboardActions = KeyboardActions (onDone = {focusManager.clearFocus()}) )
         }
     }
 

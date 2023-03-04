@@ -153,6 +153,7 @@ class UserViewModel @Inject constructor(
                                             is Response.Success -> {
                                                 UserData.user = response.data
                                             }
+                                            else->{}
                                         }
 
                                     }
@@ -160,6 +161,7 @@ class UserViewModel @Inject constructor(
                                 is Response.Failure -> {
                                     Log.d("ImagePicker", response.e.message)
                                 }
+                                else->{}
                             }
 
                         }
@@ -167,6 +169,7 @@ class UserViewModel @Inject constructor(
                     is Response.Failure -> {
                         Log.d("ImagePicker", response.e.message)
                     }
+                    else->{}
                 }
 
             }
@@ -327,6 +330,7 @@ class UserViewModel @Inject constructor(
                             _isUsernameAddedFlow.value = response
                         }
                     }
+                    else->{}
                 }
             }
 
@@ -372,6 +376,7 @@ class UserViewModel @Inject constructor(
                             )
                         )
                     }
+                    else->{}
                 }
 
 
