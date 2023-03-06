@@ -63,7 +63,7 @@ sealed class SignInEvent {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     SignInContent(
                         onSignInSubmitted = { email,password->
-                            viewModel?.signin(email,password)
+                            viewModel?.signin(email.trim(),password.trim())
                         }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -115,6 +115,8 @@ sealed class SignInEvent {
                             val context = LocalContext.current
                             Toast.makeText(context,"Failed to validate user code 102",Toast.LENGTH_LONG).show()
                         }
+                        else->{}
+
                     }
                 }
 

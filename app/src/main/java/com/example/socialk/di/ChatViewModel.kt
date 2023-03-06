@@ -218,6 +218,8 @@ class ChatViewModel @Inject constructor(
                         _messagesState.value=response
 
                     }
+                    else->{}
+
                 }
 
             }
@@ -232,6 +234,8 @@ class ChatViewModel @Inject constructor(
                         _firstMessagesState.value=response
 
                     }
+                    else->{}
+
                 }
 
             }
@@ -248,6 +252,8 @@ class ChatViewModel @Inject constructor(
                         _moreMessagesState.value=response
 
                     }
+                    else->{}
+
                 }
 
             }

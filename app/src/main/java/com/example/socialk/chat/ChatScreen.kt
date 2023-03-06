@@ -229,6 +229,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                 Toast.makeText(LocalContext.current, "Failed to send the image", Toast.LENGTH_SHORT)
                     .show()
             }
+            else ->{}
         }
     }
     chatViewModel.firstMessagesState.value.let {
@@ -239,6 +240,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
             }
             is Response.Loading -> {}
             is Response.Failure -> {}
+            else ->{}
         }
     }
     chatViewModel.messagesState.value.let {
@@ -248,6 +250,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
             }
             is Response.Loading -> {}
             is Response.Failure -> {}
+            else ->{}
         }
     }
     chatViewModel.moreMessagesState.value.let {
@@ -258,6 +261,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
             }
             is Response.Loading -> {}
             is Response.Failure -> {}
+            else ->{}
         }
     }
 
@@ -457,6 +461,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                             chat.highlited_message = null
                             highlight_dialog = false
                         }
+                        else ->{}
                     }
                 }, highlitedMessage = chat.highlited_message!!)
 
@@ -813,6 +818,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                         bottomSheetState.show()
                     }
                 }
+                else ->{}
             }
 
 
@@ -837,6 +843,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                     bottomSheetState.hide()
                 }
             }
+            else ->{}
         }
     },
     activeUsersViewModel = activeUsersViewModel

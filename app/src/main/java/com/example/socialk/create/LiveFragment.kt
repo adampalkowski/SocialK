@@ -185,6 +185,8 @@ class LiveFragment : Fragment() {
                                         destroy_time=destroyTime,
                                 ))
                             }
+                            else->{}
+
                         }
                     },
                         bottomNavEvent  ={screen->
@@ -193,6 +195,8 @@ class LiveFragment : Fragment() {
                                 is Map -> viewModel.handleGoToMap()
                                 is Chats -> viewModel.handleGoToChats()
                                 is Profile ->viewModel.handleGoToProfile()
+                                else->{}
+
                             }
                         })
                 }

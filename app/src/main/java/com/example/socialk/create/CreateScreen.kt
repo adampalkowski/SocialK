@@ -392,6 +392,8 @@ fun CreateScreen(location:String?,
             is Response.Failure -> Box(modifier = Modifier.fillMaxSize()) {
                 Text(text = "FAILURE", fontSize = 50.sp)
             }
+            else->{}
+
         }
     }
     if(openDialog.value){

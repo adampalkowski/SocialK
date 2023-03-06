@@ -167,6 +167,7 @@ fun EditProfileScreen(
 
             }
             is Response.Failure->{}
+            else ->{}
         }
     }
     user_flow2?.value.let {

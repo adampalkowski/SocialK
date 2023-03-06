@@ -115,6 +115,7 @@ fun PickUsernameScreen(userViewModel: UserViewModel?,authViewModel:AuthViewModel
 
                 Toast.makeText(LocalContext.current,    databaseResponse.e.message.toString(), Toast.LENGTH_LONG).show()
             }
+            else ->{}
         }
     }
 }

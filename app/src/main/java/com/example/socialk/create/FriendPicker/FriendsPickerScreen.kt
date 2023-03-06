@@ -110,6 +110,8 @@ fun FriendsPickerScreen(
                         is CreateEvent.GroupUnSelected -> {
                             removeGroup(event.chat)
                         }
+                        else->{}
+
                     }
                 })
                 UserPicker(modifier = Modifier, onEvent = { event ->
@@ -124,6 +126,8 @@ fun FriendsPickerScreen(
                             all_friends.value = !all_friends.value
                             clearUsers()
                         }
+                        else->{}
+
                     }
 
                 }, userViewModel = userViewModel)

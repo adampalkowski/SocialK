@@ -94,6 +94,7 @@ class UserProfileFragment : Fragment(){
                                     Toast.makeText(activity?.applicationContext,
                                         "Invite to " + event.user.username+ " removed ",Toast.LENGTH_LONG).show()
                                 }
+                                else ->{}
                             }
                         }
                     )

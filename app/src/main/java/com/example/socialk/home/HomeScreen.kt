@@ -185,7 +185,9 @@ fun HomeScreen(
             is Response.Failure->{
 
             }
-        }
+         else->{}
+
+     }
     }
     activityDialog(activity =homeViewModel?.activity?.value , activityDialogState =showDialogState,onEvent={
         homeViewModel?.setShowDialog(false)
@@ -218,6 +220,8 @@ fun HomeScreen(
                     activityViewModel?.getActivitiesForUser(viewModel?.currentUser!!.uid)
 
                 }
+                else->{}
+
 
             }
         },
@@ -295,6 +299,8 @@ fun HomeScreenContent(
                             }
                         }
                     }
+                    else->{}
+
                 }
             }
             //divider bettwen active users and activities
@@ -333,6 +339,8 @@ fun HomeScreenContent(
                         }
                         activitiesExist.value=true
                         }
+                    else->{}
+
                 }
             }
             activityViewModel?.moreActivitiesListState?.value.let {
@@ -360,6 +368,8 @@ fun HomeScreenContent(
 
                         }
                     }
+                    else->{}
+
                 }
             }
             item {

@@ -114,6 +114,8 @@ fun LiveScreen (activeUsersViewModel:ActiveUsersViewModel,onEvent: (LiveEvent) -
             is Response.Failure-> Box(modifier = Modifier.fillMaxSize()){
                 androidx.compose.material3.Text(text = "FAILURE", fontSize = 50.sp)
             }
+            else->{}
+
         }
     }
 }
@@ -194,6 +196,8 @@ fun LiveScreenContent(activeUsersViewModel:ActiveUsersViewModel,onEvent: (LiveEv
                 when(it){
                     is LiveEvent.SetCurrentLocation->{
                         currentLocation.value=it.latLng}
+                    else->{}
+
                 }
             },activeUsersViewModel)
 

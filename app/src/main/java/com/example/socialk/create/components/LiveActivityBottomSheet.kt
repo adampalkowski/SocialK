@@ -50,6 +50,8 @@ fun BottomDialogLiveActivity(state: ModalBottomSheetState = rememberModalBottomS
                         is Response.Failure->{
                             Log.d("BOTTOMDIALOGLIVE","NOFILUR")
                         }
+                        else->{}
+
                     }
                 }
 

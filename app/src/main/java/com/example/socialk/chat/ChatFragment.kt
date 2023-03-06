@@ -300,6 +300,7 @@ class ChatFragment : Fragment() {
                                     requestPermissionLauncher.launch(
                                         android.Manifest.permission.ACCESS_FINE_LOCATION)
                                 }
+                                else ->{}
                             }
                         }
                     )

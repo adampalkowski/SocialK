@@ -80,6 +80,8 @@ class ActiveUsersViewModel @Inject constructor(
                                     Response.Success(list_without_removed_activites as List<ActiveUser>)
                             }
                         }
+                        else->{}
+
                     }
 
                     _activeUsersListState.value = response
