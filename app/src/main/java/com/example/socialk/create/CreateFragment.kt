@@ -132,7 +132,6 @@ class CreateFragment : Fragment() {
                                 is Chats -> viewModel.handleGoToChats()
                                 is Profile -> viewModel.handleGoToProfile()
                                 else->{}
-
                             }
                         })
                 }

@@ -81,7 +81,6 @@ class ActiveUsersViewModel @Inject constructor(
                             }
                         }
                         else->{}
-
                     }
 
                     _activeUsersListState.value = response

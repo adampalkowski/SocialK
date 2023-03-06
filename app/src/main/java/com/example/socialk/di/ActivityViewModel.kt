@@ -79,10 +79,9 @@ class ActivityViewModel @Inject constructor(
                             })
                         response.data.time_left = time_left
                         _activityState.value = response
-                    }
-                    else->{}
-
+                    }            else->{}
                 }
+
 
             }
         }

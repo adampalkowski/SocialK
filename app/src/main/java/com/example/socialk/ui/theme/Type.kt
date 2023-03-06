@@ -34,8 +34,7 @@ val Typography =Typography(
         fontFamily = Inter,
         fontSize = 96.sp,
         fontWeight = FontWeight.Light,
-        lineHeight = 117.sp,
-        letterSpacing = (-1.5).sp
+
     ),
     h2 = TextStyle(
         fontFamily = Inter,
@@ -61,7 +60,7 @@ val Typography =Typography(
     h6 = TextStyle(
         fontFamily = Inter,
         fontSize = 12.sp,
-        fontWeight = FontWeight.Light,
+        fontWeight = FontWeight.ExtraLight,
     ),
     subtitle1 = TextStyle(
         fontFamily = Inter,
@@ -73,22 +72,19 @@ val Typography =Typography(
         fontFamily = Karla,
         fontSize = 14.sp,
         fontWeight = FontWeight.Bold,
-        lineHeight = 24.sp,
-        letterSpacing = 0.1.sp
+
     ),
     body1 = TextStyle(
-        fontFamily = Karla,
-        fontSize = 16.sp,
-        fontWeight = FontWeight.Normal,
-        lineHeight = 28.sp,
-        letterSpacing = 0.15.sp
+        fontFamily = Inter,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.SemiBold,
+
     ),
     body2 = TextStyle(
         fontFamily = Inter,
         fontSize = 14.sp,
         fontWeight = FontWeight.Medium,
-        lineHeight = 20.sp,
-        letterSpacing = 0.25.sp
+
     ),
     button = TextStyle(
         fontFamily = Inter,
@@ -99,14 +95,12 @@ val Typography =Typography(
         fontFamily = Karla,
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
-        lineHeight = 16.sp,
-        letterSpacing = 0.4.sp
+
     ),
     overline = TextStyle(
         fontFamily = Montserrat,
         fontSize = 12.sp,
         fontWeight = FontWeight.SemiBold,
-        lineHeight = 16.sp,
-        letterSpacing = 1.sp
+
     )
 )

@@ -158,7 +158,7 @@ class MapFragment:Fragment() {
         var latLng:LatLng?=null
         if (latlngInitial!=null){
             val values=latlngInitial?.split("/")
-             latLng= LatLng(values!!.get(0).toDouble(),values?.get(1)?.toDouble()!!)
+             latLng= LatLng(values?.get(0)?.toDouble()!!,values?.get(1)?.toDouble()!!)
         }
         Log.d("Mapfragment","got data"+latlngInitial)
         return ComposeView(requireContext()).apply {
@@ -180,8 +180,6 @@ class MapFragment:Fragment() {
                                 requestPermissionLauncher.launch(
                                     android.Manifest.permission.ACCESS_FINE_LOCATION)
                             }
-                            else->{}
-
                         }
                     },
                         bottomNavEvent  ={screen->
@@ -191,8 +189,6 @@ class MapFragment:Fragment() {
                                 is Chats -> viewModel.handleGoToChats()
                                 is Create -> viewModel.handleGoToCreate(null)
                                 is Profile ->viewModel.handleGoToProfile()
-                                else->{}
-
                             }
                         }
                     ,viewModel,locationCallback)

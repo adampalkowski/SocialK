@@ -92,7 +92,6 @@ fun WelcomeScreen(userViewModel:UserViewModel?,authViewModel: AuthViewModel,onEv
                 is Response.Failure->{
                 }
                 else->{}
-
             }
         }
     }

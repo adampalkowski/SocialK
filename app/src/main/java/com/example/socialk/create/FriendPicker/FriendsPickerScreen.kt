@@ -111,7 +111,6 @@ fun FriendsPickerScreen(
                             removeGroup(event.chat)
                         }
                         else->{}
-
                     }
                 })
                 UserPicker(modifier = Modifier, onEvent = { event ->
@@ -127,7 +126,6 @@ fun FriendsPickerScreen(
                             clearUsers()
                         }
                         else->{}
-
                     }
 
                 }, userViewModel = userViewModel)

@@ -154,7 +154,6 @@ class UserViewModel @Inject constructor(
                                                 UserData.user = response.data
                                             }
                                             else->{}
-
                                         }
 
                                     }
@@ -163,7 +162,6 @@ class UserViewModel @Inject constructor(
                                     Log.d("ImagePicker", response.e.message)
                                 }
                                 else->{}
-
                             }
 
                         }
@@ -172,7 +170,6 @@ class UserViewModel @Inject constructor(
                         Log.d("ImagePicker", response.e.message)
                     }
                     else->{}
-
                 }
 
             }
@@ -334,7 +331,6 @@ class UserViewModel @Inject constructor(
                         }
                     }
                     else->{}
-
                 }
             }
 
@@ -381,7 +377,6 @@ class UserViewModel @Inject constructor(
                         )
                     }
                     else->{}
-
                 }
 
 

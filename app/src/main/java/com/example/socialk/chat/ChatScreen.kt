@@ -229,7 +229,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                 Toast.makeText(LocalContext.current, "Failed to send the image", Toast.LENGTH_SHORT)
                     .show()
             }
-            else ->{}
+            else->{}
         }
     }
     chatViewModel.firstMessagesState.value.let {
@@ -240,7 +240,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
             }
             is Response.Loading -> {}
             is Response.Failure -> {}
-            else ->{}
+            else->{}
         }
     }
     chatViewModel.messagesState.value.let {
@@ -250,7 +250,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
             }
             is Response.Loading -> {}
             is Response.Failure -> {}
-            else ->{}
+            else->{}
         }
     }
     chatViewModel.moreMessagesState.value.let {
@@ -261,7 +261,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
             }
             is Response.Loading -> {}
             is Response.Failure -> {}
-            else ->{}
+            else->{}
         }
     }
 
@@ -461,7 +461,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                             chat.highlited_message = null
                             highlight_dialog = false
                         }
-                        else ->{}
+                        else->{}
                     }
                 }, highlitedMessage = chat.highlited_message!!)
 
@@ -818,7 +818,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                         bottomSheetState.show()
                     }
                 }
-                else ->{}
+                else->{}
             }
 
 
@@ -843,7 +843,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                     bottomSheetState.hide()
                 }
             }
-            else ->{}
+            else->{}
         }
     },
     activeUsersViewModel = activeUsersViewModel

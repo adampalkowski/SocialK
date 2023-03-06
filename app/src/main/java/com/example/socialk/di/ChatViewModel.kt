@@ -219,7 +219,6 @@ class ChatViewModel @Inject constructor(
 
                     }
                     else->{}
-
                 }
 
             }
@@ -235,7 +234,6 @@ class ChatViewModel @Inject constructor(
 
                     }
                     else->{}
-
                 }
 
             }
@@ -253,7 +251,6 @@ class ChatViewModel @Inject constructor(
 
                     }
                     else->{}
-
                 }
 
             }
