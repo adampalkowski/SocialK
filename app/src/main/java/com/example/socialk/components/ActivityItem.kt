@@ -1,14 +1,15 @@
 package com.example.socialk.components
 
-import android.util.Log.e
-import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material.*
+import androidx.compose.material.Card
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -21,18 +22,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
-import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.socialk.R
 import com.example.socialk.chat.ChatComponents.ChatButton
@@ -41,8 +39,6 @@ import com.example.socialk.model.Activity
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 import com.example.socialk.ui.theme.Typography
-import com.google.android.gms.maps.model.LatLng
-import kotlin.math.roundToInt
 
 sealed class ActivityItemEvent {
     class LikedActivity(activity: Activity) : ActivityItemEvent() {
@@ -57,6 +53,7 @@ sealed class ActivityItemEvent {
         val activity = activity
     }
 }
+/*
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
  fun SwipableActivity( activity: Activity,
@@ -83,9 +80,8 @@ sealed class ActivityItemEvent {
             .swipeable(
                 state = swipeableState,
                 anchors = anchors,
-                thresholds = { _, _ -> FractionalThreshold(1.2f) },
+                thresholds = { _, _ -> FractionalThreshold(1f) },
                 orientation = Orientation.Horizontal,
-                velocityThreshold =  1000.dp
             )
             .background(Color.LightGray)
     ) {
@@ -109,7 +105,7 @@ sealed class ActivityItemEvent {
     swipeableState
 
 }
-
+*/
 @Composable
 fun ActivityItem(modifier:Modifier=Modifier,
     activity: Activity,
@@ -205,10 +201,7 @@ fun ActivityItem(modifier:Modifier=Modifier,
                 }
                 controls(onEvent = { event ->
                     when (event) {
-                        is ActivityItemEvent.LikedActivity -> {
-                            liked.value = false
-                            onEvent(ActivityEvent.ActivityUnLiked(event.activity))
-                        }
+
                         is ActivityItemEvent.NotLikedActivity -> {
                             liked.value = true
                             onEvent(ActivityEvent.ActivityLiked(event.activity))
@@ -216,6 +209,7 @@ fun ActivityItem(modifier:Modifier=Modifier,
                         is ActivityItemEvent.OpenActivityChat -> {
                             onEvent(ActivityEvent.OpenActivityChat(event.activity))
                         }
+                        else->{}
                     }
                 }, activity, liked.value)
             }
@@ -426,31 +420,27 @@ fun controls(onEvent: (ActivityItemEvent) -> Unit, activity: Activity, liked: Bo
     Column(
         modifier = Modifier
     ) {
-        ChatButton(
-            onEvent = {
-                if (liked) {
-                    onEvent(ActivityItemEvent.LikedActivity(activity))
-                } else {
-                    onEvent(ActivityItemEvent.NotLikedActivity(activity))
+        if (liked) {
 
-                }
-            }, icon = if (liked) {
-                R.drawable.ic_heart_red
-            } else {
-                R.drawable.ic_heart
-            }, iconTint = if (liked) {
-                Color.Red
-            } else {
-                SocialTheme.colors.iconPrimary
-            }
-        )
+        } else {
+            ChatButton(
+                onEvent = {
+                        onEvent(ActivityItemEvent.NotLikedActivity(activity))
+
+                }, icon =
+                    R.drawable.ic_add_task
+               , iconTint =
+                    SocialTheme.colors.iconPrimary
+            )
+
+        }
+
         Spacer(modifier = Modifier.height(6.dp))
         ChatButton(
             onEvent = { onEvent(ActivityItemEvent.OpenActivityChat(activity)) },
             icon = R.drawable.ic_chat
         )
-        Spacer(modifier = Modifier.height(6.dp))
-        ChatButton(onEvent = { /*TODO*/ }, icon = R.drawable.ic_bookmark)
+
     }
 
 }

@@ -358,10 +358,10 @@ fun CreateScreen(location:String?,
                         time_length = timeLengthState.toString(),
                         invited_users = arrayListOf(),
                         description=descriptionTextState.text,
-                        custom_location=customLocationTextState.text,
-                        min=minTextState.text,
-                        max=maxTextState.text,
-                        location=latlng.value
+                        location=latlng.value,
+                        min = minTextState.text,
+                        max = maxTextState.text,
+                        custom_location = customLocationTextState.text
                     )
                 )
 
@@ -371,7 +371,7 @@ fun CreateScreen(location:String?,
 
         }
 
-        if (!  activityTextState.isFocused &&!descriptionTextState.isFocused && !customLocationTextState.isFocused ) {
+        if (!  activityTextState.isFocused &&!descriptionTextState.isFocused && !customLocationTextState.isFocused && !maxTextState.isFocused&& !minTextState.isFocused  ) {
             BottomBar(
                 onTabSelected = { screen -> bottomNavEvent(screen) },
                 currentScreen = Create
@@ -699,7 +699,7 @@ fun ConfigureField(
 fun RequirementsNumberField(hint: String    ,numberState:TextFieldState,
                             focusManager: FocusManager,
                             imeAction: ImeAction = ImeAction.Done) {
-
+    val regex = Regex("^[0-9]+$")
     Card(
         modifier = Modifier
             .widthIn(50.dp, 100.dp)
@@ -721,9 +721,12 @@ fun RequirementsNumberField(hint: String    ,numberState:TextFieldState,
                 textStyle = TextStyle(fontSize = 14.sp),
                 value = numberState.text,
                 onValueChange = {
-                    if (it.length < 4) {
 
-                        numberState.text = it
+                    if (it.length < 4) {
+                        if(regex.containsMatchIn(it))
+                        {
+                            numberState.text = it
+                        }
                     }
                 },
                 placeholder = {
@@ -740,9 +743,7 @@ fun RequirementsNumberField(hint: String    ,numberState:TextFieldState,
                     errorIndicatorColor = Color.Transparent,
                     cursorColor = SocialTheme.colors.textPrimary
                 ),
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    imeAction = imeAction
-                ) , keyboardActions = KeyboardActions (onDone = {focusManager.clearFocus()}) )
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number), keyboardActions = KeyboardActions (onDone = {focusManager.clearFocus()}) )
         }
     }
 

@@ -194,6 +194,7 @@ fun HomeScreen(
         homeViewModel?.removeActivity()
         Log.d("homescreen","falseeee")
     })
+
     BottomDialog(
         state = bottomSheetState,
         activity = bottomSheetActivity,
@@ -218,6 +219,12 @@ fun HomeScreen(
                     activityViewModel?.removeUserFromActivityInvites(bottomSheetActivity,UserData.user!!.id!!)
                     activityViewModel?.getActivitiesForUser(viewModel?.currentUser!!.uid)
 
+                }
+                is BottomDialogEvent.LeaveActivity->{
+                    activityViewModel?.unlikeActivity(
+                        event.activity.id,
+                        UserData.user!!
+                    )
                 }
                 else->{}
 
@@ -317,7 +324,7 @@ fun HomeScreenContent(
                         //display activities
                         Log.d("homescreen", it.data.toString())
                         items(it.data) { item ->
-                            SwipableActivity(
+                            ActivityItem(
                                 activity = item,
                                 onEvent = activityEvent,
                                 username = item.creator_username,

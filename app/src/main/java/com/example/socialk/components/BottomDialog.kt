@@ -43,6 +43,10 @@ import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
 
 sealed class BottomDialogEvent {
+    class LeaveActivity(activity: Activity) : BottomDialogEvent() {
+        val activity = activity
+    }
+
     object GoToProfile : BottomDialogEvent()
     object LogOut : BottomDialogEvent()
     object GoToSettings : BottomDialogEvent()
@@ -84,6 +88,9 @@ fun BottomDialog(state:ModalBottomSheetState=rememberModalBottomSheetState(Modal
                             }
                             is BottomDialogEvent.HideBottomDialog->{
                                 coroutineScope.launch { state.hide() }
+                            }
+                            is BottomDialogEvent.LeaveActivity->{
+                                onEvent(BottomDialogEvent.LeaveActivity(activity))
                             }
                             else->{}
                         }
@@ -169,6 +176,7 @@ fun ActivitySettingsContent(context:Context,
     Box(modifier = Modifier.background(color=SocialTheme.colors.uiBackground)){
         Column() {
             Spacer(modifier = Modifier.width(12.dp))
+            SettingsItem(text="Leave activity",icon=R.drawable.ic_log_out, onClick ={onEvent(BottomDialogEvent.LeaveActivity(activity))} )
             SettingsItem(text="Display participants",icon=R.drawable.ic_group_not_filled, onClick ={displayParticipants.value=!displayParticipants.value} )
             SettingsItem(text="Hide activity",icon=R.drawable.ic_visibility_off,  onClick ={onEvent(BottomDialogEvent.AlertHideActivity)})
             SettingsItem(text="Copy activity link",icon=R.drawable.ic_link,  onClick ={
