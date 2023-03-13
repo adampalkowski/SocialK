@@ -1,6 +1,9 @@
 package com.example.socialk
 
+import android.net.Uri
 import android.util.Log
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,6 +41,10 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import kotlinx.coroutines.launch
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
+import java.util.concurrent.Executor
 
 sealed class ProfileEvent {
     object GoToProfile : ProfileEvent()
@@ -132,6 +139,8 @@ fun LiveActivities(
         )
     }
 }
+
+
 
 @Composable
 fun LiveActivitiesCurrentUser(

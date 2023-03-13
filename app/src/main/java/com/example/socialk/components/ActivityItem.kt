@@ -52,6 +52,7 @@ sealed class ActivityItemEvent {
     class OpenActivityChat(activity: Activity) : ActivityItemEvent() {
         val activity = activity
     }
+    object OpenCamera: ActivityItemEvent()
 }
 /*
 @OptIn(ExperimentalMaterialApi::class)
@@ -106,6 +107,9 @@ sealed class ActivityItemEvent {
 
 }
 */
+
+
+
 @Composable
 fun ActivityItem(modifier:Modifier=Modifier,
     activity: Activity,
@@ -208,6 +212,9 @@ fun ActivityItem(modifier:Modifier=Modifier,
                         }
                         is ActivityItemEvent.OpenActivityChat -> {
                             onEvent(ActivityEvent.OpenActivityChat(event.activity))
+                        }
+                        is ActivityItemEvent.OpenCamera -> {
+                            onEvent(ActivityEvent.OpenCamera)
                         }
                         else->{}
                     }
@@ -440,6 +447,10 @@ fun controls(onEvent: (ActivityItemEvent) -> Unit, activity: Activity, liked: Bo
             onEvent = { onEvent(ActivityItemEvent.OpenActivityChat(activity)) },
             icon = R.drawable.ic_chat
         )
+        Spacer(modifier = Modifier.height(6.dp))
+        ChatButton(
+            onEvent = { onEvent(ActivityItemEvent.OpenCamera) },
+            icon = R.drawable.ic_add_photo)
 
     }
 

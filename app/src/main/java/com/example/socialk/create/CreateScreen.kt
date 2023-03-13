@@ -128,7 +128,7 @@ fun CreateScreen(location:String?,
         mutableStateOf(NumberTextFieldState())
     }
     var timeState by rememberSaveable {
-        mutableStateOf(LocalTime.now().noSeconds())
+        mutableStateOf(LocalTime.now().noSeconds().plusHours(1))
     }
     var dateState by rememberSaveable {
         mutableStateOf(LocalDate.now().toString())

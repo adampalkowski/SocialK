@@ -1,6 +1,12 @@
 package com.example.socialk.home
 
+import android.content.Context
+import android.net.Uri
 import android.util.Log
+import androidx.activity.OnBackPressedCallback
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.example.socialk.*
 import com.example.socialk.R
 import com.example.socialk.components.*
@@ -37,9 +44,14 @@ import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
+import com.google.accompanist.systemuicontroller.SystemUiController
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
+import java.io.File
+import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.Executor
 
 sealed class ActivityEvent() {
     class OpenActivitySettings(activity: Activity) : ActivityEvent() {
@@ -63,12 +75,15 @@ sealed class ActivityEvent() {
     class GoToMap( latlng: String) : ActivityEvent() {
         val latlng = latlng
     }
+    object OpenCamera: ActivityEvent()
 }
 
 sealed class HomeEvent {
     object GoToProfile : HomeEvent()
+    object OpenCamera : HomeEvent()
     object LogOut : HomeEvent()
     object GoToMemories : HomeEvent()
+    object BackPressed : HomeEvent()
     object GoToSettings : HomeEvent()
     class GoToMap ( latlng: String): HomeEvent(){
         val latlng=latlng
@@ -89,7 +104,7 @@ sealed class HomeEvent {
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun HomeScreen(
+fun HomeScreen(systemUiController: SystemUiController,
     activeUsersViewModel: ActiveUsersViewModel?,
     activityViewModel: ActivityViewModel?,
     chatViewModel: ChatViewModel,
@@ -97,6 +112,18 @@ fun HomeScreen(
     onEvent: (HomeEvent) -> Unit,
     bottomNavEvent: (Destinations) -> Unit
 ) {
+    //set status bar TRANSPARENT
+    SideEffect {
+        systemUiController.setStatusBarColor(color = androidx.compose.ui.graphics.Color.Transparent)
+        systemUiController.setNavigationBarColor(color = androidx.compose.ui.graphics.Color.Transparent)
+    }
+    val backCallback = remember { // remember the callback to avoid recompositions
+        object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                onEvent(HomeEvent.BackPressed)
+            }
+        }
+    }
     val openDialog = remember { mutableStateOf(false)  }
     var bottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
     val scope = rememberCoroutineScope()
@@ -108,7 +135,7 @@ fun HomeScreen(
     val showDialogState: Boolean by homeViewModel?.showDialog!!.collectAsState()
     var bottomSheetActivity by rememberSaveable{ mutableStateOf(Activity()) }
 
-    androidx.compose.material.Scaffold(
+    androidx.compose.material.Scaffold(modifier=Modifier.systemBarsPadding(),
         scaffoldState = scaffoldState,
         bottomBar = {
             BottomBar(
@@ -148,6 +175,10 @@ fun HomeScreen(
                             }
                             is ActivityEvent.GoToProfile -> {
                                 onEvent(HomeEvent.GoToProfileWithID(user_id = it.user_id))
+
+                            }
+                            is ActivityEvent.OpenCamera -> {
+                                onEvent(HomeEvent.OpenCamera)
 
                             }
                             is ActivityEvent.OpenActivitySettings -> {
@@ -254,6 +285,7 @@ fun activityDialog(activity:Activity?, activityDialogState: Boolean, onEvent: ()
    }
 
 }
+
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
