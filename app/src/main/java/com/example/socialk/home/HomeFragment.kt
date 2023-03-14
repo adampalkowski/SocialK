@@ -65,15 +65,16 @@ class HomeFragment : Fragment() {
     private var shouldShowPhoto: MutableState<Boolean> = mutableStateOf(false)
     private fun handleImageCapture(uri: Uri) {
         Log.i("kilo", "Image captured: $uri")
-        shouldShowCamera.value = false
+        shouldShowCamera.value = true
         photoUri = uri
         shouldShowPhoto.value = true
     }
+
     private fun getOutputDirectory(): File {
-        val mediaDir =requireActivity().externalMediaDirs
+        val mediaDir = requireActivity().externalMediaDirs
             .firstOrNull()?.let {
-            File(it, resources.getString(R.string.app_name)).apply { mkdirs() }
-        }
+                File(it, resources.getString(R.string.app_name)).apply { mkdirs() }
+            }
 
         return if (mediaDir != null && mediaDir.exists()) mediaDir else requireActivity().filesDir
     }
@@ -82,6 +83,7 @@ class HomeFragment : Fragment() {
         super.onDestroy()
         cameraExecutor.shutdown()
     }
+
     private fun requestCameraPermission() {
         when {
             ContextCompat.checkSelfPermission(
@@ -99,6 +101,7 @@ class HomeFragment : Fragment() {
             else -> requestPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
+
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -112,13 +115,15 @@ class HomeFragment : Fragment() {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(requireActivity().window, false)
     }
-    private suspend fun Context.getCameraProvider(): ProcessCameraProvider = suspendCoroutine { continuation ->
-        ProcessCameraProvider.getInstance(this).also { cameraProvider ->
-            cameraProvider.addListener({
-                continuation.resume(cameraProvider.get())
-            }, ContextCompat.getMainExecutor(this))
+
+    private suspend fun Context.getCameraProvider(): ProcessCameraProvider =
+        suspendCoroutine { continuation ->
+            ProcessCameraProvider.getInstance(this).also { cameraProvider ->
+                cameraProvider.addListener({
+                    continuation.resume(cameraProvider.get())
+                }, ContextCompat.getMainExecutor(this))
+            }
         }
-    }
 
 
     override fun onCreateView(
@@ -139,36 +144,42 @@ class HomeFragment : Fragment() {
                     navigate(navigateTo, Screen.Home, bundle)
                 } else if (navigateTo == Screen.UserProfile) {
                     val bundle = Bundle()
-                    bundle.putSerializable("user_id",viewModel.clicked_profile.value)
+                    bundle.putSerializable("user_id", viewModel.clicked_profile.value)
                     navigate(navigateTo, Screen.Home, bundle)
-                }else{
-                        navigate(navigateTo, Screen.Home)
+                } else {
+                    navigate(navigateTo, Screen.Home)
 
-                    }
                 }
             }
-            activityViewModel?.getActivitiesForUser(authViewModel?.currentUser?.uid)
-            activeUsersViewModel?.getActiveUsersForUser(authViewModel?.currentUser?.uid)
-            viewModel.activity_link.value.let {
-                if (it != null) {
-                    Log.d("HomeFragment", it.toString())
-                    activityViewModel.getActivity(it)
-                    viewModel.resetLink()
-                }
+        }
+        activityViewModel?.getActivitiesForUser(authViewModel?.currentUser?.uid)
+        activeUsersViewModel?.getActiveUsersForUser(authViewModel?.currentUser?.uid)
+        viewModel.activity_link.value.let {
+            if (it != null) {
+                Log.d("HomeFragment", it.toString())
+                activityViewModel.getActivity(it)
+                viewModel.resetLink()
+            }
 
 
-        requestCameraPermission()
+            requestCameraPermission()
 
-        outputDirectory = getOutputDirectory()
-        cameraExecutor = Executors.newSingleThreadExecutor()
+            outputDirectory = getOutputDirectory()
+            cameraExecutor = Executors.newSingleThreadExecutor()
 
             return ComposeView(requireContext()).apply {
                 setContent {
                     if (shouldShowCamera.value) {
                         CameraView(
-                            onEvent={event->
-                                when(event){
-                                    is CameraEvent.BackPressed ->{if (shouldShowCamera.value){shouldShowCamera.value=false}else{activity?.onBackPressedDispatcher?.onBackPressed()}}
+                            onEvent = { event ->
+                                when (event) {
+                                    is CameraEvent.BackPressed -> {
+                                        if (shouldShowCamera.value) {
+                                            shouldShowCamera.value = false
+                                        } else {
+                                            activity?.onBackPressedDispatcher?.onBackPressed()
+                                        }
+                                    }
                                 }
                             },
                             outputDirectory = outputDirectory,
@@ -177,13 +188,13 @@ class HomeFragment : Fragment() {
                             onError = { Log.e("kilo", "View error:", it) }
                         )
                         if (shouldShowPhoto.value) {
-                            ImageDisplay(modifier=Modifier.fillMaxSize(),photoUri)
+                            ImageDisplay(modifier = Modifier.fillMaxSize(), photoUri)
                         }
-                    }else{
+                    } else {
                         val systemUiController = rememberSystemUiController()
                         SocialTheme {
 
-                            HomeScreen(systemUiController,activeUsersViewModel,
+                            HomeScreen(systemUiController, activeUsersViewModel,
                                 activityViewModel,
                                 chatViewModel = chatViewModel,
                                 authViewModel,
@@ -191,7 +202,13 @@ class HomeFragment : Fragment() {
                                 onEvent = { event ->
                                     when (event) {
                                         is HomeEvent.GoToProfile -> viewModel.handleGoToProfile()
-                                        is HomeEvent.BackPressed -> {if (shouldShowCamera.value){shouldShowCamera.value=false}else{activity?.onBackPressedDispatcher?.onBackPressed()}}
+                                        is HomeEvent.BackPressed -> {
+                                            if (shouldShowCamera.value) {
+                                                shouldShowCamera.value = false
+                                            } else {
+                                                activity?.onBackPressedDispatcher?.onBackPressed()
+                                            }
+                                        }
                                         is HomeEvent.LogOut -> viewModel.handleLogOut()
                                         is HomeEvent.GoToSettings -> viewModel.handleGoToSettings()
                                         is HomeEvent.GoToMemories -> viewModel.handleGoToMemories()
