@@ -116,6 +116,11 @@ class HomeFragment : Fragment() {
         WindowCompat.setDecorFitsSystemWindows(requireActivity().window, false)
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        WindowCompat.setDecorFitsSystemWindows(requireActivity().window, true)
+
+    }
     private suspend fun Context.getCameraProvider(): ProcessCameraProvider =
         suspendCoroutine { continuation ->
             ProcessCameraProvider.getInstance(this).also { cameraProvider ->

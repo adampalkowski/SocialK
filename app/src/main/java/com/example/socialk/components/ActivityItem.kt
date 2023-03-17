@@ -34,11 +34,13 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.socialk.R
 import com.example.socialk.chat.ChatComponents.ChatButton
+import com.example.socialk.chat.checkIfToday
 import com.example.socialk.home.ActivityEvent
 import com.example.socialk.model.Activity
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 import com.example.socialk.ui.theme.Typography
+import java.time.LocalDate
 
 sealed class ActivityItemEvent {
     class LikedActivity(activity: Activity) : ActivityItemEvent() {
@@ -162,7 +164,7 @@ fun ActivityItem(modifier:Modifier=Modifier,
                         color = SocialTheme.colors.textPrimary
                     )
                     Text(
-                        text = timeLeft,
+                        text ="Starts in "+timeLeft,
                         style = com.example.socialk.ui.theme.Typography.subtitle1,
                         textAlign = TextAlign.Center,
                         color = SocialTheme.colors.textPrimary
@@ -389,8 +391,9 @@ fun ActivityDetailsBar(min:Int,max:Int,
                     tint = SocialTheme.colors.iconPrimary
                 )
                 Spacer(modifier = Modifier.width(8.dp))
+                val dateORTODAY = if(checkIfToday(date)){"Today"}else{date}
                 Text(
-                    text = date,
+                    text = dateORTODAY,
                     style = TextStyle(
                         fontFamily = Inter,
                         fontWeight = FontWeight.ExtraLight,

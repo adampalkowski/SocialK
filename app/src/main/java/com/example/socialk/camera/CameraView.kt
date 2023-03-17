@@ -32,6 +32,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -236,88 +237,110 @@ fun CameraView(
             )
             Log.d("CAMERAVIEW", iconPosition.x.toString() + " " + iconPosition.y.toString())
         }
-        Column(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(bottom = 20.dp)
-                .padding(end = 12.dp)
-        ) {
 
-            IconButton(
-                onClick = {
-                    flash_on.value = !flash_on.value
-                    Log.d("camerview", "button clicked" + flash_on.value)
-                },
-                content = {
-                    Icon(
-                        painter =
-                        if (flash_on.value) {
-                            painterResource(id = R.drawable.ic_bolt_filled)
 
-                        } else {
-                            painterResource(id = R.drawable.ic_bolt)
 
-                        },
-                        contentDescription = "Take picture",
-                        tint = androidx.compose.ui.graphics.Color.White,
-                        modifier = Modifier
-                            .size(36.dp),
-                    )
-                }
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            IconButton(
-
-                onClick = {
-                    if (lensFacing == CameraSelector.LENS_FACING_BACK) {
-                        lensFacing = CameraSelector.LENS_FACING_FRONT
-                    } else {
-                        lensFacing = CameraSelector.LENS_FACING_BACK
-                    }
-                },
-                content = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_flip_camera),
-                        contentDescription = "Take picture",
-                        tint = androidx.compose.ui.graphics.Color.White,
-                        modifier = Modifier
-                            .size(36.dp),
-                    )
-                }
-            )
-        }
         Column(modifier = Modifier.align(Alignment.BottomCenter))
         {
-            IconButton(
+            Card(
+                modifier = Modifier.background(color = androidx.compose.ui.graphics.Color.Transparent),
+                backgroundColor = androidx.compose.ui.graphics.Color.Transparent,
+                shape = RoundedCornerShape(24.dp),
+                elevation = 0.dp
+            ) {
+                //padding
+                Row(
+                    Modifier.background(color = androidx.compose.ui.graphics.Color.Transparent),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
 
-                modifier = Modifier.padding(bottom = 20.dp),
-                onClick = {
-                    takePhoto(
-                        filenameFormat = "yyyy-MM-dd-HH-mm-ss-SSS",
-                        imageCapture = imageCapture,
-                        outputDirectory = outputDirectory,
-                        executor = executor,
-                        onImageCaptured = onImageCaptured,
-                        onError = onError
-                    )
-                },
-                content = {
+                    IconButton(modifier = Modifier.border(
+                        BorderStroke(1.dp,
+                            androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f)
+                        ), shape = RoundedCornerShape(16.dp)
+                    ).padding(4.dp),
+                        onClick = {
+                            flash_on.value = !flash_on.value
+                            Log.d("camerview", "button clicked" + flash_on.value)
+                        },
+                        content = {
+                            Icon(
+                                painter =
+                                if (flash_on.value) {
+                                    painterResource(id = R.drawable.ic_bolt_filled)
 
-                    Icon(
-                        painter =   painterResource(id = R.drawable.ic_panorama_fish_eye),
-                        contentDescription = "Take picture",
-                        tint = androidx.compose.ui.graphics.Color.White,
-                        modifier = Modifier
-                            .size(88.dp)
-                            .padding(1.dp)
-                            .border(
-                                1.dp,
-                                color = androidx.compose.ui.graphics.Color.White,
-                                CircleShape
+                                } else {
+                                    painterResource(id = R.drawable.ic_bolt)
+
+                                },
+                                contentDescription = "Take picture",
+                                tint = androidx.compose.ui.graphics.Color.White,
+                                modifier = Modifier
+                                    .size(24.dp),
                             )
+                        }
+                    )
+                    Spacer(modifier = Modifier.width(24.dp))
+
+                    IconButton(
+
+                        modifier = Modifier.padding(bottom = 20.dp),
+                        onClick = {
+                            takePhoto(
+                                filenameFormat = "yyyy-MM-dd-HH-mm-ss-SSS",
+                                imageCapture = imageCapture,
+                                outputDirectory = outputDirectory,
+                                executor = executor,
+                                onImageCaptured = onImageCaptured,
+                                onError = onError
+                            )
+                        },
+                        content = {
+
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_panorama_fish_eye),
+                                contentDescription = "Take picture",
+                                tint = androidx.compose.ui.graphics.Color.White,
+                                modifier = Modifier
+                                    .size(88.dp)
+
+                                    .border(
+                                        1.dp,
+                                        color = androidx.compose.ui.graphics.Color.White,
+                                        CircleShape
+                                    )
+
+                            )
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.width(24.dp))
+                    IconButton(
+                        modifier = Modifier.border(
+                            BorderStroke(1.dp,
+                                androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f)
+                            ), shape = RoundedCornerShape(16.dp)
+                        ).padding(4.dp),
+                        onClick = {
+                            if (lensFacing == CameraSelector.LENS_FACING_BACK) {
+                                lensFacing = CameraSelector.LENS_FACING_FRONT
+                            } else {
+                                lensFacing = CameraSelector.LENS_FACING_BACK
+                            }
+                        },
+                        content = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_flip_camera),
+                                contentDescription = "Take picture",
+                                tint = androidx.compose.ui.graphics.Color.White,
+                                modifier = Modifier
+                                    .size(24.dp),
+                            )
+                        }
                     )
                 }
-            )
+            }
+
             Spacer(modifier = Modifier.height(48.dp))
         }
 
@@ -338,34 +361,57 @@ fun ImageDisplay(modifier: Modifier, photoUri: Uri) {
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-        Box(modifier = Modifier
-            .align(Alignment.BottomEnd)
-            .padding(bottom = 48.dp, end = 24.dp)
-                ){
-            Card(modifier=Modifier,onClick = { /*TODO*/ }, border = BorderStroke(2.dp,
-                androidx.compose.ui.graphics.Color.White), shape = RoundedCornerShape(12.dp), backgroundColor = androidx.compose.ui.graphics.Color.Transparent, elevation = 0.dp) {
-                Row(modifier=Modifier.padding(vertical = 6.dp, horizontal = 12.dp),verticalAlignment = Alignment.CenterVertically) {
-                    Icon(modifier=Modifier.size(36.dp),
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 48.dp, end = 24.dp)
+        ) {
+            Card(
+                modifier = Modifier,
+                onClick = { /*TODO*/ },
+                border = BorderStroke(
+                    2.dp,
+                    androidx.compose.ui.graphics.Color.White
+                ),
+                shape = RoundedCornerShape(12.dp),
+                backgroundColor = androidx.compose.ui.graphics.Color.Transparent,
+                elevation = 0.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        modifier = Modifier.size(36.dp),
                         tint = androidx.compose.ui.graphics.Color.White,
                         painter = painterResource(id = R.drawable.ic_send),
-                        contentDescription ="send picture" )
+                        contentDescription = "send picture"
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "Set",color= androidx.compose.ui.graphics.Color.White,style= TextStyle(
-                        fontFamily = Inter,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
-                    ))
+                    Text(
+                        text = "Set",
+                        color = androidx.compose.ui.graphics.Color.White,
+                        style = TextStyle(
+                            fontFamily = Inter,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
 
                 }
             }
         }
-        Box(modifier = Modifier
-            .align(Alignment.TopStart)
-            .padding(horizontal = 16.dp, vertical = 48.dp)){
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(horizontal = 16.dp, vertical = 48.dp)
+        ) {
             IconButton(onClick = { /*TODO*/ }) {
-                Icon(modifier=Modifier.size(36.dp),
+                Icon(
+                    modifier = Modifier.size(36.dp),
                     tint = androidx.compose.ui.graphics.Color.White,
-                    painter = painterResource(id = R.drawable.ic_x), contentDescription = "sd")
+                    painter = painterResource(id = R.drawable.ic_x), contentDescription = "sd"
+                )
             }
 
         }

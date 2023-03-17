@@ -32,6 +32,7 @@ import com.example.socialk.Destinations
 import com.example.socialk.R
 import com.example.socialk.bottomTabRowScreens
 import com.example.socialk.ui.theme.SocialTheme
+import com.example.socialk.ui.theme.Typography
 import java.util.*
 
 private val TabHeight = 56.dp
@@ -52,12 +53,23 @@ fun BottomBarRow(     allScreens: List<Destinations>,
        Row(modifier = Modifier
            .selectableGroup()
            .background(
-                   brush = (if (transparent){ Brush.verticalGradient( listOf(Color.Transparent ,Color.Transparent ,SocialTheme.colors.uiBackground)) }else{ Brush.verticalGradient( colors = SocialTheme.colors.gradient6_1)})
+               brush = (if (transparent) {
+                   Brush.verticalGradient(
+                       listOf(
+                           Color.Transparent,
+                           Color.Transparent,
+                           SocialTheme.colors.uiBackground
+                       )
+                   )
+               } else {
+                   Brush.verticalGradient(colors = SocialTheme.colors.gradient6_1)
+               })
            ), horizontalArrangement = Arrangement.SpaceEvenly) {
            allScreens.forEach { screen ->
                BottomTab(
                    text = screen.route,
                    imageID = screen.icon,
+                   imageID_not_filled=screen.icon_not_filled,
                    onSelected = { onTabSelected(screen) },
                    selected = currentScreen == screen
                )
@@ -66,37 +78,6 @@ fun BottomBarRow(     allScreens: List<Destinations>,
    }
 }
 
-@Composable
-fun BottomBarRowCustom(     allScreens: List<Destinations>,
-                      onTabSelected: (Destinations) -> Unit,
-                      currentScreen: Destinations){
-    Surface(modifier = Modifier
-        .height(TabHeight)
-        .fillMaxWidth(),
-        color = Color.Transparent
-    ) {
-        Row(modifier = Modifier
-            .selectableGroup()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = SocialTheme.colors.gradient6_1
-                )
-
-            ), horizontalArrangement = Arrangement.SpaceEvenly) {
-            allScreens.forEach { screen ->
-                BottomTab(
-                    text = screen.route,
-                    imageID = screen.icon,
-                    onSelected = { onTabSelected(screen) },
-                    selected = currentScreen == screen
-                )
-            }
-            Spacer(modifier = Modifier.width(80.dp))
-            SocialFab()
-
-        }
-    }
-}
 
 @Composable
 fun BottomBar( onTabSelected: (Destinations) -> Unit,currentScreen: Destinations,transparent:Boolean=false){
@@ -119,7 +100,7 @@ fun SocialFab(){
 
 @Composable
 fun BottomTab(text: String,
-              imageID: Int,
+              imageID: Int,imageID_not_filled:Int,
               onSelected: () -> Unit,
               selected: Boolean){
     val color = SocialTheme.colors.error
@@ -153,14 +134,20 @@ fun BottomTab(text: String,
             )
             .clearAndSetSemantics { contentDescription = text }, horizontalAlignment = Alignment.CenterHorizontally
     ) {
-            Icon(   modifier = Modifier.size(24.dp),
-                painter= painterResource(id = imageID),
-                contentDescription = text,
-                tint = tabTintColor
-            )
+
             if (selected) {
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(text.uppercase(Locale.getDefault()), color = SocialTheme.colors.iconInteractive, fontSize = 12.sp)
+                Icon(   modifier = Modifier.size(24.dp),
+                    painter= painterResource(id = imageID),
+                    contentDescription = text,
+                    tint = tabTintColor
+                )
+                Text(text.uppercase(Locale.getDefault()), style = Typography.h6, fontSize = 10.sp, color = SocialTheme.colors.iconInteractive)
+            }else{
+                Icon(   modifier = Modifier.size(24.dp),
+                    painter= painterResource(id = imageID_not_filled),
+                    contentDescription = text,
+                    tint = tabTintColor
+                )
             }
 
     }
