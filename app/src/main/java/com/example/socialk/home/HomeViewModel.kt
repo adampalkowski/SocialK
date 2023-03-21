@@ -1,6 +1,10 @@
 package com.example.socialk.home
 
+import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -21,6 +25,10 @@ class HomeViewModel : ViewModel() {
     val clicked_chat_activity: LiveData<Activity> = _clicked_chat_activity
     private val _clicked_location_activity = MutableLiveData<String>()
     val clicked_location_activity: LiveData<String> = _clicked_location_activity
+     var shouldShowCamera: MutableState<Boolean> = mutableStateOf(false)
+     var shouldShowPhoto: MutableState<Boolean> = mutableStateOf(false)
+     var displayPhoto: MutableState<Boolean> = mutableStateOf(false)
+     var camera_activity_id: MutableState<String> = mutableStateOf("")
 
     private val _showDialog = MutableStateFlow(false)
     val showDialog: StateFlow<Boolean> = _showDialog.asStateFlow()
@@ -30,11 +38,16 @@ class HomeViewModel : ViewModel() {
 
     private val _activity = MutableLiveData<Activity?>()
     val activity: LiveData<Activity?> = _activity
+    private val _photo_uri = MutableStateFlow<Uri?>("".toUri())
+    val photo_uri: MutableStateFlow<Uri?> = _photo_uri
 
     private val _activity_link = MutableLiveData<String?>()
     val activity_link: LiveData<String?> = _activity_link
     fun setShowDialog(b: Boolean) {
         _showDialog.value=b
+    }
+    fun setPhotoUri(uri: Uri) {
+        _photo_uri.value=uri
     }
     fun resetLink() {
         _activity_link.value=null

@@ -87,6 +87,9 @@ class ChatViewModel @Inject constructor(
     private val _addMessageState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val addMessageState: State<Response<Void?>> = _addMessageState
 
+    private val _isImageAddedToStorageAndFirebaseState = MutableStateFlow<Response<String>?>(null)
+    val isImageAddedToStorageAndFirebaseState:MutableStateFlow<Response<String>?> = _isImageAddedToStorageAndFirebaseState
+
     private val _isImageAddedToStorageState = MutableStateFlow<Response<String>?>(null)
     val isImageAddedToStorageFlow: StateFlow<Response<String>?> = _isImageAddedToStorageState
 
@@ -321,7 +324,7 @@ class ChatViewModel @Inject constructor(
     }
 
     fun sendImage(chat_id: String,message:ChatMessage, uri: Uri) {
-
+        _isImageAddedToStorageAndFirebaseState.value=Response.Loading
         val uuid: UUID = UUID.randomUUID()
         val id:String = uuid.toString()
         message.id=id
@@ -340,6 +343,7 @@ class ChatViewModel @Inject constructor(
                         repo.addMessage(chat_id,message).collect{
                                 response->
                             _addMessageState.value=response
+                            _isImageAddedToStorageAndFirebaseState.value=Response.Success("successfully added image")
                         }
                         repo.updateChatCollectionRecentMessage(chat_id, recent_message = "image sent", recent_message_time = message.sent_time).collect{
                                 response->

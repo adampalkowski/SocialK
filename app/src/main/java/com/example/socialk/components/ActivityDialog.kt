@@ -43,7 +43,7 @@ fun ActivityDialog(onDismiss:()->Unit,onConfirm:(Int)->Unit,onCancel:(Int)->Unit
                      liked =activity.participants_usernames.containsKey(UserData.user!!.id),
                      onEvent = {},
                      location = activity.location
-                 )
+              )
                 }
 
             }

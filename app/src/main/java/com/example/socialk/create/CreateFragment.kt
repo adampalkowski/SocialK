@@ -27,6 +27,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
+import kotlin.collections.HashMap
 
 @AndroidEntryPoint
 class CreateFragment : Fragment() {
@@ -114,7 +115,8 @@ class CreateFragment : Fragment() {
                                     participants_profile_pictures =participants_profile_pictures ,
                                     participants_usernames =participants_usernames,
                                     creation_time = current,
-                                    location=event.location
+                                    location=event.location,
+                                    pictures=HashMap()
                                 )
 
                                 viewModel.handleGoToFriendsPicker(activity)

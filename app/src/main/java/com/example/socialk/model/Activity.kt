@@ -27,9 +27,11 @@ data class Activity(
     val participants_usernames:HashMap<String,String>,
     val creation_time:String,
     val location:String,
+    val pictures:HashMap<String,String>
 
 ):java.io.Serializable{
     constructor(): this("", "","", "","", "","",
-        "","","", "","","","", 0,100,false,false,0, ArrayList(), HashMap(),HashMap
-    (),"","")
+        "","","", "","","","",
+        0,100,false,false,0, ArrayList(), HashMap(),HashMap
+    (),"","", HashMap())
 }

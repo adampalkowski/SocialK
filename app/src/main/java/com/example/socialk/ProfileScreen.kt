@@ -31,6 +31,8 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.socialk.components.ActivityItem
 import com.example.socialk.components.BottomBar
 import com.example.socialk.di.ActivityViewModel
+import com.example.socialk.home.ActivityEvent
+import com.example.socialk.home.HomeEvent
 import com.example.socialk.model.Response
 import com.example.socialk.model.User
 import com.example.socialk.model.UserData
@@ -168,7 +170,7 @@ fun LiveActivitiesCurrentUser(
                                 location =activity.location,
                                 liked =activity.participants_usernames.containsKey(UserData.user!!.id),
                                 onEvent ={}
-                            )
+                       )
                         }
                     }
 
@@ -197,7 +199,7 @@ fun LiveActivitiesCurrentUser(
                                 location =activity.location,
                                 liked =activity.participants_usernames.containsKey(UserData.user!!.id),
                                 onEvent ={}
-                            )
+                                )
                         }
                     }
 

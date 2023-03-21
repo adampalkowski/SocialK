@@ -1,17 +1,18 @@
 package com.example.socialk.components
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Center
@@ -35,8 +36,10 @@ import coil.request.ImageRequest
 import com.example.socialk.R
 import com.example.socialk.chat.ChatComponents.ChatButton
 import com.example.socialk.chat.checkIfToday
+import com.example.socialk.di.UserRepositoryImpl
 import com.example.socialk.home.ActivityEvent
 import com.example.socialk.model.Activity
+import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 import com.example.socialk.ui.theme.Typography
@@ -50,11 +53,11 @@ sealed class ActivityItemEvent {
     class NotLikedActivity(activity: Activity) : ActivityItemEvent() {
         val activity = activity
     }
-
+    class DisplayPicture(val photo_url: String,val activity_id: String) : ActivityItemEvent()
     class OpenActivityChat(activity: Activity) : ActivityItemEvent() {
         val activity = activity
     }
-    object OpenCamera: ActivityItemEvent()
+    class OpenCamera(val activity_id:String): ActivityItemEvent()
 }
 /*
 @OptIn(ExperimentalMaterialApi::class)
@@ -125,10 +128,8 @@ fun ActivityItem(modifier:Modifier=Modifier,
     custom_location: String,
     location: String,
     liked: Boolean,
-    onEvent: (ActivityEvent) -> Unit
+    onEvent: (ActivityEvent) -> Unit,lockPhotoButton:Boolean=false
 ) {
-
-
     var liked = rememberSaveable { mutableStateOf(liked) }
     Box(
         modifier = modifier
@@ -207,7 +208,6 @@ fun ActivityItem(modifier:Modifier=Modifier,
                 }
                 controls(onEvent = { event ->
                     when (event) {
-
                         is ActivityItemEvent.NotLikedActivity -> {
                             liked.value = true
                             onEvent(ActivityEvent.ActivityLiked(event.activity))
@@ -216,11 +216,15 @@ fun ActivityItem(modifier:Modifier=Modifier,
                             onEvent(ActivityEvent.OpenActivityChat(event.activity))
                         }
                         is ActivityItemEvent.OpenCamera -> {
-                            onEvent(ActivityEvent.OpenCamera(activity.id))
+                            Log.d("activityRepositoryImpl","open camera event")
+                            onEvent(ActivityEvent.OpenCamera(event.activity_id))
+                        }
+                        is ActivityItemEvent.DisplayPicture -> {
+                            onEvent(ActivityEvent.DisplayPicture(photo_url = event.photo_url,event.activity_id))
                         }
                         else->{}
                     }
-                }, activity, liked.value)
+                }, activity, liked.value,lockPhotoButton)
             }
 
             //DETAILS
@@ -425,8 +429,9 @@ fun ActivityDetailsBar(min:Int,max:Int,
 }
 
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun controls(onEvent: (ActivityItemEvent) -> Unit, activity: Activity, liked: Boolean) {
+fun controls(onEvent: (ActivityItemEvent) -> Unit, activity: Activity, liked: Boolean,lockPhotoButton: Boolean) {
     Column(
         modifier = Modifier
     ) {
@@ -451,9 +456,36 @@ fun controls(onEvent: (ActivityItemEvent) -> Unit, activity: Activity, liked: Bo
             icon = R.drawable.ic_chat
         )
         Spacer(modifier = Modifier.height(6.dp))
-        ChatButton(
-            onEvent = { onEvent(ActivityItemEvent.OpenCamera) },
-            icon = R.drawable.ic_add_photo)
+        if (activity.pictures.containsKey(UserData.user!!.id)){
+                val photo_url=activity.pictures.get(UserData.user!!.id)
+            Card(onClick = {onEvent(ActivityItemEvent.DisplayPicture(photo_url!!,activity.id))}) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(photo_url)
+                        .crossfade(true)
+                        .build(),
+                    placeholder = painterResource(R.drawable.ic_add_photo),
+                    contentDescription = "image sent",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(48.dp).background(color=SocialTheme.colors.uiBackground)
+                )
+            }
+        }else{
+
+            ChatButton(
+                onEvent = {
+                    if(lockPhotoButton){
+
+                    }else{
+                        onEvent(ActivityItemEvent.OpenCamera(activity.id))
+                    }
+
+               },
+                icon = R.drawable.ic_add_photo)
+        }
+
+
 
     }
 

@@ -1,7 +1,6 @@
 package com.example.socialk.home
 
 import android.Manifest
-import android.content.ContentResolver
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -12,13 +11,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -26,13 +25,9 @@ import androidx.fragment.app.viewModels
 import com.example.socialk.*
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
-import com.example.socialk.camera.CameraEvent
-import com.example.socialk.camera.CameraView
-import com.example.socialk.camera.ImageDisplay
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.ChatViewModel
-import com.example.socialk.model.Response
 import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.SocialTheme
@@ -53,17 +48,13 @@ class HomeFragment : Fragment() {
     private val activeUsersViewModel by viewModels<ActiveUsersViewModel>()
     private lateinit var outputDirectory: File
     private lateinit var cameraExecutor: ExecutorService
-    private var shouldShowCamera: MutableState<Boolean> = mutableStateOf(false)
-    private var camera_activity_id: MutableState<String> = mutableStateOf("")
-    private lateinit var photoUri: Uri
-    private var shouldShowPhoto: MutableState<Boolean> = mutableStateOf(false)
-    private var image_sent_loading: MutableState<Boolean> = mutableStateOf(false)
-    private fun handleImageCapture(uri: Uri) {
 
+    private val TAG = "HOMEFRAGMENT"
+    private fun handleImageCapture(uri: Uri) {
         Log.i("kilo", "Image captured: $uri")
-        shouldShowCamera.value = true
-        photoUri = uri
-        shouldShowPhoto.value = true
+        viewModel.shouldShowCamera.value = true
+        viewModel.setPhotoUri(uri)
+        viewModel.shouldShowPhoto.value = true
 
     }
 
@@ -76,11 +67,47 @@ class HomeFragment : Fragment() {
         return if (mediaDir != null && mediaDir.exists()) mediaDir else requireActivity().filesDir
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        cameraExecutor.shutdown()
+    override fun onStart() {
+        super.onStart()
+        Log.d(TAG,"on start")
     }
 
+    override fun onStop() {
+
+        super.onStop()
+        Log.d(TAG,"on stop")
+        if (outputDirectory!=null){
+            Log.d(TAG,"on destroy +output")
+            if (viewModel.shouldShowPhoto.value){
+                if (viewModel.photo_uri.value!=null ){
+                    Log.d(TAG,"on destroy +uri")
+                    val photoFile= File(outputDirectory,viewModel.photo_uri.value?.lastPathSegment)
+                    photoFile.delete()
+                }
+            }
+
+        }
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        Log.d(TAG,"on detacj")
+
+    }
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG,"on destroy")
+        cameraExecutor.shutdown()
+        if (outputDirectory!=null){
+            Log.d(TAG,"on destroy +output")
+
+            if (viewModel.photo_uri.value!=null){
+                Log.d(TAG,"on destroy +uri")
+                val photoFile= File(outputDirectory,viewModel.photo_uri.value?.lastPathSegment)
+                photoFile.delete()
+            }
+        }
+    }
     private fun requestCameraPermission() {
         when {
             ContextCompat.checkSelfPermission(
@@ -115,6 +142,8 @@ class HomeFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        Log.d(TAG,"on destroy view")
+
         WindowCompat.setDecorFitsSystemWindows(requireActivity().window, true)
 
     }
@@ -128,6 +157,7 @@ class HomeFragment : Fragment() {
         }
 
 
+    @OptIn(ExperimentalAnimationApi::class)
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -171,60 +201,6 @@ class HomeFragment : Fragment() {
 
             return ComposeView(requireContext()).apply {
                 setContent {
-
-                    if (shouldShowCamera.value) {
-                        CameraView(
-                            onEvent = { event ->
-                                when (event) {
-                                    is CameraEvent.BackPressed -> {
-                                        if (shouldShowCamera.value) {
-                                            shouldShowCamera.value = false
-                                        } else {
-                                            activity?.onBackPressedDispatcher?.onBackPressed()
-                                        }
-                                    }
-                                    else->{}
-                                }
-                            },
-                            outputDirectory = outputDirectory,
-                            executor = cameraExecutor,
-                            onImageCaptured = ::handleImageCapture,
-                            onError = { Log.e("kilo", "View error:", it) }
-                        )
-                        if (shouldShowPhoto.value) {
-                            ImageDisplay(modifier = Modifier.fillMaxSize(), photoUri,onEvent={
-                                event->
-                                when(event){
-                                    is CameraEvent.RemovePhoto->{
-                                        val photoFile= File(outputDirectory,photoUri.lastPathSegment)
-                                        photoFile.delete()
-                                        shouldShowPhoto.value=false
-                                        shouldShowCamera.value=true
-                                    }
-                                    is CameraEvent.BackPressed -> {
-                                        Log.d("CAMERAVIEW","BACKRPESSED")
-                                        val photoFile= File(outputDirectory,photoUri.lastPathSegment)
-                                        photoFile.delete()
-                                        shouldShowPhoto.value=false
-                                        shouldShowCamera.value=true
-                                    }   is CameraEvent.SetPicture -> {
-                                    if (camera_activity_id.value.isNotEmpty()){
-                                        activityViewModel.setParticipantImage(camera_activity_id.value,authViewModel?.currentUser?.uid.toString(),event.image_url)
-                                    }
-
-
-
-                                } is CameraEvent.ImageSent ->{
-                                    image_sent_loading.value=true
-                                    shouldShowPhoto.value=false
-                                    shouldShowCamera.value=false
-                                }
-                                    else->{}
-                                }
-
-                            },activityViewModel)
-                        }
-                    } else {
                         val systemUiController = rememberSystemUiController()
                         SocialTheme {
 
@@ -237,8 +213,8 @@ class HomeFragment : Fragment() {
                                     when (event) {
                                         is HomeEvent.GoToProfile -> viewModel.handleGoToProfile()
                                         is HomeEvent.BackPressed -> {
-                                            if (shouldShowCamera.value) {
-                                                shouldShowCamera.value = false
+                                            if (viewModel.shouldShowCamera.value) {
+                                                viewModel.shouldShowCamera.value = false
                                             } else {
                                                 activity?.onBackPressedDispatcher?.onBackPressed()
                                             }
@@ -256,9 +232,8 @@ class HomeFragment : Fragment() {
                                             viewModel.handleGoToChat(event.activity)
                                         }
                                         is HomeEvent.OpenCamera -> {
-
-                                            shouldShowCamera.value = true
-                                            camera_activity_id.value= event.activity_id
+                                            viewModel.shouldShowCamera.value = true
+                                                viewModel.camera_activity_id.value= event.activity_id
                                         }
                                         is HomeEvent.ActivityLiked -> {
                                             activityViewModel.likeActivity(
@@ -272,10 +247,19 @@ class HomeFragment : Fragment() {
                                                 UserData.user!!
                                             )
                                         }
+
+                                        is HomeEvent.DisplayPicture->{
+                                            viewModel.camera_activity_id.value= event.activity_id
+                                            viewModel.photo_uri.value=event.photo_url.toUri()
+                                            viewModel.shouldShowCamera.value=true
+                                            viewModel.shouldShowPhoto.value=true
+                                            viewModel.displayPhoto.value=true
+
+                                        }
                                         is HomeEvent.RemovePhotoFromGallery->{
                                             if (outputDirectory!=null ){
-                                                if (photoUri!=null){
-                                                    val photoFile= File(outputDirectory,photoUri.lastPathSegment)
+                                                if (viewModel.photo_uri.value!=null){
+                                                    val photoFile= File(outputDirectory,viewModel.photo_uri.value?.lastPathSegment)
                                                     photoFile.delete()
                                                     activityViewModel.addImageToActivityState.value=null
                                                 }
@@ -293,7 +277,7 @@ class HomeFragment : Fragment() {
                                         is Profile -> viewModel.handleGoToProfile()
                                         is Create -> viewModel.handleGoToCreate()
                                     }
-                                }
+                                },outputDirectory,cameraExecutor, onImageCaptured =::handleImageCapture
                             )
                         }
                     }
@@ -302,6 +286,5 @@ class HomeFragment : Fragment() {
             }
         }
 
-    }
 }
 

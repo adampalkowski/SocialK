@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
 import org.checkerframework.checker.units.qual.A
+import java.lang.reflect.Field
 import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -176,18 +177,18 @@ class ActivityRepositoryImpl @Inject constructor(
             if (imageUri != null) {
                 val fileName = id
                 try {
-                    resStorage.child("high_res_images/$fileName" + "_1000x1000").delete().await1()
+                    resStorage.child("high_res_images/$fileName" + "_1080x1920").delete().await1()
                 }catch (e:StorageException){
 
                 }
                 val imageRef = resStorage.child("high_res_images/$fileName")
                 imageRef.putFile(imageUri).await1()
-                val reference = resStorage.child("high_res_images/$fileName" + "_1000x1000")
+                val reference = resStorage.child("high_res_images/$fileName" + "_1080x1920")
                 val url = keepTrying(8, reference)
                 emit(Response.Success(url))
             }
         } catch (e: Exception) {
-            Log.d("ImagePicker", "try addProfilePictureToStorage EXCEPTION")
+            Log.d("ActivityRepositoryImpl", "try addProfilePictureToStorage EXCEPTION")
             emit(
                 Response.Failure(
                     e = SocialException(
@@ -198,6 +199,46 @@ class ActivityRepositoryImpl @Inject constructor(
             )
         }
     }
+    override suspend fun deleteImageFromHighResStorage(
+        id: String
+    ): Flow<Response<String>> = flow {
+        try {
+            emit(Response.Loading)
+                val fileName = id
+                try {
+                    val deletion=resStorage.child("high_res_images/$fileName" + "_1080x1920").delete().await1()
+                }catch (e:StorageException){
+
+                }
+            emit(Response.Success("succesfully deleted from storage"))
+
+        } catch (e: Exception) {
+            Log.d("deleteImageFromHighResStorage", "deletion from storage exception")
+            emit(
+                Response.Failure(
+                    e = SocialException(
+                        "deleteImageFromHighResStorage exception",
+                        Exception()
+                    )
+                )
+            )
+        }
+    }
+
+    override suspend fun deleteActivityImageFromFirestoreActivity(
+        activity_id: String,
+        user_id: String
+    ): Flow<Response<String>> =flow {
+
+        try{
+            emit(Response.Loading)
+            val deletion = activitiesRef.document(activity_id).update("pictures"+"."+user_id,FieldValue.delete()).await()
+            emit(Response.Success("deletion"))
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("deleteActivityImageFromFirestoreActivity",Exception())))
+        }
+    }
+
     suspend fun keepTrying(triesRemaining: Int, storageRef: StorageReference): String {
         if (triesRemaining < 0) {
             throw TimeoutException("out of tries")

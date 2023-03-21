@@ -40,13 +40,18 @@ class ActivityViewModel @Inject constructor(
 
     private val _isImageAddedToStorageState = MutableStateFlow<Response<String>?>(null)
     val isImageAddedToStorageFlow: StateFlow<Response<String>?> = _isImageAddedToStorageState
+    private val _isImageDeletedFromStorage = MutableStateFlow<Response<String>?>(null)
+    val isImageDeletedFromStorage: StateFlow<Response<String>?> = _isImageDeletedFromStorage
 
     private val _activitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val activitiesListState: State<Response<List<Activity>>> = _activitiesListState
+
     private val _moreActivitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val moreActivitiesListState: State<Response<List<Activity>>> = _moreActivitiesListState
+
     private val _userActivitiesState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val userActivitiesState: State<Response<List<Activity>>> = _userActivitiesState
+
     private val _userMoreActivitiesState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val userMoreActivitiesState: State<Response<List<Activity>>> = _userMoreActivitiesState
 
@@ -58,6 +63,9 @@ class ActivityViewModel @Inject constructor(
 
     private val _addImageToActivityState = MutableStateFlow<Response<String>?>(null)
     val addImageToActivityState: MutableStateFlow<Response<String>?> = _addImageToActivityState
+
+    private val _isImageRemoveFromActivityState = MutableStateFlow<Response<String>?>(null)
+    val isImageRemoveFromActivityState: MutableStateFlow<Response<String>?> = _isImageRemoveFromActivityState
 
     private val _isActivityDeletedState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isActivityDeletedState: State<Response<Void?>> = _isActivityDeletedState
@@ -340,7 +348,7 @@ class ActivityViewModel @Inject constructor(
                         val new_url:String=response.data
                         repo.addParticipantImageToActivity(activity_id,user_id,new_url).collect{
                                 response->
-                            _addImageToActivityState.value=Response.Success("added image")
+                            _addImageToActivityState.value=Response.Success(new_url)
                         }
 
                     }
@@ -348,7 +356,9 @@ class ActivityViewModel @Inject constructor(
 
                     }
                     is Response.Failure->{
-
+                        _addImageToActivityState.value=Response.Failure(e = SocialException(
+                            "image not found in directory",
+                            Exception()))
                     }
                 }
 
@@ -358,4 +368,35 @@ class ActivityViewModel @Inject constructor(
 
         }
     }
+    fun removeParticipantImage(activity_id: String, user_id:String) {
+        viewModelScope.launch {
+            isImageRemoveFromActivityState.value= Response.Loading
+            repo.deleteImageFromHighResStorage(activity_id+user_id).collect{ response ->
+                _isImageDeletedFromStorage.value=response
+                when(response){
+                    is Response.Success->{
+
+                    }
+                    is Response.Loading->{
+
+                    }
+                    is Response.Failure->{
+
+                        _isImageRemoveFromActivityState.value=Response.Failure(e = SocialException(
+                            "exception while removing from storage",
+                            Exception()))
+                    }
+                }
+
+            }
+            repo.deleteActivityImageFromFirestoreActivity(activity_id,user_id).collect{
+                    response->
+                _isImageRemoveFromActivityState.value=Response.Success("removed image from activity and storage")
+            }
+
+
+
+        }
+    }
+
 }

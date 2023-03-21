@@ -4,13 +4,14 @@ import android.app.LocalActivityManager
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
-import android.graphics.Color
 import android.graphics.Point
 import android.net.Uri
+import android.provider.ContactsContract.DisplayPhoto
 import android.util.Log
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
+import android.widget.Space
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
@@ -36,6 +37,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -52,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.core.view.ViewCompat.animate
 import androidx.core.view.WindowCompat
 import coil.compose.rememberImagePainter
@@ -126,8 +129,10 @@ fun BackPressHandler(
 
 sealed class CameraEvent {
     object BackPressed : CameraEvent()
-    class SetPicture(val image_url:Uri): CameraEvent()
+    object SavePhoto : CameraEvent()
+    class SetPicture(val image_url: Uri) : CameraEvent()
     object RemovePhoto : CameraEvent()
+    object DeletePhoto : CameraEvent()
     object ImageSent : CameraEvent()
 }
 
@@ -236,14 +241,16 @@ fun CameraView(
         )
 
         //BACK FROM CAMERA BUTTON
-        Box(modifier= Modifier
-            .align(Alignment.TopStart)
-            .padding(top = 24.dp)
-            .padding(12.dp)){
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(top = 24.dp)
+                .padding(12.dp)
+        ) {
             IconButton(
                 modifier = Modifier,
                 onClick = {
-                        onEvent(CameraEvent.BackPressed)
+                    onEvent(CameraEvent.BackPressed)
                 },
                 content = {
                     Icon(
@@ -373,13 +380,15 @@ fun CameraView(
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ImageDisplay(modifier: Modifier, photoUri: Uri,onEvent: (CameraEvent) -> Unit,
-                 activityViewModel:ActivityViewModel?) {
-    val flow =activityViewModel?.addImageToActivityState?.collectAsState()
+fun ImageDisplay(
+    modifier: Modifier, photoUri: Uri, onEvent: (CameraEvent) -> Unit,
+    activityViewModel: ActivityViewModel?, displayPhoto: Boolean
+) {
+    val flow = activityViewModel?.addImageToActivityState?.collectAsState()
 
 
     BackPressHandler(onBackPressed = { onEvent(CameraEvent.BackPressed) })
-    Surface(modifier=Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize()) {
 
         Box(
             modifier = Modifier
@@ -393,10 +402,12 @@ fun ImageDisplay(modifier: Modifier, photoUri: Uri,onEvent: (CameraEvent) -> Uni
                 contentScale = ContentScale.Crop
             )
             //BACK FROM CAMERA BUTTON
-            Box(modifier= Modifier
-                .align(Alignment.TopStart)
-                .padding(top = 24.dp)
-                .padding(12.dp)){
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(top = 24.dp)
+                    .padding(12.dp)
+            ) {
                 IconButton(
                     modifier = Modifier
 
@@ -406,7 +417,11 @@ fun ImageDisplay(modifier: Modifier, photoUri: Uri,onEvent: (CameraEvent) -> Uni
                     },
                     content = {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_x),
+                            painter = if (displayPhoto) {
+                                painterResource(id = R.drawable.ic_back)
+                            } else {
+                                painterResource(id = R.drawable.ic_x)
+                            },
                             contentDescription = "Go back from camera",
                             tint = androidx.compose.ui.graphics.Color.White,
                             modifier = Modifier
@@ -416,65 +431,137 @@ fun ImageDisplay(modifier: Modifier, photoUri: Uri,onEvent: (CameraEvent) -> Uni
                 )
 
             }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(bottom = 48.dp, end = 24.dp)
-            ) {
-                Card(
-                    modifier = Modifier,
-                    onClick = {
-                        onEvent(CameraEvent.SetPicture(photoUri))
+            if (displayPhoto) {
+                Row(
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 48.dp)) {
+                    CameraButton(
+                        onClick = {
+                            onEvent(CameraEvent.RemovePhoto)
+                        },
+                        icon = R.drawable.ic_flip_camera_ios,
+                        iconTint=androidx.compose.ui.graphics.Color.White,
+                        color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f),
+                        text = "Retake"
+                    )
+                    Spacer(modifier = Modifier.width(24.dp))
+                    CameraButton(
+                        onClick = {
+                            onEvent( CameraEvent.SavePhoto)
+                        },
+                        icon = R.drawable.ic_download,
+                        iconTint=androidx.compose.ui.graphics.Color.White,
+                        color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f),
+                        text = "Save"
+                    )
+                    Spacer(modifier = Modifier.width(24.dp))
 
-                    },
-                    border = BorderStroke(
-                        2.dp,
-                        androidx.compose.ui.graphics.Color.White
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    backgroundColor = androidx.compose.ui.graphics.Color.Transparent,
-                    elevation = 0.dp
-                ) {
-                    Row(
-                        modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            modifier = Modifier.size(36.dp),
-                            tint = androidx.compose.ui.graphics.Color.White,
-                            painter = painterResource(id = R.drawable.ic_send),
-                            contentDescription = "send picture"
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Set",
-                            color = androidx.compose.ui.graphics.Color.White,
-                            style = TextStyle(
-                                fontFamily = Inter,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        )
-
-                    }
+                    CameraButton(
+                        onClick = {
+                            onEvent( CameraEvent.DeletePhoto)
+                        },
+                        icon = R.drawable.ic_delete,
+                        iconTint=androidx.compose.ui.graphics.Color.White,
+                        color = androidx.compose.ui.graphics.Color.White,
+                        text = "Delete", textColor = Color.White
+                    )
                 }
+
+            } else {
+                Row(   modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(bottom = 36.dp, end = 24.dp, start = 24.dp)) {
+                    CameraButton(
+                        onClick = {
+                            onEvent(CameraEvent.SavePhoto)
+                        },
+                        icon = R.drawable.ic_download,
+                        iconTint= androidx.compose.ui.graphics.Color.White,
+                        textColor=androidx.compose.ui.graphics.Color.White,
+                        backgroundColor=androidx.compose.ui.graphics.Color.Transparent,
+                        color = androidx.compose.ui.graphics.Color.White.copy(alpha=0.6f),
+                        text = "Save"
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    CameraButton(
+                        onClick = {
+                            onEvent(CameraEvent.SetPicture(image_url = photoUri))
+                        },
+                        icon = R.drawable.ic_send_and_archive,
+                        iconTint= androidx.compose.ui.graphics.Color.White,
+                        textColor=androidx.compose.ui.graphics.Color.White,
+                        backgroundColor=Color(0xff0F0F30),
+                        color = Color(0xff0F0F30),
+                        text = "Set"
+                    )
+                }
+
             }
+
 
         }
 
     }
     flow?.value.let {
-        when(it){
-            is Response.Success ->{
+        when (it) {
+            is Response.Success -> {
             }
-            is Response.Failure->{}
-            is Response.Loading->{
+            is Response.Failure -> {}
+            is Response.Loading -> {
                 onEvent(CameraEvent.ImageSent)
             }
-            else->{}
+            else -> {}
         }
     }
 
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun CameraButton(
+    onClick: () -> Unit,
+    icon: Int,
+    iconTint:androidx.compose.ui.graphics.Color,
+    textColor:androidx.compose.ui.graphics.Color=androidx.compose.ui.graphics.Color.White,
+    backgroundColor:androidx.compose.ui.graphics.Color=androidx.compose.ui.graphics.Color.Transparent,
+    color: androidx.compose.ui.graphics.Color,
+    text: String
+) {
+    Card(
+        modifier = Modifier,
+        onClick = onClick,
+        border = BorderStroke(
+            1.dp,
+            color
+        ),
+        shape = RoundedCornerShape(12.dp),
+        backgroundColor = backgroundColor,
+        elevation = 0.dp
+    ) {
+        Row(
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                modifier = Modifier.size(24.dp),
+                tint = iconTint,
+                painter = painterResource(id = icon),
+                contentDescription = "send picture"
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = text,
+                color = textColor,
+                style = TextStyle(
+                    fontFamily = Inter,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
+
+        }
+    }
 }
 
 private fun takePhoto(

@@ -1,14 +1,13 @@
 package com.example.socialk.chat
 
 import android.content.res.Configuration
-import android.graphics.drawable.GradientDrawable.Orientation
 import android.net.Uri
 import android.util.Log
 import android.util.Patterns
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.*
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -19,10 +18,7 @@ import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.*
 import androidx.compose.material.Divider
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.BottomCenter
-import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Alignment.Companion.TopCenter
@@ -40,25 +36,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.fragment.app.viewModels
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.socialk.R
 import com.example.socialk.chat.ChatComponents.*
-import com.example.socialk.components.BottomDialog
-import com.example.socialk.components.BottomDialogEvent
-import com.example.socialk.components.CustomSocialDialog
-import com.example.socialk.components.SocialDialog
+import com.example.socialk.components.*
 import com.example.socialk.create.ActivityTextFieldState
 import com.example.socialk.create.LiveEvent
-import com.example.socialk.create.LiveScreen
-import com.example.socialk.create.LiveScreenContent
 import com.example.socialk.create.components.BottomDialogLiveActivity
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.map.loadIcon
 import com.example.socialk.model.*
+import com.example.socialk.signinsignup.ProgressBar
 import com.example.socialk.signinsignup.TextFieldState
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
@@ -167,7 +158,7 @@ fun ChatScreen(activeUsersViewModel:ActiveUsersViewModel,
     when (val result = chatState.value) {
         is Response.Loading -> {
             // Display a circular loading indicator
-            CircularProgressIndicator()
+            CircularProgressIndicator(color=SocialTheme.colors.textPrimary)
         }
         is Response.Success -> {
             ChatContent(chat = result.data, onEvent = onEvent, chatViewModel = chatViewModel,activeUsersViewModel=activeUsersViewModel)
@@ -179,7 +170,9 @@ fun ChatScreen(activeUsersViewModel:ActiveUsersViewModel,
 
 }
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class,
+    ExperimentalAnimationApi::class
+)
 @Composable
 fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatViewModel,activeUsersViewModel:ActiveUsersViewModel) {
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -218,6 +211,24 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
         Log.d("ImageFromGallery", "image passed" + uri.toString())
         uri = newUri
     }
+
+    //handle image loading animatipn
+    var showLoading by remember { mutableStateOf(false) }
+    val flowimageaddition = chatViewModel?.isImageAddedToStorageAndFirebaseState?.collectAsState()
+    flowimageaddition?.value.let {
+        when (it) {
+            is Response.Success -> {
+                showLoading = false
+
+            }
+            is Response.Failure -> {}
+            is Response.Loading -> {
+                showLoading = true
+            }
+            else -> {}
+        }
+    }
+
 
     isImageAddedToStorage.let { response ->
         Log.d("ImagePicker", response.toString())
@@ -793,8 +804,16 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                 }
             }
         }
+        //display loading animation when uploading image beacause it takes time to resize
+        AnimatedVisibility(
+            visible = showLoading,
+            enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
+            exit = scaleOut()
+        ) {
 
-
+            //UPLOADING IMAGE
+            UploadBar(icon_anim = true, text = "Processing image", icon = R.drawable.ic_send_and_archive)
+        }
 
         ChatScreenBottomInputs(modifier = Modifier, keyboardController, onEvent = {
             when (it) {
