@@ -216,7 +216,7 @@ fun ActivityItem(modifier:Modifier=Modifier,
                             onEvent(ActivityEvent.OpenActivityChat(event.activity))
                         }
                         is ActivityItemEvent.OpenCamera -> {
-                            onEvent(ActivityEvent.OpenCamera)
+                            onEvent(ActivityEvent.OpenCamera(activity.id))
                         }
                         else->{}
                     }

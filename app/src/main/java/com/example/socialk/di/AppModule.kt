@@ -35,7 +35,9 @@ annotation class FirebaseStorageDefault
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class FirebaseStorageRes
-
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class FirebaseStorageHighRes
 @Module
 @InstallIn(ViewModelComponent::class)
 class AppModule {
@@ -47,6 +49,10 @@ class AppModule {
     @Provides
     @FirebaseStorageRes
     fun provideFirebaseStorageRes() = Firebase.storage("gs://socialv2-340711")
+    @Provides
+    @FirebaseStorageHighRes
+    fun provideFirebaseStorageHighRes() = Firebase.storage("gs://socialv2-340711-8wm0n")
+
     @Provides
     fun provideFirebaseFirestore() = Firebase.firestore
 
@@ -125,11 +131,13 @@ class AppModule {
     @Provides
     fun provideActivityRepository(
         db: FirebaseFirestore,
+        @FirebaseStorageHighRes highResStorage: FirebaseStorage
     ):ActivityRepository= ActivityRepositoryImpl(
         activitiesRef =db.collection("Activities"),
         activeUsersRef =db.collection("ActiveUsers"),
         chatCollectionsRef =db.collection("groups") ,
-        messagessRef =db.collection("Chats")
+        messagessRef =db.collection("Chats"),
+        resStorage=highResStorage.reference
     )
     @Provides
     fun provideUsersRepository(

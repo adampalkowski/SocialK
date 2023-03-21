@@ -1,5 +1,6 @@
 package com.example.socialk.di
 
+import android.net.Uri
 import com.example.socialk.ActiveUser
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
@@ -12,7 +13,10 @@ interface ActivityRepository {
     suspend fun getActivity(id:String) : Flow<Response<Activity>>
     suspend fun getUserActivities(id: String): Flow<Response<List<Activity>>>
     suspend fun getMoreUserActivities(id: String): Flow<Response<List<Activity>>>
+    suspend fun addImageFromGalleryToStorage(id: String,uri: Uri): Flow<Response<String>>
     suspend fun likeActivity(id:String,user: User) : Flow<Response<Void?>>
+    suspend fun addParticipantImageToActivity(activity_id:String,user_id:String,picture_url: String) : Flow<Response<Void?>>
+    suspend fun setParticipantPicture(id:String,user: User) : Flow<Response<Void?>>
     suspend fun unlikeActivity(id:String,user:User) : Flow<Response<Void?>>
 
     suspend fun addActivity(activity:Activity) : Flow<Response<Void?>>

@@ -64,6 +64,8 @@ import java.util.concurrent.Executor
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import com.example.socialk.R
+import com.example.socialk.di.ActivityViewModel
+import com.example.socialk.model.Response
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 import kotlin.math.pow
@@ -124,6 +126,9 @@ fun BackPressHandler(
 
 sealed class CameraEvent {
     object BackPressed : CameraEvent()
+    class SetPicture(val image_url:Uri): CameraEvent()
+    object RemovePhoto : CameraEvent()
+    object ImageSent : CameraEvent()
 }
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -135,6 +140,8 @@ fun CameraView(
     onImageCaptured: (Uri) -> Unit,
     onError: (ImageCaptureException) -> Unit
 ) {
+
+
     //set status bar TRANSPARENT
 
     val flash_on = remember { mutableStateOf(false) }
@@ -227,18 +234,29 @@ fun CameraView(
                 }
             }
         )
-        // add an IconButton on top of the AndroidView using the Box's contentAlignment parameter
-        if (isIconVisible.value) {
-            Icon(
-                painter = painterResource(R.drawable.ic_camera),
-                contentDescription = "Icon",
-                modifier = Modifier
-                    .offset(x = iconPosition.x.dp, y = iconPosition.y.dp)
+
+        //BACK FROM CAMERA BUTTON
+        Box(modifier= Modifier
+            .align(Alignment.TopStart)
+            .padding(top = 24.dp)
+            .padding(12.dp)){
+            IconButton(
+                modifier = Modifier,
+                onClick = {
+                        onEvent(CameraEvent.BackPressed)
+                },
+                content = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_back),
+                        contentDescription = "Go back from camera",
+                        tint = androidx.compose.ui.graphics.Color.White,
+                        modifier = Modifier
+                            .size(24.dp),
+                    )
+                }
             )
-            Log.d("CAMERAVIEW", iconPosition.x.toString() + " " + iconPosition.y.toString())
+
         }
-
-
 
         Column(modifier = Modifier.align(Alignment.BottomCenter))
         {
@@ -254,11 +272,14 @@ fun CameraView(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                    IconButton(modifier = Modifier.border(
-                        BorderStroke(1.dp,
-                            androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f)
-                        ), shape = RoundedCornerShape(16.dp)
-                    ).padding(4.dp),
+                    IconButton(modifier = Modifier
+                        .border(
+                            BorderStroke(
+                                1.dp,
+                                androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f)
+                            ), shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(4.dp),
                         onClick = {
                             flash_on.value = !flash_on.value
                             Log.d("camerview", "button clicked" + flash_on.value)
@@ -316,11 +337,14 @@ fun CameraView(
 
                     Spacer(modifier = Modifier.width(24.dp))
                     IconButton(
-                        modifier = Modifier.border(
-                            BorderStroke(1.dp,
-                                androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f)
-                            ), shape = RoundedCornerShape(16.dp)
-                        ).padding(4.dp),
+                        modifier = Modifier
+                            .border(
+                                BorderStroke(
+                                    1.dp,
+                                    androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f)
+                                ), shape = RoundedCornerShape(16.dp)
+                            )
+                            .padding(4.dp),
                         onClick = {
                             if (lensFacing == CameraSelector.LENS_FACING_BACK) {
                                 lensFacing = CameraSelector.LENS_FACING_FRONT
@@ -349,73 +373,108 @@ fun CameraView(
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ImageDisplay(modifier: Modifier, photoUri: Uri) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(color = androidx.compose.ui.graphics.Color.Black)
-    ) {
-        Image(
-            painter = rememberImagePainter(photoUri),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
+fun ImageDisplay(modifier: Modifier, photoUri: Uri,onEvent: (CameraEvent) -> Unit,
+                 activityViewModel:ActivityViewModel?) {
+    val flow =activityViewModel?.addImageToActivityState?.collectAsState()
+
+
+    BackPressHandler(onBackPressed = { onEvent(CameraEvent.BackPressed) })
+    Surface(modifier=Modifier.fillMaxSize()) {
+
         Box(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 48.dp, end = 24.dp)
+                .fillMaxSize()
+                .background(color = androidx.compose.ui.graphics.Color.Black)
         ) {
-            Card(
-                modifier = Modifier,
-                onClick = { /*TODO*/ },
-                border = BorderStroke(
-                    2.dp,
-                    androidx.compose.ui.graphics.Color.White
-                ),
-                shape = RoundedCornerShape(12.dp),
-                backgroundColor = androidx.compose.ui.graphics.Color.Transparent,
-                elevation = 0.dp
-            ) {
-                Row(
-                    modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        modifier = Modifier.size(36.dp),
-                        tint = androidx.compose.ui.graphics.Color.White,
-                        painter = painterResource(id = R.drawable.ic_send),
-                        contentDescription = "send picture"
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Set",
-                        color = androidx.compose.ui.graphics.Color.White,
-                        style = TextStyle(
-                            fontFamily = Inter,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    )
+            Image(
+                painter = rememberImagePainter(photoUri),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            //BACK FROM CAMERA BUTTON
+            Box(modifier= Modifier
+                .align(Alignment.TopStart)
+                .padding(top = 24.dp)
+                .padding(12.dp)){
+                IconButton(
+                    modifier = Modifier
 
+                        .padding(4.dp),
+                    onClick = {
+                        onEvent(CameraEvent.RemovePhoto)
+                    },
+                    content = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_x),
+                            contentDescription = "Go back from camera",
+                            tint = androidx.compose.ui.graphics.Color.White,
+                            modifier = Modifier
+                                .size(24.dp),
+                        )
+                    }
+                )
+
+            }
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(bottom = 48.dp, end = 24.dp)
+            ) {
+                Card(
+                    modifier = Modifier,
+                    onClick = {
+                        onEvent(CameraEvent.SetPicture(photoUri))
+
+                    },
+                    border = BorderStroke(
+                        2.dp,
+                        androidx.compose.ui.graphics.Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    backgroundColor = androidx.compose.ui.graphics.Color.Transparent,
+                    elevation = 0.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(36.dp),
+                            tint = androidx.compose.ui.graphics.Color.White,
+                            painter = painterResource(id = R.drawable.ic_send),
+                            contentDescription = "send picture"
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Set",
+                            color = androidx.compose.ui.graphics.Color.White,
+                            style = TextStyle(
+                                fontFamily = Inter,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+
+                    }
                 }
             }
-        }
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(horizontal = 16.dp, vertical = 48.dp)
-        ) {
-            IconButton(onClick = { /*TODO*/ }) {
-                Icon(
-                    modifier = Modifier.size(36.dp),
-                    tint = androidx.compose.ui.graphics.Color.White,
-                    painter = painterResource(id = R.drawable.ic_x), contentDescription = "sd"
-                )
-            }
 
         }
+
     }
+    flow?.value.let {
+        when(it){
+            is Response.Success ->{
+            }
+            is Response.Failure->{}
+            is Response.Loading->{
+                onEvent(CameraEvent.ImageSent)
+            }
+            else->{}
+        }
+    }
+
 }
 
 private fun takePhoto(
@@ -449,3 +508,4 @@ private fun takePhoto(
         }
     })
 }
+

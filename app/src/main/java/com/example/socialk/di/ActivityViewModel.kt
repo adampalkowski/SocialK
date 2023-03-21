@@ -1,6 +1,8 @@
 package com.example.socialk.di
 
+import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
@@ -9,17 +11,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.socialk.ActiveUser
 import com.example.socialk.home.HomeEvent
-import com.example.socialk.model.Activity
-import com.example.socialk.model.Response
-import com.example.socialk.model.SocialException
-import com.example.socialk.model.User
+import com.example.socialk.model.*
 import com.marosseleng.compose.material3.datetimepickers.time.domain.noSeconds
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -35,6 +38,9 @@ class ActivityViewModel @Inject constructor(
 ) : ViewModel() {
     var openDialogState = mutableStateOf(false)
 
+    private val _isImageAddedToStorageState = MutableStateFlow<Response<String>?>(null)
+    val isImageAddedToStorageFlow: StateFlow<Response<String>?> = _isImageAddedToStorageState
+
     private val _activitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val activitiesListState: State<Response<List<Activity>>> = _activitiesListState
     private val _moreActivitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
@@ -47,9 +53,11 @@ class ActivityViewModel @Inject constructor(
     private val _activityState = mutableStateOf<Response<Activity>>(Response.Loading)
     val activityState: State<Response<Activity>> = _activityState
 
-
     private val _isActivityAddedState = mutableStateOf<Response<Void?>?>(Response.Success(null))
     val isActivityAddedState: State<Response<Void?>?> = _isActivityAddedState
+
+    private val _addImageToActivityState = MutableStateFlow<Response<String>?>(null)
+    val addImageToActivityState: MutableStateFlow<Response<String>?> = _addImageToActivityState
 
     private val _isActivityDeletedState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isActivityDeletedState: State<Response<Void?>> = _isActivityDeletedState
@@ -322,5 +330,32 @@ class ActivityViewModel @Inject constructor(
 
         }
     }
+    fun setParticipantImage(activity_id: String, user_id:String,uri: Uri) {
+        viewModelScope.launch {
+            _addImageToActivityState.value= Response.Loading
+            repo.addImageFromGalleryToStorage(activity_id+user_id, uri).collect{ response ->
+                _isImageAddedToStorageState.value=response
+                when(response){
+                    is Response.Success->{
+                        val new_url:String=response.data
+                        repo.addParticipantImageToActivity(activity_id,user_id,new_url).collect{
+                                response->
+                            _addImageToActivityState.value=Response.Success("added image")
+                        }
 
+                    }
+                    is Response.Loading->{
+
+                    }
+                    is Response.Failure->{
+
+                    }
+                }
+
+            }
+
+
+
+        }
+    }
 }

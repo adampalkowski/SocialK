@@ -3,10 +3,13 @@ package com.example.socialk.home
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,9 +25,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.*
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -33,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.socialk.*
 import com.example.socialk.R
+import com.example.socialk.camera.CameraEvent
 import com.example.socialk.components.*
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
@@ -42,16 +49,12 @@ import com.example.socialk.model.ChatMessage
 import com.example.socialk.model.Response
 import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
+import com.example.socialk.signinsignup.ProgressBar
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 import com.google.accompanist.systemuicontroller.SystemUiController
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
-import java.io.File
-import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.Executor
 
 sealed class ActivityEvent() {
     class OpenActivitySettings(activity: Activity) : ActivityEvent() {
@@ -75,16 +78,17 @@ sealed class ActivityEvent() {
     class GoToMap( latlng: String) : ActivityEvent() {
         val latlng = latlng
     }
-    object OpenCamera: ActivityEvent()
+    class OpenCamera(val activity_id:String): ActivityEvent()
 }
 
 sealed class HomeEvent {
     object GoToProfile : HomeEvent()
-    object OpenCamera : HomeEvent()
+    class OpenCamera(val activity_id:String) : HomeEvent()
     object LogOut : HomeEvent()
     object GoToMemories : HomeEvent()
     object BackPressed : HomeEvent()
     object GoToSettings : HomeEvent()
+    object RemovePhotoFromGallery : HomeEvent()
     class GoToMap ( latlng: String): HomeEvent(){
         val latlng=latlng
     }
@@ -112,6 +116,8 @@ fun HomeScreen(systemUiController: SystemUiController,
     onEvent: (HomeEvent) -> Unit,
     bottomNavEvent: (Destinations) -> Unit
 ) {
+
+
     //set status bar TRANSPARENT
     SideEffect {
         systemUiController.setStatusBarColor(color = androidx.compose.ui.graphics.Color.Transparent)
@@ -134,7 +140,7 @@ fun HomeScreen(systemUiController: SystemUiController,
     val scaffoldState = rememberScaffoldState()
     val showDialogState: Boolean by homeViewModel?.showDialog!!.collectAsState()
     var bottomSheetActivity by rememberSaveable{ mutableStateOf(Activity()) }
-
+    
     androidx.compose.material.Scaffold(modifier=Modifier.systemBarsPadding(),
         scaffoldState = scaffoldState,
         bottomBar = {
@@ -178,7 +184,7 @@ fun HomeScreen(systemUiController: SystemUiController,
 
                             }
                             is ActivityEvent.OpenCamera -> {
-                                onEvent(HomeEvent.OpenCamera)
+                                onEvent(HomeEvent.OpenCamera(activity_id =it.activity_id))
 
                             }
                             is ActivityEvent.OpenActivitySettings -> {
@@ -225,7 +231,7 @@ fun HomeScreen(systemUiController: SystemUiController,
         homeViewModel?.removeActivity()
         Log.d("homescreen","falseeee")
     })
-
+    
     BottomDialog(
         state = bottomSheetState,
         activity = bottomSheetActivity,
@@ -287,7 +293,7 @@ fun activityDialog(activity:Activity?, activityDialogState: Boolean, onEvent: ()
 }
 
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun HomeScreenContent(
     activityEvent: (ActivityEvent) -> Unit, activeUsersViewModel: ActiveUsersViewModel?,
@@ -307,7 +313,21 @@ fun HomeScreenContent(
         activityViewModel?.getActivitiesForUser(viewModel?.currentUser!!.uid)
 
     }
-
+    val flowimageaddition =activityViewModel?.addImageToActivityState?.collectAsState()
+    var isVisiblePhoto by remember { mutableStateOf(false) }
+    flowimageaddition?.value.let {
+        when (it) {
+            is Response.Success -> {
+                isVisiblePhoto = false
+                onEvent(HomeEvent.RemovePhotoFromGallery)
+            }
+            is Response.Failure -> {}
+            is Response.Loading -> {
+                isVisiblePhoto=true
+            }
+            else -> {}
+        }
+    }
     val state = rememberPullRefreshState(refreshing, ::refresh)
     Box(modifier = Modifier
         .fillMaxSize()
@@ -349,6 +369,63 @@ fun HomeScreenContent(
                         .background(color = SocialTheme.colors.uiFloated)
                 )
             }
+            item{
+                AnimatedVisibility(
+                    visible = isVisiblePhoto,enter= slideInVertically (animationSpec = tween(500,easing= LinearEasing)),
+                    exit = scaleOut ()
+                ) {
+                                    val infiniteTransition = rememberInfiniteTransition()
+                                    val progress by infiniteTransition.animateFloat(
+                                        initialValue = 0f,
+                                        targetValue = 1f,
+                                        animationSpec = infiniteRepeatable(
+                                            animation = tween(durationMillis = 2000, easing = LinearEasing),
+                                            repeatMode = RepeatMode.Reverse
+                                        )
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(36.dp)
+                                            .background(color = Color.LightGray.copy(alpha = 0.5f))
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxSize(),
+                                            verticalAlignment = CenterVertically
+                                        ) {
+                                            Spacer(modifier = Modifier.width(24.dp))
+                                            androidx.compose.material3.Icon(
+                                                modifier = Modifier.size(24.dp),
+                                                painter = painterResource(id = R.drawable.ic_add_photo),
+                                                tint = Color.White,
+                                                contentDescription = null
+                                            )
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Text(
+                                                text = "Uploading image",
+                                                color = Color.White,
+                                                style = TextStyle(
+                                                    fontFamily = Inter,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.SemiBold
+                                                ),
+                                            )
+                                            Spacer(modifier = Modifier.weight(1f))
+                                            androidx.compose.material3.Icon(
+                                                modifier = Modifier.size(24.dp).alpha(alpha = progress),
+                                                painter = painterResource(id = R.drawable.ic_publish_with_changes_700),
+                                                tint = Color.White,
+                                                contentDescription = null
+                                            )
+                                            Spacer(modifier = Modifier.width(24.dp))
+
+
+                        }
+                    }
+                }
+            }
+
+        
             activityViewModel?.activitiesListState?.value.let {
                 when (it) {
                     is Response.Success -> {
@@ -443,6 +520,8 @@ fun HomeScreenContent(
     }
 
 }
+
+
 
 
 @Composable
