@@ -23,8 +23,10 @@ interface ActivityRepository {
 
     suspend fun addActivity(activity:Activity) : Flow<Response<Void?>>
     suspend fun addUserToActivityInvites(activity: Activity,user_id:String) : Flow<Response<Void?>>
+    suspend fun leaveLiveActivity(activity_id: String,user_id:String) : Flow<Response<Void?>>
     suspend fun removeUserFromActivityInvites(activity: Activity,user_id:String) : Flow<Response<Void?>>
     suspend fun deleteActivity(id:String) : Flow<Response<Void?>>
+    suspend fun joinActiveUser(live_activity_id:String,user_id:String,profile_url:String,username:String) : Flow<Response<Void?>>
 
     suspend fun getActivitiesForUser(id:String) : Flow<Response<List<Activity>>>
     suspend fun getMoreActivitiesForUser(id:String) : Flow<Response<List<Activity>>>

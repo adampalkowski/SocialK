@@ -112,6 +112,19 @@ class ActivityRepositoryImpl @Inject constructor(
             emit(Response.Failure(e= SocialException("addUserToActivityInvites exception",Exception())))
         }
     }
+    override suspend fun leaveLiveActivity(activity_id: String,user_id:String): Flow<Response<Void?>> =flow {
+        try {
+            emit(Response.Loading)
+            Log.d("HOMESCREEN","LEAVEACTIVITY")
+            Log.d("HOMESCREEN",activity_id+user_id)
+            val addition = activeUsersRef.document(activity_id).update("participants_profile_pictures"+"."+user_id
+                ,FieldValue.delete(),"participants_usernames"+"."+user_id,FieldValue.delete()).await()
+            emit(Response.Success(addition))
+
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("addUserToActivityInvites exception",Exception())))
+        }
+    }
 
     override suspend fun removeUserFromActivityInvites(activity: Activity,user_id:String): Flow<Response<Void?>> =flow {
         try {
@@ -135,6 +148,15 @@ class ActivityRepositoryImpl @Inject constructor(
             emit(Response.Success(deletion3))
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("deleteActivity exception",Exception())))
+        }
+    }
+    override suspend fun joinActiveUser(live_activity_id:String,user_id: String,profile_url:String,username:String) :Flow<Response<Void?>> = flow {
+        try{
+            emit(Response.Loading)
+            val update = activeUsersRef.document(live_activity_id).update("participants_profile_pictures"+"."+user_id,profile_url,"participants_usernames"+"."+user_id,username).await()
+            emit(Response.Success(update))
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("joinActiveUser exception",Exception())))
         }
     }
     override suspend fun getUserActivities(id: String): Flow<Response<List<Activity>>> =callbackFlow {
@@ -370,7 +392,6 @@ class ActivityRepositoryImpl @Inject constructor(
     override suspend fun addActiveUser(activeUser: ActiveUser): Response<Boolean>   {
         return try {
             val result = activeUsersRef.document(activeUser.creator_id).set(activeUser).await()
-
             com.example.socialk.model.Response.Success(true)
         } catch (e: Exception) {
             e.printStackTrace()

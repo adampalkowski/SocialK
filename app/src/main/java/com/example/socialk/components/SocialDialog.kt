@@ -17,6 +17,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -29,17 +30,17 @@ fun SocialDialog(onDismiss:()->Unit,onConfirm:(Int)->Unit,onCancel:(Int)->Unit,
                  title:String,info:String,icon:Int,actionButtonText:String="Delete",actionButtonTextColor:Color=Color.Red){
     Dialog(onDismissRequest =onDismiss) {
         Card(shape= RoundedCornerShape(16.dp)) {
-            Box(modifier = Modifier.padding(24.dp),){
+            Box(modifier = Modifier.background(color=SocialTheme.colors.uiBackground).padding(24.dp),){
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(painter = painterResource(id = icon), contentDescription = null, tint = SocialTheme.colors.iconPrimary)
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(text = title,style= TextStyle(
-                        fontWeight = FontWeight.Medium, fontSize = 20.sp, fontFamily = Inter
+                        fontWeight = FontWeight.Medium, fontSize = 20.sp, fontFamily = Inter,color=SocialTheme.colors.textPrimary
                     )
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = info, style = TextStyle(
-                        fontSize = 14.sp, fontWeight = FontWeight.Normal , fontFamily = Inter
+                    Text(text = info, textAlign = TextAlign.Center, style = TextStyle(
+                        fontSize = 14.sp, fontWeight = FontWeight.Normal , fontFamily = Inter,color=SocialTheme.colors.textPrimary
                     )
                     )
                     Spacer(modifier = Modifier.height(24.dp))

@@ -16,6 +16,7 @@ import com.marosseleng.compose.material3.datetimepickers.time.domain.noSeconds
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.LocalDate
@@ -41,6 +42,13 @@ class ActiveUsersViewModel @Inject constructor(
     private val _isActiveUsersDeletedState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isActiveUsersDeletedState: State<Response<Void?>> = _isActiveUsersDeletedState
 
+    private val _isUserAddedToLiveActivityState = mutableStateOf<Response<Void?>>(Response.Loading)
+    val isUserAddedToLiveActivityState: State<Response<Void?>> = _isUserAddedToLiveActivityState
+
+    private val _isLiveActivityLeft = mutableStateOf<Response<Void?>>(Response.Loading)
+    val isLiveActivityLeft: State<Response<Void?>> = _isLiveActivityLeft
+
+
     private val _granted_permission = MutableStateFlow<Boolean>(false)
     val granted_permission: StateFlow<Boolean> = _granted_permission
 
@@ -48,6 +56,25 @@ class ActiveUsersViewModel @Inject constructor(
     val location: StateFlow<LatLng?> = _location
     fun setLocation(location: LatLng){
         _location.value=location
+    }
+    fun joinActiveUser(live_activity_id:String,user:String,profile_url:String,username:String){
+        viewModelScope.launch {
+            _isUserAddedToLiveActivityState.value=Response.Loading
+            val result= repo.joinActiveUser(live_activity_id,user, profile_url ,username).collect{
+                response->
+                _isUserAddedToLiveActivityState.value=response
+            }
+        }
+
+
+    }
+    fun leaveLiveActivity( activity_id:String, user_id:String){
+
+        viewModelScope.launch {
+                repo.leaveLiveActivity( activity_id,user_id).collect(){
+
+                }
+         }
     }
     fun permissionGranted(){
         _granted_permission.value=true

@@ -1,5 +1,6 @@
 package com.example.socialk.chat
 
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Looper
@@ -13,13 +14,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import com.example.socialk.ActiveUser
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
-import com.example.socialk.create.LiveEvent
 import com.example.socialk.create.calculateDestroyTime
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ChatViewModel
@@ -87,6 +88,35 @@ class ChatFragment : Fragment() {
         }
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        Log.d("CHATFRAGMENT","ONCREATE")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d("CHATFRAGMENT","ONRESUME")
+        WindowCompat.setDecorFitsSystemWindows(requireActivity().window, true)
+
+
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        Log.d("CHATFRAGMENT","onattach")
+
+    }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        Log.d("CHATFRAGMENT","ondestroyvuew")
+
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d("CHATFRAGMENT","ondestrot")
+
+    }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -217,18 +247,26 @@ class ChatFragment : Fragment() {
                                     val destroyTime:String= calculateDestroyTime( event.start_time,event.time_length)
                                     participants_profile_pictures[authViewModel.currentUser!!.uid]=UserData.user!!.pictureUrl!!
                                     participants_usernames[authViewModel.currentUser!!.uid]=UserData.user!!.username!!
+                                    val invited_users=ArrayList<String>(UserData.user!!.friends_ids.keys)
+                                    invited_users.add(authViewModel.currentUser!!.uid)
+
                                     activeUsersViewModel.addActiveUser(
-                                        ActiveUser(id=id,
-                                            creator_id = if (authViewModel.currentUser==null){""}else{ authViewModel.currentUser!!.uid.toString()},
+                                        ActiveUser(
+                                            id = id,
+                                            creator_id = if (authViewModel.currentUser == null) {
+                                                ""
+                                            } else {
+                                                authViewModel.currentUser!!.uid.toString()
+                                            },
                                             participants_profile_pictures = participants_profile_pictures,
-                                            participants_usernames =  participants_usernames,
+                                            participants_usernames = participants_usernames,
                                             latLng = event.latLng,
                                             time_end = "",
                                             time_length = event.time_length,
                                             time_start = event.start_time,
                                             create_time = current,
-                                            invited_users = ArrayList<String>(UserData.user!!.friends_ids.keys),
-                                            destroy_time=destroyTime,
+                                            invited_users = invited_users,
+                                            destroy_time = destroyTime,
                                         )
                                     )
                                 }
@@ -247,6 +285,10 @@ class ChatFragment : Fragment() {
                                     )
                                 }
                                 is ChatEvent.SendMessage -> {
+                                    val sdf =
+                                        SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+                                        val currentDateandTime = sdf.format(Date())
+                                    Log.d("CHATFRAGMENT",currentDateandTime.toString())
                                     //id and sent_time are set in view model
                                     chatViewModel.addMessage(
                                         chat_id!!,
@@ -262,6 +304,8 @@ class ChatFragment : Fragment() {
                                 }
 
                                 is ChatEvent.SendLive -> {
+                                    Log.d("CHATSCREEN","Send live")
+
                                     //id and sent_time are set in view model
                                     chatViewModel.addMessage(
                                         chat_id!!,
@@ -299,6 +343,9 @@ class ChatFragment : Fragment() {
                                 is ChatEvent.AskForPermission -> {
                                     requestPermissionLauncher.launch(
                                         android.Manifest.permission.ACCESS_FINE_LOCATION)
+                                }
+                                is ChatEvent.JoinLive->{
+                                    activeUsersViewModel.joinActiveUser(event.live_activity_id,authViewModel.currentUser!!.uid,UserData.user!!.pictureUrl!!,UserData.user!!.username!!)
                                 }
                                 else->{}
                             }

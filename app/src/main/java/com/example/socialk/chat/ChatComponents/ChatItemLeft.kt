@@ -22,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -33,6 +34,7 @@ import com.example.socialk.ui.theme.SocialTheme
 
 sealed class ChatItemEvent(){
     class OpenLocation(val latLng:String):ChatItemEvent()
+    class JoinLive(val live_activity_id:String):ChatItemEvent()
 }
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -116,9 +118,32 @@ fun ChatItemLeft(text_type:String,
                                         fontFamily = Inter,
                                         fontWeight = FontWeight.Medium,
                                         fontSize = 14.sp,
+                                        color=SocialTheme.colors.textPrimary,
+                                        textDecoration = TextDecoration.Underline,
                                     ),
                                     onClick = {
                                         onEvent(ChatItemEvent.OpenLocation(textMessage))
+                                    }
+                                )
+                            }
+
+                        }
+                    }else if(text_type.equals("live")){
+                        Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(painter = painterResource(id = R.drawable.ic_input), tint = SocialTheme.colors.iconPrimary, contentDescription =null )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                ClickableText(
+                                    text = AnnotatedString("Live activity shared") ,
+                                    style = TextStyle(
+                                        fontFamily = Inter,
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 14.sp,
+                                        color=SocialTheme.colors.textPrimary,
+                                        textDecoration = TextDecoration.Underline,
+                                    ),
+                                    onClick = {
+                                        onEvent(ChatItemEvent.JoinLive(textMessage))
                                     }
                                 )
                             }

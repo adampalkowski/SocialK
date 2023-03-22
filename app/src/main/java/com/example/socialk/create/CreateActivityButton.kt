@@ -34,7 +34,7 @@ fun CreateActivityButton(onClick: () -> Unit, text: String) {
             Text(
                 text = text,
                 style = TextStyle(
-                    color = SocialTheme.colors.textSecondary, fontSize = 18.sp,
+                    color = SocialTheme.colors.textPrimary, fontSize = 18.sp,
                     fontFamily = Inter, fontWeight = FontWeight.Bold
                 )
             )

@@ -102,6 +102,7 @@ class ActivityViewModel @Inject constructor(
             }
         }
     }
+
     fun getMoreActivitiesForUser(id: String?) {
         if (id == null) {
             _moreActivitiesListState.value = Response.Failure(

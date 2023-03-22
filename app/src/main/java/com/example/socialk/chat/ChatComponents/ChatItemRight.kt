@@ -18,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -87,7 +88,7 @@ fun ChatItemRight(
                                     fontFamily = Inter,
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 14.sp,
-                                    color=SocialTheme.colors.textSecondary
+                                    color=SocialTheme.colors.textSecondary            ,
                                 ),
                                 onClick = {
                                     onEvent(ChatItemEvent.OpenLocation(textMessage))
@@ -96,7 +97,28 @@ fun ChatItemRight(
                         }
 
                     }
-                }else {
+                }else if(text_type.equals("live")){
+                    Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(painter = painterResource(id = R.drawable.ic_input), tint = SocialTheme.colors.textSecondary, contentDescription =null )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            ClickableText(
+                                text = AnnotatedString("Live activity shared") ,
+                                style = TextStyle(
+                                    fontFamily = Inter,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 14.sp,
+                                    color=SocialTheme.colors.textSecondary,textDecoration = TextDecoration.Underline,
+                                ),
+                                onClick = {
+
+                                }
+                            )
+                        }
+
+                    }
+                }
+                else {
                     Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                         Text(
                             text = textMessage,

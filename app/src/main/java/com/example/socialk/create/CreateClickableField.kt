@@ -46,7 +46,7 @@ fun CreateClickableTextField(
                 fontFamily = Inter,
                 fontWeight = FontWeight.Normal,
                 fontSize = 16.sp,
-                color = SocialTheme.colors.iconSecondary
+                color = SocialTheme.colors.textPrimary
             )
             Spacer(modifier = Modifier.weight(1f))
             ClickableText(text = AnnotatedString(value), style = TextStyle(fontSize = 16.sp, fontFamily = Inter,

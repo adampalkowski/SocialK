@@ -37,28 +37,29 @@ fun BottomDialogLiveActivity(state: ModalBottomSheetState = rememberModalBottomS
             sheetContentColor = SocialTheme.colors.textPrimary, scrimColor = Color(0x7E313131),
             sheetContent = {
                 LiveScreenContent(activeUsersViewModel =activeUsersViewModel , onEvent =onEvent )
-                flow.value.let {
-                    when(it){
-                        is Response.Success->{
-                                    onEvent(LiveEvent.SendLiveMessage)
-                                    onEvent(LiveEvent.CloseDialog)
-                        }
-                        is Response.Loading->{
-                            Log.d("BOTTOMDIALOGLIVE","LOADINg")
-                            CircularProgressIndicator()
-                        }
-                        is Response.Failure->{
-                            Log.d("BOTTOMDIALOGLIVE","NOFILUR")
-                        }
-                        else->{}
 
-                    }
-                }
 
             }
         ){
         }
 
     }
+    flow.value.let {
+        when(it){
+            is Response.Success->{
+                onEvent(LiveEvent.CloseDialog)
+                activeUsersViewModel.activeUserAdded()
+                onEvent(LiveEvent.SendLiveMessage)
+            }
+            is Response.Loading->{
+                Log.d("BOTTOMDIALOGLIVE","LOADINg")
+                CircularProgressIndicator(color = SocialTheme.colors.textPrimary)
+            }
+            is Response.Failure->{
+                Log.d("BOTTOMDIALOGLIVE","NOFILUR")
+            }
+            else->{}
 
+        }
+    }
 }

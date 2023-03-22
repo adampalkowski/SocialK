@@ -34,6 +34,7 @@ import com.example.socialk.ui.theme.SocialTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
+import java.time.ZoneId
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.coroutines.resume
@@ -46,8 +47,8 @@ class HomeFragment : Fragment() {
     private val chatViewModel by viewModels<ChatViewModel>()
     private val activityViewModel by activityViewModels<ActivityViewModel>()
     private val activeUsersViewModel by viewModels<ActiveUsersViewModel>()
-    private lateinit var outputDirectory: File
-    private lateinit var cameraExecutor: ExecutorService
+    private  var outputDirectory: File? =null
+    private var cameraExecutor: ExecutorService?=null
 
     private val TAG = "HOMEFRAGMENT"
     private fun handleImageCapture(uri: Uri) {
@@ -89,22 +90,21 @@ class HomeFragment : Fragment() {
         }
     }
 
-    override fun onDetach() {
-        super.onDetach()
-        Log.d(TAG,"on detacj")
 
-    }
     override fun onDestroy() {
         super.onDestroy()
-        Log.d(TAG,"on destroy")
-        cameraExecutor.shutdown()
+
+        cameraExecutor?.shutdown()
         if (outputDirectory!=null){
             Log.d(TAG,"on destroy +output")
 
             if (viewModel.photo_uri.value!=null){
-                Log.d(TAG,"on destroy +uri")
-                val photoFile= File(outputDirectory,viewModel.photo_uri.value?.lastPathSegment)
-                photoFile.delete()
+                if (viewModel.photo_uri.value?.lastPathSegment!=null){
+                    Log.d(TAG,"on destroy +uri")
+                    val photoFile= File(outputDirectory,viewModel.photo_uri.value?.lastPathSegment)
+                    photoFile.delete()
+                }
+
             }
         }
     }
@@ -138,6 +138,8 @@ class HomeFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(requireActivity().window, false)
+        Log.d("CHATFRAGMENT",    ZoneId.getAvailableZoneIds().toString())
+
     }
 
     override fun onDestroyView() {
@@ -226,7 +228,13 @@ class HomeFragment : Fragment() {
                                             viewModel.handleGoToMapActivity(event.latlng)
                                         }
                                         is HomeEvent.GoToProfileWithID -> {
-                                            viewModel.handleGoToUserProfile(event.user_id)
+                                            if (event.user_id.equals(UserData.user!!.id)){
+                                                viewModel.handleGoToProfile()
+
+                                            }else{
+                                                viewModel.handleGoToUserProfile(event.user_id)
+
+                                            }
                                         }
                                         is HomeEvent.GoToChat -> {
                                             viewModel.handleGoToChat(event.activity)
@@ -266,7 +274,14 @@ class HomeFragment : Fragment() {
                                             }
 
                                         }
+                                        is HomeEvent.LeaveLiveActivity->{
+                                            Log.d("HOMESCREEN","here")
 
+                                            activeUsersViewModel.leaveLiveActivity(event.activity_id,event.user_id)
+                                        }
+                                        is HomeEvent.DestroyLiveActivity->{
+                                            activeUsersViewModel.deleteActiveUser(event.id)
+                                        }
                                     }
                                 },
                                 bottomNavEvent = { screen ->

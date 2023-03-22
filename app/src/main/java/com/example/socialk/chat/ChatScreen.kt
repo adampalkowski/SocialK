@@ -18,6 +18,7 @@ import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.*
 import androidx.compose.material.Divider
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
@@ -63,6 +64,7 @@ sealed class ChatEvent {
     object GoToProfile : ChatEvent()
     object LiveInvite : ChatEvent()
     class ShareLocation(val latLng: LatLng) : ChatEvent()
+    class JoinLive(val live_activity_id: String) : ChatEvent()
     object CloseDialog : ChatEvent()
     object LogOut : ChatEvent()
     object OpenLocationDialog : ChatEvent()
@@ -180,10 +182,13 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
     val permission_flow = chatViewModel.granted_permission.collectAsState()
     val location_flow = chatViewModel.location.collectAsState()
     val isImageAddedToStorage by chatViewModel.isImageAddedToStorageFlow.collectAsState()
-    val openDialog = remember { mutableStateOf(false) }
-    val openLocationDialog = remember { mutableStateOf(false) }
+    val openDialog = rememberSaveable { mutableStateOf(false) }
+    val openLocationDialog = rememberSaveable { mutableStateOf(false) }
     val openCreateLiveDialog = remember { mutableStateOf(false) }
-    val displayLocationDialog = remember { mutableStateOf<LatLng?>(null) }
+    val displayLocationDialog = rememberSaveable { mutableStateOf<LatLng?>(null) }
+
+    val dialogJoinLive= rememberSaveable { mutableStateOf<String?>(null) }
+
     val hasExecutedMoreMessages = remember { mutableStateOf(false) }
     var bottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
 
@@ -306,8 +311,12 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                             date = it.sent_time,
                             onLongPress = { messageOptionsVisibility = true }, onClick = {
                                 if (highlite_message) {
-                                    openDialog.value = true
-                                    highlited_message_text = it.text
+                                    if(it.message_type.equals("live")||it.message_type.equals("latLng")){
+
+                                    }else{
+                                        openDialog.value = true
+                                        highlited_message_text = it.text
+                                    }
                                 }
                             }, onEvent = { event ->
                                 when (event) {
@@ -316,6 +325,8 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                                         val lat = values.get(0).toDouble()
                                         val lng = values.get(1).toDouble()
                                         displayLocationDialog.value = LatLng(lat, lng)
+                                    }
+                                    is ChatItemEvent.JoinLive->{
                                     }
                                 }
 
@@ -329,7 +340,13 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                             onLongPress = { messageOptionsVisibility = true },
                             picture_url = it.sender_picture_url, onClick = {
                                 if (highlite_message) {
-                                    openDialog.value = true
+                                    if(it.message_type.equals("live")||it.message_type.equals("latLng")){
+
+                                    }else{
+                                        openDialog.value = true
+                                        highlited_message_text = it.text
+                                    }
+
                                 }
                             }, onEvent = { event ->
                                 when (event) {
@@ -338,6 +355,9 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                                         val lat = values.get(0).toDouble()
                                         val lng = values.get(1).toDouble()
                                         displayLocationDialog.value = LatLng(lat, lng)
+                                    }
+                                    is ChatItemEvent.JoinLive->{
+                                        dialogJoinLive.value=event.live_activity_id
                                     }
                                 }
 
@@ -357,8 +377,12 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                             date = it.sent_time,
                             onLongPress = { messageOptionsVisibility = true }, onClick = {
                                 if (highlite_message) {
-                                    openDialog.value = true
-                                    highlited_message_text = it.text
+                                    if(it.message_type.equals("live")||it.message_type.equals("latLng")){
+
+                                    }else{
+                                        openDialog.value = true
+                                        highlited_message_text = it.text
+                                    }
                                 }
                             }, onEvent = { event ->
                                 when (event) {
@@ -367,6 +391,9 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                                         val lat = values.get(0).toDouble()
                                         val lng = values.get(1).toDouble()
                                         displayLocationDialog.value = LatLng(lat, lng)
+                                    }
+                                    is ChatItemEvent.JoinLive->{
+
                                     }
                                 }
 
@@ -380,7 +407,12 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                             onLongPress = { messageOptionsVisibility = true },
                             picture_url = it.sender_picture_url, onClick = {
                                 if (highlite_message) {
-                                    openDialog.value = true
+                                    if(it.message_type.equals("live")||it.message_type.equals("latLng")){
+
+                                    }else{
+                                        openDialog.value = true
+                                        highlited_message_text = it.text
+                                    }
                                 }
                             }, onEvent = { event ->
                                 when (event) {
@@ -390,6 +422,9 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                                         val lng = values.get(1).toDouble()
                                         displayLocationDialog.value = LatLng(lat, lng)
                                     }
+                                    is ChatItemEvent.JoinLive->{
+                                        dialogJoinLive.value=event.live_activity_id
+                                }
                                 }
 
                             })
@@ -408,8 +443,12 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                             date = it.sent_time,
                             onLongPress = { messageOptionsVisibility = true }, onClick = {
                                 if (highlite_message) {
-                                    openDialog.value = true
-                                    highlited_message_text = it.text
+                                    if(it.message_type.equals("live")||it.message_type.equals("latLng")){
+
+                                    }else{
+                                        openDialog.value = true
+                                        highlited_message_text = it.text
+                                    }
                                 }
                             }, onEvent = { event ->
                                 when (event) {
@@ -418,6 +457,8 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                                         val lat = values.get(0).toDouble()
                                         val lng = values.get(1).toDouble()
                                         displayLocationDialog.value = LatLng(lat, lng)
+                                    }
+                                    is ChatItemEvent.JoinLive->{
                                     }
                                 }
 
@@ -431,7 +472,12 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                             onLongPress = { messageOptionsVisibility = true },
                             picture_url = it.sender_picture_url, onClick = {
                                 if (highlite_message) {
-                                    openDialog.value = true
+                                    if(it.message_type.equals("live")||it.message_type.equals("latLng")){
+
+                                    }else{
+                                        openDialog.value = true
+                                        highlited_message_text = it.text
+                                    }
                                 }
                             }, onEvent = { event ->
                                 when (event) {
@@ -440,6 +486,9 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                                         val lat = values.get(0).toDouble()
                                         val lng = values.get(1).toDouble()
                                         displayLocationDialog.value = LatLng(lat, lng)
+                                    }
+                                    is ChatItemEvent.JoinLive->{
+                                        dialogJoinLive.value=event.live_activity_id
                                     }
                                 }
 
@@ -459,11 +508,43 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
 
                 }
             }
-
             if (chat.highlited_message != null) {
                 if (chat.highlited_message!!.isNotEmpty()) {
                     highlight_dialog = true
                 }
+            }
+            activeUsersViewModel.isUserAddedToLiveActivityState.value.let {it->
+                when(it){
+                    is Response.Success->{
+                        Toast.makeText(LocalContext.current,"Joined live activity",Toast.LENGTH_SHORT).show()
+
+                    }
+                    is Response.Loading->{}
+                    is Response.Failure->{
+                        Toast.makeText(LocalContext.current,"Failed to join live activity",Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            if(  dialogJoinLive.value!=null){
+                SocialDialog(
+                    onDismiss = {
+                        dialogJoinLive.value = null
+                    },
+                    onConfirm = {
+                        onEvent(ChatEvent.JoinLive(dialogJoinLive.value.toString()))
+
+                        dialogJoinLive.value= null
+                    },
+                    onCancel = {
+                        dialogJoinLive.value= null
+                    },
+                    title = "Join live activity",
+                    info = "Your profile picture and username will be display in your friend's live activity, join in to let others know that you are ready to start activities",
+                    icon = R.drawable.ic_input,
+                    actionButtonText = "Join", actionButtonTextColor =SocialTheme.colors.textInteractive
+                )
+            }else{
+
             }
             if (highlight_dialog) {
                 HighLightDialog(modifier = Modifier.align(TopCenter), onEvent = { it ->
@@ -549,8 +630,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
         }
 
 
-
-        Divider()
+        com.example.socialk.chat.ChatComponents.Divider()
         if (openDialog.value) {
             CustomSocialDialog(
                 onDismiss = {
@@ -771,7 +851,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                                 title = "Share current location?",
                                 info = "Chat users will be able to see your location on map",
                                 icon = R.drawable.ic_location_24,
-                                actionButtonText = "Share"
+                                actionButtonText = "Share", actionButtonTextColor =SocialTheme.colors.iconInteractive
                             )
                             Toast.makeText(
                                 LocalContext.current,
@@ -850,14 +930,13 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
     onEvent = { event ->
         when (event) {
             is LiveEvent.CreateActiveUser->{
-                Log.d("BOTTOMDIALOGLIVE","create USEr")
-
                 onEvent(ChatEvent.CreateActiveUser(start_time=event.start_time, latLng = event.latLng, time_length = event.time_length))
             }
             is LiveEvent.SendLiveMessage->{
                 onEvent(ChatEvent.SendLive)
             }
             is LiveEvent.CloseDialog->{
+                Log.d("CHATSCREEN","Close dialog")
                 scope.launch {
                     bottomSheetState.hide()
                 }

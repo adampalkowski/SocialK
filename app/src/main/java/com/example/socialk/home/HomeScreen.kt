@@ -78,6 +78,8 @@ sealed class ActivityEvent() {
 sealed class HomeEvent {
     object GoToProfile : HomeEvent()
     class OpenCamera(val activity_id: String) : HomeEvent()
+    class DestroyLiveActivity(val id: String) : HomeEvent()
+    class LeaveLiveActivity(val activity_id: String, val user_id: String) : HomeEvent()
     class DisplayPicture(val photo_url: String, val activity_id: String) : HomeEvent()
     object LogOut : HomeEvent()
     object GoToMemories : HomeEvent()
@@ -115,8 +117,8 @@ fun HomeScreen(
     viewModel: AuthViewModel?, homeViewModel: HomeViewModel,
     onEvent: (HomeEvent) -> Unit,
     bottomNavEvent: (Destinations) -> Unit,
-    outputDirectory: File,
-    executor: Executor,
+    outputDirectory: File?,
+    executor: Executor?,
     onImageCaptured: (Uri) -> Unit,
 ) {
 
@@ -163,7 +165,7 @@ fun HomeScreen(
                 HomeScreenContent(activeUsersViewModel = activeUsersViewModel,
                     viewModel = viewModel,
                     activityViewModel = activityViewModel,
-                    padding = it,homeViewModel=homeViewModel,
+                    padding = it, homeViewModel = homeViewModel,
                     isDark = isDark,
                     activityEvent = {
                         when (it) {
@@ -201,6 +203,7 @@ fun HomeScreen(
                             is ActivityEvent.DisplayPicture -> {
                                 onEvent(HomeEvent.DisplayPicture(it.photo_url, it.activity_id))
                             }
+
                             else -> {}
                         }
 
@@ -232,7 +235,7 @@ fun HomeScreen(
     }
     AnimatedVisibility(
         visible = homeViewModel.shouldShowCamera.value,
-        enter = scaleIn(animationSpec = tween(800), transformOrigin = TransformOrigin(1f, 0.2f)) ,
+        enter = scaleIn(animationSpec = tween(800), transformOrigin = TransformOrigin(1f, 0.2f)),
         exit = scaleOut(animationSpec = tween(800), transformOrigin = TransformOrigin(1f, 0.2f))
 
     ) {
@@ -247,15 +250,15 @@ fun HomeScreen(
                             homeViewModel.shouldShowPhoto.value = false
                         }
                     }
-                    is CameraEvent.SavePhoto->{
-                            homeViewModel.shouldShowCamera.value = false
-                            homeViewModel.shouldShowPhoto.value = false
+                    is CameraEvent.SavePhoto -> {
+                        homeViewModel.shouldShowCamera.value = false
+                        homeViewModel.shouldShowPhoto.value = false
                     }
                     else -> {}
                 }
             },
-            outputDirectory = outputDirectory,
-            executor = executor,
+            outputDirectory = outputDirectory!!,
+            executor = executor!!,
             onImageCaptured = onImageCaptured,
             onError = { Log.e("kilo", "View error:", it) }
         )
@@ -264,7 +267,8 @@ fun HomeScreen(
             if (uri_flow.value == null) {
                 homeViewModel.shouldShowPhoto.value = false
             } else {
-                ImageDisplay(modifier = Modifier.fillMaxSize(),
+                ImageDisplay(
+                    modifier = Modifier.fillMaxSize(),
                     uri_flow.value!!, onEvent = { event ->
                         when (event) {
                             is CameraEvent.RemovePhoto -> {
@@ -297,7 +301,7 @@ fun HomeScreen(
                                 homeViewModel.shouldShowCamera.value = false
 
                             }
-                            is CameraEvent.SavePhoto->{
+                            is CameraEvent.SavePhoto -> {
                                 homeViewModel.shouldShowCamera.value = false
                                 homeViewModel.shouldShowPhoto.value = false
                             }
@@ -432,7 +436,7 @@ fun HomeScreenContent(
     onEvent: (HomeEvent) -> Unit,
     homeViewModel: HomeViewModel
 
-    ) {
+) {
 
     val refreshScope = rememberCoroutineScope()
     var refreshing by remember { mutableStateOf(false) }
@@ -449,6 +453,8 @@ fun HomeScreenContent(
     var uploading by remember { mutableStateOf(false) }
     var updateActivity by remember { mutableStateOf(false) }
     var updateDeleteActivity by remember { mutableStateOf(false) }
+    var liveActivityDialog by rememberSaveable { mutableStateOf<String?>(null) }
+    var liveActivityParticipantsValue by rememberSaveable { mutableStateOf<Int>(0) }
     var deletingImage by remember { mutableStateOf(false) }
     var photo_url by remember { mutableStateOf("") }
     var uploadingError by remember { mutableStateOf(false) }
@@ -458,7 +464,7 @@ fun HomeScreenContent(
                 deletingImage = false
 
                 activityViewModel?.isImageRemoveFromActivityState?.value = null
-                updateDeleteActivity=true
+                updateDeleteActivity = true
 
             }
             is Response.Failure -> {
@@ -477,8 +483,8 @@ fun HomeScreenContent(
             is Response.Success -> {
                 uploading = false
                 onEvent(HomeEvent.RemovePhotoFromGallery)
-                updateActivity=true
-                photo_url=it.data
+                updateActivity = true
+                photo_url = it.data
             }
             is Response.Failure -> {
                 uploading = false
@@ -498,7 +504,36 @@ fun HomeScreenContent(
         }
     }
     val state = rememberPullRefreshState(refreshing, ::refresh)
+    if (liveActivityDialog != null) {
+        Log.d("HOMESCREEN",liveActivityDialog!!)
+        Log.d("HOMESCREEN",liveActivityParticipantsValue.toString()!!)
 
+        SocialDialog(
+            onDismiss = { liveActivityDialog = null },
+            onConfirm = {
+                //check if destroy or leave live activity
+                if (liveActivityParticipantsValue > 1) {
+
+                    Log.d("HOMESCREEN","CLICKED")
+                    onEvent( HomeEvent.LeaveLiveActivity(
+                            liveActivityDialog!!.toString(),
+                            UserData.user!!.id
+                        )
+                    )
+
+                } else {
+                    //destroy acitivty passing liveACtivity id
+                    onEvent(HomeEvent.DestroyLiveActivity(liveActivityDialog!!.toString()))
+                }
+                liveActivityDialog = null
+            },
+            onCancel = { liveActivityDialog = null },
+            title = "Leave live activity?",
+            info = "Others wont see you in this live activity, if you are the only participant the activity will be destroyed",
+            icon = R.drawable.ic_log_out,
+            actionButtonText="Leave"
+        )
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -515,13 +550,23 @@ fun HomeScreenContent(
                     is Response.Success -> {
                         item {
                             LazyRow {
-                                items(it.data) { ActiveUser ->
+                                items(it.data) { liveActivity ->
                                     Spacer(modifier = Modifier.width(12.dp))
                                     ActiveUserItem(
-                                        //TODO onclick of the active user
-                                        onClick = {},
-                                        profileUrls = ActiveUser.participants_profile_pictures,
-                                        usernames = ActiveUser.participants_usernames
+                                        onClick = {
+                                            Log.d("HOMESCREEN",liveActivity.toString())
+                                            if (liveActivity.participants_profile_pictures.keys.contains(
+                                                    UserData.user!!.id
+                                                )
+                                            ) {
+                                                Log.d("HOMESCREEN",liveActivity.id)
+                                                liveActivityDialog = liveActivity.creator_id
+                                                liveActivityParticipantsValue =
+                                                    liveActivity.participants_profile_pictures.size
+                                            }
+                                        },
+                                        profileUrls = liveActivity.participants_profile_pictures,
+                                        usernames = liveActivity.participants_usernames
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                 }
@@ -588,17 +633,17 @@ fun HomeScreenContent(
                         //display activities
 
                         items(it.data) { item ->
-                            if (updateActivity){
-                                if(item.id==homeViewModel.camera_activity_id.value){
-                                    item.pictures[UserData.user!!.id]=photo_url
+                            if (updateActivity) {
+                                if (item.id == homeViewModel.camera_activity_id.value) {
+                                    item.pictures[UserData.user!!.id] = photo_url
                                 }
-                                updateActivity=false
+                                updateActivity = false
                             }
-                            if (updateDeleteActivity){
-                                if(item.id==homeViewModel.camera_activity_id.value){
+                            if (updateDeleteActivity) {
+                                if (item.id == homeViewModel.camera_activity_id.value) {
                                     item.pictures.remove(UserData.user!!.id)
                                 }
-                                updateDeleteActivity=false
+                                updateDeleteActivity = false
                             }
                             ActivityItem(
                                 activity = item,
@@ -629,18 +674,18 @@ fun HomeScreenContent(
                         //display activities
                         Log.d("homescreen", it.data.toString())
                         items(it.data) { item ->
-                            if (updateActivity){
-                                if(item.id==homeViewModel.camera_activity_id.value){
-                                    item.pictures[UserData.user!!.id]=photo_url
+                            if (updateActivity) {
+                                if (item.id == homeViewModel.camera_activity_id.value) {
+                                    item.pictures[UserData.user!!.id] = photo_url
                                 }
-                                updateActivity=false
+                                updateActivity = false
 
                             }
-                            if (updateDeleteActivity){
-                                if(item.id==homeViewModel.camera_activity_id.value){
+                            if (updateDeleteActivity) {
+                                if (item.id == homeViewModel.camera_activity_id.value) {
                                     item.pictures.remove(UserData.user!!.id)
                                 }
-                                updateDeleteActivity=false
+                                updateDeleteActivity = false
                             }
                             ActivityItem(
                                 activity = item,
@@ -656,7 +701,7 @@ fun HomeScreenContent(
                                 timePeriod = item.start_time + " - " + item.end_time,
                                 custom_location = item.custom_location,
                                 location = item.location,
-                                lockPhotoButton=uploading
+                                lockPhotoButton = uploading
                             )
 
                         }

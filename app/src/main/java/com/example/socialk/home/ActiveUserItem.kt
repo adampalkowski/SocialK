@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -36,6 +37,7 @@ import com.example.socialk.ui.theme.SocialTheme
 /*
 HOME TOP ROW displays active user profile picture and username, provides on click to action
 */
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ActiveUserItem(profileUrls: HashMap<String,String>, usernames: HashMap<String,String>, onClick: () -> Unit) {
     val rainbowColorsBrush = remember {
@@ -53,8 +55,7 @@ fun ActiveUserItem(profileUrls: HashMap<String,String>, usernames: HashMap<Strin
         )
     }
     Box(modifier = Modifier
-        .padding(6.dp)
-        .clickable { onClick }) {
+        .padding(6.dp).clickable(onClick = onClick)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Row(     horizontalArrangement = Arrangement.spacedBy((-20).dp)) {
               profileUrls.values.toList().take(3).reversed().forEachIndexed { index, it ->

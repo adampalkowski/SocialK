@@ -2,9 +2,7 @@ package com.example.socialk.di
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -13,16 +11,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.socialk.model.Chat
 import com.example.socialk.model.ChatMessage
 import com.example.socialk.model.Response
+import com.example.socialk.util.getTime
 import com.google.android.gms.maps.model.LatLng
-import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.*
 import javax.inject.Inject
-import kotlin.collections.ArrayList
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
@@ -145,10 +141,7 @@ class ChatViewModel @Inject constructor(
                 chatCollection.id=id
             }
 
-            val current = LocalDateTime.now()
-            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-            val formatted = current.format(formatter)
-            chatCollection.create_date=formatted
+            chatCollection.create_date= getTime()
             repo.addChatCollection(chatCollection).collect{
                     response->
                 _addChatCollectionState.value=response
@@ -268,10 +261,8 @@ class ChatViewModel @Inject constructor(
         val uuid: UUID = UUID.randomUUID()
         val id:String = uuid.toString()
         message.id=id
-        val current = LocalDateTime.now()
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-        val formatted = current.format(formatter)
-        message.sent_time=formatted
+
+        message.sent_time= getTime()
         viewModelScope.launch {
             repo.addMessage(chat_collection_id,message).collect{
                     response->
@@ -328,10 +319,8 @@ class ChatViewModel @Inject constructor(
         val uuid: UUID = UUID.randomUUID()
         val id:String = uuid.toString()
         message.id=id
-        val current = LocalDateTime.now()
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-        val formatted = current.format(formatter)
-        message.sent_time=formatted
+
+        message.sent_time= getTime()
         viewModelScope.launch {
             repo.addImageFromGalleryToStorage(id, uri).collect{ response ->
                 _isImageAddedToStorageState.value=response

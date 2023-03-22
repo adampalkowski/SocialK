@@ -171,6 +171,9 @@ class LiveFragment : Fragment() {
                                 val destroyTime:String= calculateDestroyTime( event.start_time,event.time_length)
                                 participants_profile_pictures[authViewModel.currentUser!!.uid]=UserData.user!!.pictureUrl!!
                                 participants_usernames[authViewModel.currentUser!!.uid]=UserData.user!!.username!!
+                                val invited_users=ArrayList<String>(UserData.user!!.friends_ids.keys)
+                                invited_users.add(authViewModel.currentUser!!.uid)
+
                                 activeUsersViewModel.addActiveUser(
                                     ActiveUser(id=id,
                                         creator_id = if (authViewModel.currentUser==null){""}else{ authViewModel.currentUser!!.uid.toString()},
@@ -181,7 +184,7 @@ class LiveFragment : Fragment() {
                                         time_length = event.time_length,
                                         time_start = event.start_time,
                                         create_time = current,
-                                        invited_users = ArrayList<String>(UserData.user!!.friends_ids.keys),
+                                        invited_users = invited_users,
                                         destroy_time=destroyTime,
                                 ))
                             }
