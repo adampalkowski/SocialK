@@ -40,22 +40,9 @@ HOME TOP ROW displays active user profile picture and username, provides on clic
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ActiveUserItem(profileUrls: HashMap<String,String>, usernames: HashMap<String,String>, onClick: () -> Unit) {
-    val rainbowColorsBrush = remember {
-        Brush.sweepGradient(
-            listOf(
-                Color(0xFF9575CD),
-                Color(0xFFBA68C8),
-                Color(0xFFE57373),
-                Color(0xFFFFB74D),
-                Color(0xFFFFF176),
-                Color(0xFFAED581),
-                Color(0xFF4DD0E1),
-                Color(0xFF9575CD)
-            )
-        )
-    }
+
     Box(modifier = Modifier
-        .padding(6.dp).clickable(onClick = onClick)) {
+        .padding(bottom=6.dp).clickable(onClick = onClick)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Row(     horizontalArrangement = Arrangement.spacedBy((-20).dp)) {
               profileUrls.values.toList().take(3).reversed().forEachIndexed { index, it ->
@@ -69,10 +56,7 @@ fun ActiveUserItem(profileUrls: HashMap<String,String>, usernames: HashMap<Strin
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .size(48.dp)
-                                .clip(CircleShape)  .border(
-                                    BorderStroke(2.dp, rainbowColorsBrush),
-                                    CircleShape
-                                )
+                                .clip(CircleShape)
                                 .zIndex(  profileUrls.values.toList().size - index.toFloat())
                         )
               }

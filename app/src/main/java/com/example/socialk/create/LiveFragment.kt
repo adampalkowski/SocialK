@@ -38,7 +38,6 @@ import kotlin.collections.HashMap
     var totalMinutes = currentMinutes + otherMinutes + (currentHours + otherHours) * 60
     if (totalMinutes >= 1440) {
         totalMinutes -= 1440
-
         val current = LocalDate.now().plusDays(1).format(formatter)
         val hours = totalMinutes / 60
         val minutes = totalMinutes % 60
@@ -51,8 +50,6 @@ import kotlin.collections.HashMap
         val result = String.format("%02d:%02d", hours, minutes)
         return "$current $result"
     }
-
-
 }
 @AndroidEntryPoint
 class LiveFragment : Fragment() {

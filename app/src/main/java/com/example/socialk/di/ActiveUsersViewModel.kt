@@ -10,6 +10,8 @@ import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
 import com.example.socialk.model.SocialException
 import com.example.socialk.model.UserData
+import com.example.socialk.util.getTime
+import com.example.socialk.util.getTimeNoSeconds
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseUser
 import com.marosseleng.compose.material3.datetimepickers.time.domain.noSeconds
@@ -95,22 +97,36 @@ class ActiveUsersViewModel @Inject constructor(
                         is Response.Success -> {
                             response.data.forEach {
                                 list_without_removed_activites.add(it)
-                                if(checkIfEnded(   it.destroy_time)){
-
+                                Log.d("ActiveUsersViewModel_CHECKING",list_without_removed_activites.toString())
+                                if(checkIfEnded(it.destroy_time)){
+                                    Log.d("ActiveUsersViewModel_CHECKING","NOT EDNED")
                                 }else{
-                                    deleteActiveUser(it.id)
+                                    Log.d("ActiveUsersViewModel_CHECKING","Ended")
+                                    deleteActiveUser(it.creator_id)
                                     list_without_removed_activites.remove(it)
-                                    Log.d("ActiveUsersViewModel", "delete users")
+                                    Log.d("ActiveUsersViewModel_CHECKING",list_without_removed_activites.toString())
+
+                                    Log.d("ActiveUsersViewModel_CHECKING", "delete users")
+                                }
+                                if(list_without_removed_activites.isEmpty()){
+                                    Log.d("ActiveUsersViewModel_CHECKING", "Empty")
+
+                                    _activeUsersListState.value =
+                                        Response.Success(emptyList())
+                                }else{
+                                    Log.d("ActiveUsersViewModel_CHECKING",list_without_removed_activites.toString())
+
+
+                                    _activeUsersListState.value =
+                                        Response.Success(list_without_removed_activites as List<ActiveUser>)
                                 }
 
-                                _activeUsersListState.value =
-                                    Response.Success(list_without_removed_activites as List<ActiveUser>)
+
                             }
                         }
                         else->{}
                     }
 
-                    _activeUsersListState.value = response
                 }
             }
         }
@@ -132,13 +148,10 @@ class ActiveUsersViewModel @Inject constructor(
         destroy_time: String,
     ): Boolean{
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-
-        val date1Str = LocalDateTime.now().format(formatter)
+        val date1Str = getTimeNoSeconds()
         val date2Str = destroy_time
-
         val date1 = LocalDateTime.parse(date1Str, formatter)
         val date2 = LocalDateTime.parse(date2Str, formatter)
-
        return date2.isEqual(date1) || date2.isAfter(date1)
 
     }
@@ -193,8 +206,6 @@ class ActiveUsersViewModel @Inject constructor(
             val result= repo.addActiveUser(activeUser)
             _isActiveUsersAddedState.value=result
         }
-
-
     }
 
     fun activeUserAdded() {

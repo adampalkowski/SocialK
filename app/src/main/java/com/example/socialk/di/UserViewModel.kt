@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.socialk.model.*
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.ListenerRegistration
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -94,6 +95,8 @@ class UserViewModel @Inject constructor(
 
     private val _isInviteAcceptedState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isInviteAcceptedState: State<Response<Void?>> = _isInviteAcceptedState
+    private val _isChatCollectionRecreatedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isChatCollectionRecreatedState: State<Response<Void?>> = _isChatCollectionRecreatedState
 
     private val _isImageAddedToStorageState = mutableStateOf<Response<String>>(Response.Loading)
     val isImageAddedToStorageState: State<Response<String>> = _isImageAddedToStorageState
@@ -101,6 +104,9 @@ class UserViewModel @Inject constructor(
     private val _isUserProfilePictureChangedState =
         mutableStateOf<Response<Void?>>(Response.Success(null))
     val isUserProfilePictureChangedState: State<Response<Void?>> = _isUserProfilePictureChangedState
+
+    private var registration: ListenerRegistration? = null
+
     fun addChatCollectionToUsers(id: String, friend_id: String, chat_id: String) {
         viewModelScope.launch {
             repo.addChatCollectionToUsers(id, friend_id, chat_id).collect { response ->
@@ -120,7 +126,7 @@ class UserViewModel @Inject constructor(
         viewModelScope.launch {
             repo.getMoreFriends(id).collect { response ->
                 _friendMoreState.value = response
-
+                registration?.remove()
             }
         }
     }
@@ -128,6 +134,13 @@ class UserViewModel @Inject constructor(
         viewModelScope.launch {
             repo.acceptInvite(current_user, user, chat).collect { response ->
                 _isInviteAcceptedState.value = response
+            }
+        }
+    }
+    fun recreateChatCollection(current_user_id: String, user_id: String, chat: Chat) {
+        viewModelScope.launch {
+            repo.recreateChatCollection(current_user_id, user_id, chat).collect { response ->
+                _isChatCollectionRecreatedState.value = response
             }
         }
     }
@@ -147,7 +160,7 @@ class UserViewModel @Inject constructor(
                                     currentUserProfile.value?.pictureUrl = imageUrl
                                     UserData.user!!.pictureUrl = imageUrl
                                     Log.d("Edit_profile_screen", "get user called")
-                                    repo.getUser(user_id).collect { response ->
+                                     registration=repo.getUser(user_id).collect { response ->
                                         _userState.value = response
                                         when (response) {
                                             is Response.Success -> {

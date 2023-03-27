@@ -31,7 +31,7 @@ interface UserRepository {
     suspend fun acceptInvite(
         current_user:User,user:User, chat:Chat
     ): Flow<Response<Void?>>
-
+    suspend fun  recreateChatCollection(current_user_id:String,user_id:String,chat:Chat): Flow<Response<Void?>>
     suspend fun addBlockedIDs(
         my_id: String,
         blocked_id: String

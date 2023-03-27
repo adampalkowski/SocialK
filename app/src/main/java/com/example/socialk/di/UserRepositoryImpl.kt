@@ -34,15 +34,18 @@ class UserRepositoryImpl @Inject constructor(
     private var lastVisibleDataFriends:DocumentSnapshot?=null
     override suspend fun getUser(id: String): Flow<Response<User>> = callbackFlow {
         trySend(Response.Loading)
-        val registration = usersRef.document(id).addSnapshotListener { snapshot, exception ->
-
+        val registration = usersRef.document(id).addSnapshotListener{ snapshot, exception ->
             if (exception != null) {
                 channel.close(exception)
+                Log.d("USERREPOSTIYRIMPL","exceoptiun")
                 return@addSnapshotListener
             }
             if (snapshot != null && snapshot.exists()) {
                 val user = snapshot.toObject(User::class.java)
                 if (user != null) {
+                    Log.d("USERREPOSTIYRIMPL","UPDATE")
+                    Log.d("USERREPOSTIYRIMPL",user.toString())
+
                     trySend(Response.Success(user))
                 }
             } else {
@@ -59,6 +62,7 @@ class UserRepositoryImpl @Inject constructor(
         }
 
         awaitClose() {
+            Log.d("USERREPOSTIYRIMPL","REMOVED")
             registration.remove()
         }
 
@@ -77,7 +81,6 @@ class UserRepositoryImpl @Inject constructor(
                 if (user != null) {
                     trySend(Response.Success(user))
                 }
-
 
             } else {
             }
@@ -415,6 +418,23 @@ class UserRepositoryImpl @Inject constructor(
 
             val three =
                 usersRef.document(current_user.id).update("friends_ids" + "." + user.id,  chat.id,"friends_ids_list", list_for_user_two)
+                    .await1()
+            emit(Response.Success(three))
+
+        } catch (e: Exception) {
+            emit(Response.Failure(e = SocialException("addInvitedIDs exception", Exception())))
+        }
+    }
+    override suspend fun recreateChatCollection(current_user_id:String,user_id:String,chat:Chat): Flow<Response<Void?>> = flow {
+        try {
+            emit(Response.Loading)
+            val one = chatCollectionsRef.document(chat.id!!).set(chat).await1()
+            val two = usersRef.document(user_id).update(
+                "friends_ids" + "." +current_user_id,
+                chat.id,
+            ).await1()
+            val three =
+                usersRef.document(current_user_id).update("friends_ids" + "." + user_id,  chat.id)
                     .await1()
             emit(Response.Success(three))
 

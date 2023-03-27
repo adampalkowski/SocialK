@@ -62,6 +62,7 @@ import kotlinx.coroutines.launch
 
 sealed class ChatEvent {
     object GoToProfile : ChatEvent()
+    object CreateNonExistingChatCollection : ChatEvent()
     object LiveInvite : ChatEvent()
     class ShareLocation(val latLng: LatLng) : ChatEvent()
     class JoinLive(val live_activity_id: String) : ChatEvent()
@@ -166,7 +167,17 @@ fun ChatScreen(activeUsersViewModel:ActiveUsersViewModel,
             ChatContent(chat = result.data, onEvent = onEvent, chatViewModel = chatViewModel,activeUsersViewModel=activeUsersViewModel)
         }
         is Response.Failure -> {
-            Toast.makeText(LocalContext.current, "Can't load in chat", Toast.LENGTH_SHORT).show()
+            Log.d("CHATREPOSITYIMPLCHATCOLLECT","FAILURE")
+            Toast.makeText(LocalContext.current, "Can't load in chat. Please try again", Toast.LENGTH_SHORT).show()
+            if(result.e.message.equals("document_null")){
+                Log.d("CHATREPOSITYIMPLCHATCOLLECT","document_null")
+                onEvent(ChatEvent.CreateNonExistingChatCollection)
+            }
+            onEvent(ChatEvent.GoBack)
+
+
+
+
         }
     }
 

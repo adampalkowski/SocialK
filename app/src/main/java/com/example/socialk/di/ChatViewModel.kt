@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.socialk.model.Chat
 import com.example.socialk.model.ChatMessage
 import com.example.socialk.model.Response
+import com.example.socialk.model.User
 import com.example.socialk.util.getTime
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,6 +38,8 @@ class ChatViewModel @Inject constructor(
     val uriReceived: State<Boolean> = _uriReceived
     private val _granted_permission = MutableStateFlow<Boolean>(false)
     val granted_permission: StateFlow<Boolean> = _granted_permission
+    val chat_type = mutableStateOf("")
+    val duo_user = mutableStateOf(User())
 
     private val _location = MutableStateFlow<LatLng?>(null)
     val location: StateFlow<LatLng?> = _location
@@ -120,7 +123,7 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             repo.getChatCollection(id).collect{
                 response->
-                _chatCollectionState.value=response
+                        _chatCollectionState.value=response
             }
         }
     }

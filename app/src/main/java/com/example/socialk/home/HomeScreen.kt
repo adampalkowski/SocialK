@@ -551,7 +551,7 @@ fun HomeScreenContent(
                         item {
                             LazyRow {
                                 items(it.data) { liveActivity ->
-                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Spacer(modifier = Modifier.width(24.dp))
                                     ActiveUserItem(
                                         onClick = {
                                             Log.d("HOMESCREEN",liveActivity.toString())

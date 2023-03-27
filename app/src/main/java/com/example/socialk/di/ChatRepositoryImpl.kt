@@ -35,11 +35,19 @@ class ChatRepositoryImpl @Inject constructor(
         chatCollectionsRef.document(id).get().addOnSuccessListener { documentSnapshot ->
             val response = if (documentSnapshot != null) {
                 val activity = documentSnapshot.toObject<Chat>()
-                Response.Success(activity)
+                if (activity!=null){
+                    Response.Success(activity)
+                }else{
+                    Response.Failure(
+                        e = SocialException(
+                            "document_null",
+                            Exception()
+                        ) )
+                }
             } else {
                 Response.Failure(
                     e = SocialException(
-                        "getChatCollection document null",
+                        "getChatCollection exception",
                         Exception()
                     )
                 )

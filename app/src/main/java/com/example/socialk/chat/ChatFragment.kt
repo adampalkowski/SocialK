@@ -28,6 +28,7 @@ import com.example.socialk.di.UserViewModel
 import com.example.socialk.model.*
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.SocialTheme
+import com.example.socialk.util.getTime
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.AndroidEntryPoint
@@ -206,12 +207,18 @@ class ChatFragment : Fragment() {
         if ( arguments?.getSerializable("chat")!=null){
             val init_chat:Chat = arguments?.getSerializable("chat")as Chat
             chat_id=init_chat.id
+            chatViewModel.chat_type.value="group"
         }else if ( arguments?.getSerializable("user")!=null){
             val init_user:User =  arguments?.getSerializable("user")as User
             chat_id=init_user.friends_ids.get(UserData.user!!.id)
+            chatViewModel.chat_type.value="duo"
+            chatViewModel.duo_user.value=init_user
+
         }else if( arguments?.getSerializable("activity")!=null){
             val init_activity:Activity = arguments?.getSerializable("activity")as Activity
             chat_id=init_activity.id
+            chatViewModel.chat_type.value="activity"
+
         }
 
 
@@ -235,6 +242,44 @@ class ChatFragment : Fragment() {
                             when (event) {
 
                                 is ChatEvent.GoBack ->activity?.onBackPressedDispatcher?.onBackPressed()
+                                is ChatEvent.CreateNonExistingChatCollection ->{
+                                    Log.d("CHATREPOSITYIMPLCHATCOLLECT","Creatae colleciton")
+                                    when(chatViewModel.chat_type.value) {
+                                        "duo" -> {
+                                            Log.d("CHATREPOSITYIMPLCHATCOLLECT","duo")
+
+                                            val uuid: UUID = UUID.randomUUID()
+                                            val id:String = uuid.toString()
+                                            val current = getTime()
+                                            userViewModel.recreateChatCollection(UserData.user!!.id,chatViewModel.duo_user.value.id, Chat(current,
+                                                owner_id =chatViewModel.duo_user.value.id,
+                                                id =id,
+                                                chat_name =null,
+                                                chat_picture =null,
+                                                recent_message =null,
+                                                recent_message_time =current,
+                                                type ="duo",
+                                                members = arrayListOf(UserData.user!!.id,chatViewModel.duo_user.value.id),
+                                                user_one_username =UserData.user!!.username,
+                                                user_two_username =chatViewModel.duo_user.value.username,
+                                                user_one_profile_pic = UserData.user!!.pictureUrl,
+                                                user_two_profile_pic = chatViewModel.duo_user.value.pictureUrl,
+                                                highlited_message = ""
+                                            ))
+
+                                        }
+                                        "activity" -> {
+
+                                        }
+                                        "group" -> {
+
+                                        }
+                                        else -> {
+
+                                        }
+                                    }
+
+                                }
                                 is ChatEvent.CreateActiveUser -> {
                                     val uuid: UUID = UUID.randomUUID()
                                     val id:String = uuid.toString()

@@ -141,9 +141,14 @@ class ActivityRepositoryImpl @Inject constructor(
     override suspend fun deleteActivity(id: String) :Flow<Response<Void?>> = flow {
         try{
             emit(Response.Loading)
-           // val deletion1 = activitiesRef.document(id).delete().await()
-            //todo delete messages that are in the collections
-            //val deletion2 = messagessRef.document(id).collection("messages").dele().await()
+            val collectionRef = messagessRef.document(id).collection("messages")
+            val ref =collectionRef.get().addOnSuccessListener { querySnapshot ->
+                for (document in querySnapshot) {
+                    document.reference.delete()
+                }
+            }
+            ref.await()
+            val deletion1 = activitiesRef.document(id).delete().await()
             val deletion3 = chatCollectionsRef.document(id).delete().await()
             emit(Response.Success(deletion3))
         }catch (e:Exception){

@@ -64,9 +64,15 @@ class UserProfileFragment : Fragment(){
 
         val user:User? = arguments?.getSerializable("user") as User?
         val user_id:String? = arguments?.getSerializable("user_id") as String?
-        if (user_id!=null){
-            userViewModel.getUser(user_id)
+        //USER IS READ 2 times THIS CAN BE OPTIMIZED i have user here but i call another time because i want to have a listener to user value
+        if(user!=null){
+            userViewModel.getUser(user.id)
+        }else{
+            if (user_id!=null){
+                userViewModel.getUser(user_id)
+            }
         }
+
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
