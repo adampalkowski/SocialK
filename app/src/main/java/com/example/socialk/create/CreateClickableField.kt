@@ -52,7 +52,7 @@ fun CreateClickableTextField(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal=24.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 24.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically
         ) {
 
             Icon(
@@ -105,7 +105,7 @@ fun EditTextField(
     title: String,
     icon: Int,
     titleTextSize:Int=16,
-    iconTint: Color =SocialTheme.colors.iconPrimary,
+    iconTint: Color =SocialTheme.colors.textPrimary.copy(0.75f),
     titleColor: Color=SocialTheme.colors.textPrimary,
 ) {
     Column(
@@ -134,7 +134,7 @@ fun EditTextField(
             Spacer(modifier = Modifier.weight(1f))
 
         }
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -170,26 +170,149 @@ fun EditTextField(
 
 }
 
-
-@Preview
 @Composable
-fun preview_text_field() {
-    SocialTheme() {
-        Surface(Modifier) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(color = SocialTheme.colors.uiBackground)
-            ) {
-                CreateClickableTextField(
-                    onClick = {},
-                    modifier = Modifier,
-                    title = "Duration",
-                    description = "Enter the duration of your activity",
-                    icon = R.drawable.ic_hourglass
+fun CustomField(
+    modifier: Modifier,
+    onClick: (Int) -> Unit,
+    title: String,
+    iconSize:Int=28,
+    text: String = "value",
+    description: String,
+    icon: Int,
+    inActiveTextColor:Color=SocialTheme.colors.textInteractive.copy(alpha = 0.5f),
+    descriptionTextSize: Int=12,
+    titleTextSize:Int=16,
+    interactiveTextSize:Int=16,
+    iconTint: Color =SocialTheme.colors.textPrimary.copy(0.75f),
+    titleColor: Color=SocialTheme.colors.textPrimary,
+    descriptionColor: Color=SocialTheme.colors.textPrimary.copy(alpha=0.5f),
+    interactiveTextColor: Color=Color(0xFF034FB4),
+    content: @Composable () -> Unit
+) {
+    Column(modifier = modifier) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Icon(
+                modifier = Modifier.size(iconSize.dp),
+                painter = painterResource(id = icon),
+                contentDescription = null,
+                tint = iconTint
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(horizontalAlignment = Alignment.Start) {
+                Text(
+                    text = title,
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = titleTextSize.sp,
+                    color = titleColor
+                )
+                Text(
+                    text = description,
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.Light,
+                    fontSize = descriptionTextSize.sp,
+                    color = descriptionColor
                 )
             }
 
+            Spacer(modifier = Modifier.weight(1f))
+
         }
+
+        content()
+        Spacer(modifier = Modifier.height(12.dp))
+        Divider()
     }
+}
+@Composable
+fun CustomLocationField(
+    hint: String = "Enter a name for your activity",
+    hideKeyboard: Boolean = false,
+    iconSize:Int=28,
+    onFocusClear: () -> Unit = {},
+    textState: TextFieldState = remember { BasicTextFieldState() },
+    onClick: () -> Unit,
+    focusManager: FocusManager,
+    modifier: Modifier,
+    title: String,
+    icon: Int,
+    titleTextSize:Int=16,
+    iconTint: Color =SocialTheme.colors.textPrimary.copy(0.75f),
+    titleColor: Color=SocialTheme.colors.textPrimary,
+    interactiveTextColor: Color=Color(0xFF034FB4),
+    interactiveTextSize:Int=16
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .padding(top = 24.dp), verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                modifier=Modifier.size(iconSize.dp),
+                painter = painterResource(id = icon),
+                contentDescription = null,
+                tint =iconTint
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = title,
+                fontFamily = Inter,
+                fontWeight = FontWeight.Medium,
+                fontSize = titleTextSize.sp,
+                color = titleColor
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(modifier=Modifier.size(24.dp),painter = painterResource(id = R.drawable.ic_map_not_filled), tint =interactiveTextColor, contentDescription =null,)
+            ClickableText(
+                text = AnnotatedString("Visit map"), style = TextStyle(
+                    fontSize = interactiveTextSize.sp, fontFamily = Inter,
+                    fontWeight = FontWeight.Normal, color = interactiveTextColor
+                ), onClick = {  },
+            )
+
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
+            shape = RoundedCornerShape(12.dp), elevation = 0.dp,
+            backgroundColor = SocialTheme.colors.uiBackground,
+            border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated)
+        ) {
+            Box(modifier = Modifier, contentAlignment = Alignment.Center) {
+                ActivityTextField(
+                    hint,
+                    textState,
+                    focusManager = focusManager
+                )
+            }
+        }
+        textState.getError()?.let { error ->
+            Row() {
+                Spacer(modifier = Modifier.width(24.dp))
+                TextFieldError(textError = error)
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Divider()
+    }
+
+    /*  if (hideKeyboard) {
+          focusManager.clearFocus()
+          // Call onFocusClear to reset hideKeyboard state to false
+          onFocusClear()
+      }*/
+
 }

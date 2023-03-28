@@ -1,7 +1,13 @@
 package com.example.socialk.create
 
 import android.util.Log
+import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,9 +24,14 @@ import androidx.compose.ui.Alignment.Companion.BottomCenter
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.*
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -30,6 +41,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.socialk.*
@@ -116,6 +128,7 @@ fun CreateScreen(
 ) {
     Log.d("createscreen", "init" + location.toString())
     val openDialog = remember { mutableStateOf(false) }
+    val displayAdvancedOptions = remember { mutableStateOf(false) }
     var location = remember { mutableStateOf(location) }
     var latlng = remember { mutableStateOf("") }
 
@@ -314,8 +327,7 @@ fun CreateScreen(
                 icon = R.drawable.ic_hourglass
             )
 
-            AdvancedOptions(onClick = {})
-/*
+
             if(location.value!=null){
                 //LOCATON FIELD
 
@@ -331,30 +343,69 @@ fun CreateScreen(
                 Log.d("createscreen","val"+latlng.value)
             }else{
                 //CUSTOM LOCATION FIELD
-                EditTextField(hint = "Describe the location",
+                CustomLocationField(hint = "Describe the location",
                     hideKeyboard = hideKeyboard,
                     onFocusClear = { hideKeyboard = false },textState=customLocationTextState,
                     modifier = Modifier, title = "Custom location",
                     icon = R.drawable.ic_edit_location, focusManager = focusManager, onClick = {})
 
             }
+            AdvancedOptions(onClick = {
+                displayAdvancedOptions.value= !displayAdvancedOptions.value})
 
-            //DESCRIPTION FIELD
-            EditTextField(hint = "Additional information",
-                hideKeyboard = hideKeyboard,
-                onFocusClear = { hideKeyboard = false },textState=descriptionTextState,
-                modifier = Modifier, title = "Description",
-                icon = R.drawable.ic_description, focusManager = focusManager, onClick = {})
 
-            RequirementsField(
-                modifier = Modifier,        hideKeyboard = hideKeyboard,
-                onFocusClear = { hideKeyboard = false },
-                onClick = {    }, minState =minTextState, maxState =maxTextState ,
-                title = "Participants limits",
-                value = locationState,
-                icon = R.drawable.ic_checklist ,focusManager = focusManager
-            )
-*/
+       
+            AnimatedVisibility(visible = displayAdvancedOptions.value,enter= expandVertically(),exit= shrinkVertically ()) {
+                Column() {
+                    EditTextField(hint = "Additional information",
+                        hideKeyboard = hideKeyboard,
+                        onFocusClear = { hideKeyboard = false },textState=descriptionTextState,
+                        modifier = Modifier, title = "Description",
+                        icon = R.drawable.ic_description, focusManager = focusManager, onClick = {})
+
+                    CustomField(text = "Additional information",
+                        modifier = Modifier, title = "Participants limits",
+                        icon = R.drawable.ic_checklist,  onClick = {}, description = "Set maximum and minimum users limit for activity"){
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                RequirementsNumberField("Min", numberState = minTextState, focusManager = focusManager)
+                            }
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                RequirementsNumberField("Max", numberState = maxTextState, focusManager = focusManager)
+                            }
+                        }
+                    }
+
+                    CustomField(text = "Privacy",
+                        modifier = Modifier, title = "Reminders",
+                        icon = R.drawable.ic_notification_active,  onClick = {}, description = "Remind users about the activity an hour before start."){
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
+                        ) {
+
+                            Spacer(modifier = Modifier.weight(1f))
+                            Switch2()
+                        }
+                    }
+                }
+
+            }
+
+
 
             Spacer(modifier = Modifier.height(48.dp))
 
@@ -550,7 +601,7 @@ fun CreateScreen(
 fun AdvancedOptions(onClick: () -> Unit) {
     Box(modifier = Modifier
         .fillMaxWidth()
-        .clickable { onClick }) {
+        .clickable(onClick = onClick)) {
         Column() {
             Box(
                 Modifier
@@ -564,7 +615,7 @@ fun AdvancedOptions(onClick: () -> Unit) {
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Advanced options",
+                        text = "Additional options",
                         style = TextStyle(
                             fontFamily = Inter,
                             fontWeight = FontWeight.Light,
@@ -638,74 +689,6 @@ fun LocationField(
     }
 
 }
-
-@Composable
-fun RequirementsField(
-    onClick: (Int) -> Unit,
-    modifier: Modifier,
-    hideKeyboard: Boolean = false,
-    onFocusClear: () -> Unit = {},
-    focusManager: FocusManager,
-    title: String,
-    value: String = "value", minState: TextFieldState, maxState: TextFieldState,
-    icon: Int
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.Start
-    ) {
-        Spacer(modifier = Modifier.height(24.dp))
-        Row(
-            modifier = Modifier.padding(horizontal = 24.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                painter = painterResource(id = icon),
-                contentDescription = null,
-                tint = SocialTheme.colors.iconSecondary
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = title,
-                fontFamily = Inter,
-                fontWeight = FontWeight.Normal,
-                fontSize = 16.sp,
-                color = SocialTheme.colors.iconSecondary
-            )
-
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Spacer(modifier = Modifier.height(6.dp))
-                RequirementsNumberField("Min", numberState = minState, focusManager = focusManager)
-            }
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Spacer(modifier = Modifier.height(6.dp))
-                RequirementsNumberField("Max", numberState = maxState, focusManager = focusManager)
-            }
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        Divider()
-    }
-    if (hideKeyboard) {
-        focusManager.clearFocus()
-        // Call onFocusClear to reset hideKeyboard state to false
-        onFocusClear()
-    }
-}
-
 
 @Composable
 fun ConfigureSwitchItem() {
@@ -845,6 +828,67 @@ fun RequirementsNumberField(
 fun keyboardAsState(): State<Boolean> {
     val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     return rememberUpdatedState(isImeVisible)
+}
+
+
+@Composable
+fun Switch2(
+    scale: Float = 2f,
+    width: Dp = 36.dp,
+    height: Dp = 20.dp,
+    strokeWidth: Dp = 2.dp,
+    checkedTrackColor: Color = Color(0xFF280664),
+    uncheckedTrackColor: Color =SocialTheme.colors.iconPrimary,
+    gapBetweenThumbAndTrackEdge: Dp = 4.dp
+) {
+
+    val switchON = remember {
+        mutableStateOf(true) // Initially the switch is ON
+    }
+
+    val thumbRadius = (height / 2) - gapBetweenThumbAndTrackEdge
+
+    // To move thumb, we need to calculate the position (along x axis)
+    val animatePosition = animateFloatAsState(
+        targetValue = if (switchON.value)
+            with(LocalDensity.current) { (width - thumbRadius - gapBetweenThumbAndTrackEdge).toPx() }
+        else
+            with(LocalDensity.current) { (thumbRadius + gapBetweenThumbAndTrackEdge).toPx() }
+    )
+
+    Canvas(
+        modifier = Modifier
+            .size(width = width, height = height)
+            .scale(scale = scale)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        // This is called when the user taps on the canvas
+                        switchON.value = !switchON.value
+                    }
+                )
+            }
+    ) {
+        // Track
+        drawRoundRect(
+            color = if (switchON.value) checkedTrackColor else uncheckedTrackColor,
+            cornerRadius = CornerRadius(x = 10.dp.toPx(), y = 10.dp.toPx()),
+            style = Stroke(width = strokeWidth.toPx())
+        )
+
+        // Thumb
+        drawCircle(
+            color = if (switchON.value) checkedTrackColor else uncheckedTrackColor,
+            radius = thumbRadius.toPx(),
+            center = Offset(
+                x = animatePosition.value,
+                y = size.height / 2
+            )
+        )
+    }
+
+    Spacer(modifier = Modifier.height(18.dp))
+
 }
 
 
