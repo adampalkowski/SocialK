@@ -168,8 +168,8 @@ fun LiveScreenContent(activeUsersViewModel:ActiveUsersViewModel,onEvent: (LiveEv
             onClick = {  focusManager.clearFocus()
                 isTimeLengthDialogShown = true },
             modifier = Modifier,
-            title = "Time length",
-            value=      if (!timeLengthState.split(":")[0].equals("00")) {
+            title = "Duration",
+            text=      if (!timeLengthState.split(":")[0].equals("00")) {
                 if (timeLengthState.split(":")[0].equals("01")) {
                     timeLengthState.split(":")[0].toInt()
                         .toString() + " hour " + " " + timeLengthState.split(":")[1].toInt()
@@ -185,7 +185,9 @@ fun LiveScreenContent(activeUsersViewModel:ActiveUsersViewModel,onEvent: (LiveEv
                 timeLengthState.split(":")[1].toInt().toString() + " " + " minutes"
             },
 
-            icon = R.drawable.ic_hourglass
+            icon = R.drawable.ic_hourglass,
+            description ="Enter the duration of your live activity"
+
         )
         CurrentLocationTextField( onClick = {  focusManager.clearFocus()},
             modifier = Modifier,
@@ -209,7 +211,7 @@ fun LiveScreenContent(activeUsersViewModel:ActiveUsersViewModel,onEvent: (LiveEv
                         currentLocation.value!!.latitude.toString()+"/"+currentLocation.value!!.longitude.toString()}
                 )
             )
-        }, text = "Share live activity")
+        }, text = "Share live activity", modifier = Modifier)
     }
 
 }

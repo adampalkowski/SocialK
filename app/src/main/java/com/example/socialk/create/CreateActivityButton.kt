@@ -1,9 +1,6 @@
 package com.example.socialk.create
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
@@ -21,21 +18,23 @@ import com.example.socialk.ui.theme.SocialTheme
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun CreateActivityButton(onClick: () -> Unit, text: String) {
+fun CreateActivityButton(modifier:Modifier, onClick: () -> Unit, text: String, color:Color=Color(
+    0xFF00083A
+), textColor:Color=SocialTheme.colors.textSecondary) {
     Card(
-        modifier = Modifier
-            .height(56.dp)
-            .width(300.dp),
-        shape = RoundedCornerShape(16.dp),
-        backgroundColor = Color(0xFF494949),
+        modifier = modifier
+            .height(48.dp).fillMaxWidth().padding(horizontal = 24.dp),
+        shape = RoundedCornerShape(100.dp),
+        elevation=0.dp,
+        backgroundColor = color,
         onClick =onClick
     ) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(
                 text = text,
                 style = TextStyle(
-                    color = SocialTheme.colors.textPrimary, fontSize = 18.sp,
-                    fontFamily = Inter, fontWeight = FontWeight.Bold
+                    color = textColor, fontSize = 16.sp,
+                    fontFamily = Inter, fontWeight = FontWeight.ExtraBold
                 )
             )
         }

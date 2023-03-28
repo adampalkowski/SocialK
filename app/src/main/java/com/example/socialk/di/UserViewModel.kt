@@ -160,7 +160,7 @@ class UserViewModel @Inject constructor(
                                     currentUserProfile.value?.pictureUrl = imageUrl
                                     UserData.user!!.pictureUrl = imageUrl
                                     Log.d("Edit_profile_screen", "get user called")
-                                     registration=repo.getUser(user_id).collect { response ->
+                                    repo.getUser(user_id).collect { response ->
                                         _userState.value = response
                                         when (response) {
                                             is Response.Success -> {

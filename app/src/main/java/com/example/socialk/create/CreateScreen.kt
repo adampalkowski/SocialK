@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.BottomCenter
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -74,15 +75,19 @@ sealed class CreateEvent {
     class UserSelected(user: User) : CreateEvent() {
         val user = user
     }
+
     class UserUnSelected(user: User) : CreateEvent() {
         val user = user
     }
+
     class GroupSelected(chat: Chat) : CreateEvent() {
         val chat = chat
     }
+
     class GroupUnSelected(chat: Chat) : CreateEvent() {
         val chat = chat
     }
+
     data class CreateActivity(
         val title: String,
         val date: String,
@@ -93,24 +98,26 @@ sealed class CreateEvent {
         val max: String,
         val custom_location: String,
         val location: String,
-        val invited_users:List<User>
+        val invited_users: List<User>
     ) : CreateEvent()
 }
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class,
+@OptIn(
+    ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class,
     ExperimentalMaterialApi::class
 )
 @Composable
-fun CreateScreen(location:String?,
+fun CreateScreen(
+    location: String?,
     userViewModel: UserViewModel,
     activityViewModel: ActivityViewModel?,
     onEvent: (CreateEvent) -> Unit,
     bottomNavEvent: (Destinations) -> Unit
 ) {
-    Log.d("createscreen","init"+location.toString())
-    val openDialog = remember { mutableStateOf(false)  }
-    var location= remember{ mutableStateOf(location)  }
-    var latlng= remember{ mutableStateOf("")  }
+    Log.d("createscreen", "init" + location.toString())
+    val openDialog = remember { mutableStateOf(false) }
+    var location = remember { mutableStateOf(location) }
+    var latlng = remember { mutableStateOf("") }
 
     val activityTextState by rememberSaveable(stateSaver = ActivityTextStateSaver) {
         mutableStateOf(ActivityTextFieldState())
@@ -215,11 +222,11 @@ fun CreateScreen(location:String?,
         mutableStateOf(MapProperties(mapType = MapType.NORMAL))
     }
     val pattern = "\\((-?\\d+\\.\\d+),(-?\\d+\\.\\d+)\\)".toRegex()
-    var latLng = LatLng(0.0,0.0)
-    var matchResult:MatchResult? =null
-    if(location.value!=null){
+    var latLng = LatLng(0.0, 0.0)
+    var matchResult: MatchResult? = null
+    if (location.value != null) {
         matchResult = pattern.find(location.value!!)
-    }else{
+    } else {
 
     }
 
@@ -227,8 +234,8 @@ fun CreateScreen(location:String?,
         val lat = matchResult.groupValues[1].toDouble()
         val lng = matchResult.groupValues[2].toDouble()
         latLng = LatLng(lat, lng)
-        latlng.value=lat.toString()+"/"+lng.toString()
-        cameraPositionState.position= CameraPosition.fromLatLngZoom(latLng, 13f)
+        latlng.value = lat.toString() + "/" + lng.toString()
+        cameraPositionState.position = CameraPosition.fromLatLngZoom(latLng, 13f)
     } else {
     }
     Surface(
@@ -247,11 +254,11 @@ fun CreateScreen(location:String?,
 
             activityPickerCreate(isSystemInDarkTheme(), onEvent = { event -> onEvent(event) })
             Spacer(modifier = Modifier.height(12.dp))
-            EditTextField(hint = "What are you planning?",
+            EditTextField(hint = "Enter a name for your activity",
                 hideKeyboard = hideKeyboard,
                 onFocusClear = { hideKeyboard = false },
                 textState = activityTextState,
-                modifier = Modifier, title = "Text",
+                modifier = Modifier, title = "Name",
                 icon = R.drawable.ic_edit, focusManager = focusManager, onClick = {})
 
             //DATE FIELD
@@ -262,8 +269,9 @@ fun CreateScreen(location:String?,
                     isDateDialogShown = true
                 },
                 title = "Date",
-                value = dateState,
-                icon = R.drawable.ic_calendar
+                text = dateState,
+                icon = R.drawable.ic_calendar,
+                description = "Select the date for your activity"
             )
             //START TIME FIELD
             CreateClickableTextField(
@@ -273,8 +281,9 @@ fun CreateScreen(location:String?,
                     isTimeDialogShown = true
                 },
                 title = "Start time",
-                value = timeState.toString(),
-                icon = R.drawable.ic_schedule
+                text = timeState.toString(),
+                icon = R.drawable.ic_schedule,
+                description = "Select the time for your activity"
             )
             //TIME LENGATH FIELD
             CreateClickableTextField(
@@ -283,29 +292,30 @@ fun CreateScreen(location:String?,
                     isTimeLengthDialogShown = true
                 },
                 modifier = Modifier,
-                title = "Time length",
-                value =
+                title = "Duration",
+                text =
                 if (!timeLengthState.split(":")[0].equals("00")) {
                     if (timeLengthState.split(":")[0].equals("01")) {
                         timeLengthState.split(":")[0].toInt()
-                            .toString() + " hour " + " " + timeLengthState.split(":")[1].toInt()
-                            .toString() + " minutes"
+                            .toString() + " h " + " " + timeLengthState.split(":")[1].toInt()
+                            .toString() + " min"
 
                     } else {
                         timeLengthState.split(":")[0].toInt()
-                            .toString() + " hours " + " " + timeLengthState.split(":")[1].toInt()
-                            .toString() + " minutes"
+                            .toString() + " h " + " " + timeLengthState.split(":")[1].toInt()
+                            .toString() + " min"
                     }
                 } else {
 
-                    timeLengthState.split(":")[1].toInt().toString() + " " + " minutes"
+                    timeLengthState.split(":")[1].toInt().toString() + " " + " min"
                 },
 
-
+                description = "Select duration of your activity",
                 icon = R.drawable.ic_hourglass
             )
 
-
+            AdvancedOptions(onClick = {})
+/*
             if(location.value!=null){
                 //LOCATON FIELD
 
@@ -344,12 +354,13 @@ fun CreateScreen(location:String?,
                 value = locationState,
                 icon = R.drawable.ic_checklist ,focusManager = focusManager
             )
+*/
 
             Spacer(modifier = Modifier.height(48.dp))
 
 
             CreateActivityButton(onClick = {
-                Log.d("createscreen","button"+latlng.value)
+                Log.d("Ready", "button" + latlng.value)
                 onEvent(
                     CreateEvent.CreateActivity(
                         title = activityTextState.text,
@@ -357,26 +368,25 @@ fun CreateScreen(location:String?,
                         start_time = timeState.toString(),
                         time_length = timeLengthState.toString(),
                         invited_users = arrayListOf(),
-                        description=descriptionTextState.text,
-                        location=latlng.value,
+                        description = descriptionTextState.text,
+                        location = latlng.value,
                         min = minTextState.text,
                         max = maxTextState.text,
                         custom_location = customLocationTextState.text
                     )
                 )
 
-            }, text = "Create activity")
-
+            }, text = "Ready", modifier = Modifier)
             Spacer(modifier = Modifier.height(64.dp))
-
         }
 
-        if (!  activityTextState.isFocused &&!descriptionTextState.isFocused && !customLocationTextState.isFocused && !maxTextState.isFocused&& !minTextState.isFocused  ) {
-            BottomBar(
-                onTabSelected = { screen -> bottomNavEvent(screen) },
-                currentScreen = Create
-            )
-        }
+
+        /*  if (!  activityTextState.isFocused &&!descriptionTextState.isFocused && !customLocationTextState.isFocused && !maxTextState.isFocused&& !minTextState.isFocused  ) {
+              BottomBar(
+                  onTabSelected = { screen -> bottomNavEvent(screen) },
+                  currentScreen = Create
+              )
+          }*/
     }
     activityViewModel?.isActivityAddedState?.value.let {
         when (it) {
@@ -393,28 +403,30 @@ fun CreateScreen(location:String?,
             is Response.Failure -> Box(modifier = Modifier.fillMaxSize()) {
                 Text(text = "FAILURE", fontSize = 50.sp)
             }
-            else->{}
+            else -> {}
         }
     }
-    if(openDialog.value){
+    if (openDialog.value) {
         CustomSocialDialog(
-            onDismiss = { openDialog.value=false },
+            onDismiss = { openDialog.value = false },
             onConfirm = {
 
             },
-            onCancel = { openDialog.value=false },
+            onCancel = { openDialog.value = false },
             title = "Location selected",
-            info ="Location was picked from map, if current location isn't correct change or remove it" ,
-            icon =R.drawable.ic_location_24,
+            info = "Location was picked from map, if current location isn't correct change or remove it",
+            icon = R.drawable.ic_location_24,
             actionButtonText = "Delete"
-        ){
+        ) {
 
             Column() {
                 Card(
                     Modifier
                         .fillMaxWidth()
-                        .height(200.dp), shape = RoundedCornerShape(8.dp)){
-                    GoogleMap(Modifier.fillMaxSize(),
+                        .height(200.dp), shape = RoundedCornerShape(8.dp)
+                ) {
+                    GoogleMap(
+                        Modifier.fillMaxSize(),
                         cameraPositionState,
                         properties = properties, onMapLoaded = {
                             isMapLoaded = true
@@ -452,53 +464,81 @@ fun CreateScreen(location:String?,
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
-                Row(modifier = Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.SpaceEvenly) {
-                    Card(shape= RoundedCornerShape(6.dp), border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated), onClick = { openDialog.value=false}){
-                        Box(modifier= Modifier
-                            .background(color = SocialTheme.colors.uiBackground)
-                            .padding(vertical = 6.dp, horizontal = 12.dp)){
-                            ClickableText(text = AnnotatedString("Dismiss")
-                                , style = TextStyle(color= SocialTheme.colors.textPrimary,
-                                    fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
-                                ), onClick = { openDialog.value=false })
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Card(
+                        shape = RoundedCornerShape(6.dp),
+                        border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
+                        onClick = { openDialog.value = false }) {
+                        Box(
+                            modifier = Modifier
+                                .background(color = SocialTheme.colors.uiBackground)
+                                .padding(vertical = 6.dp, horizontal = 12.dp)
+                        ) {
+                            ClickableText(text = AnnotatedString("Dismiss"), style = TextStyle(
+                                color = SocialTheme.colors.textPrimary,
+                                fontFamily = Inter,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp
+                            ), onClick = { openDialog.value = false })
                         }
 
                     }
 
 
-                    Card(shape= RoundedCornerShape(6.dp), border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated), onClick = {
-                        openDialog.value=false
-                        onEvent(CreateEvent.GoToMap)}){
-                        Box(modifier= Modifier
-                            .background(color = SocialTheme.colors.uiBackground)
-                            .padding(vertical = 6.dp, horizontal = 12.dp)){
-                            ClickableText(text = AnnotatedString("Change")
-                                , style = TextStyle(color= Color.Green,
-                                    fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
-                                ), onClick = {
-                                    openDialog.value=false
-                                    onEvent(CreateEvent.GoToMap) })
-                        }
-
-                    }
-                    Card(shape= RoundedCornerShape(6.dp), border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated), onClick = {
-                        openDialog.value=false
-                        location.value=null }){
-                        Box(modifier= Modifier
-                            .background(color = SocialTheme.colors.uiBackground)
-                            .padding(vertical = 6.dp, horizontal = 12.dp)){
-                            ClickableText(text = AnnotatedString("Remove"), style = TextStyle(color=Color.Red,
-                                fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
+                    Card(
+                        shape = RoundedCornerShape(6.dp),
+                        border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
+                        onClick = {
+                            openDialog.value = false
+                            onEvent(CreateEvent.GoToMap)
+                        }) {
+                        Box(
+                            modifier = Modifier
+                                .background(color = SocialTheme.colors.uiBackground)
+                                .padding(vertical = 6.dp, horizontal = 12.dp)
+                        ) {
+                            ClickableText(text = AnnotatedString("Change"), style = TextStyle(
+                                color = Color.Green,
+                                fontFamily = Inter,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp
                             ), onClick = {
-                                openDialog.value=false
-                                location.value=null })
-                }
-            }
+                                openDialog.value = false
+                                onEvent(CreateEvent.GoToMap)
+                            })
+                        }
+
+                    }
+                    Card(
+                        shape = RoundedCornerShape(6.dp),
+                        border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
+                        onClick = {
+                            openDialog.value = false
+                            location.value = null
+                        }) {
+                        Box(
+                            modifier = Modifier
+                                .background(color = SocialTheme.colors.uiBackground)
+                                .padding(vertical = 6.dp, horizontal = 12.dp)
+                        ) {
+                            ClickableText(text = AnnotatedString("Remove"), style = TextStyle(
+                                color = Color.Red,
+                                fontFamily = Inter,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp
+                            ), onClick = {
+                                openDialog.value = false
+                                location.value = null
+                            })
+                        }
+                    }
 
                 }
 
             }
-
 
 
         }
@@ -506,48 +546,96 @@ fun CreateScreen(location:String?,
 
 }
 
+@Composable
+fun AdvancedOptions(onClick: () -> Unit) {
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .clickable { onClick }) {
+        Column() {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(6.dp), contentAlignment = Center) {
+                Row(modifier = Modifier.align(Center)) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_down),
+                        contentDescription = null,
+                        tint = SocialTheme.colors.textPrimary
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Advanced options",
+                        style = TextStyle(
+                            fontFamily = Inter,
+                            fontWeight = FontWeight.Light,
+                            color = SocialTheme.colors.textPrimary,
+                            fontSize = 14.sp
+                        )
+                    )
+                }
+            }
+            Divider()
+        }
+    }
+
+}
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun LocationField(modifier: Modifier.Companion, onClick: () -> Unit, title: String, value: String, icon: Int) {
+fun LocationField(
+    modifier: Modifier.Companion,
+    onClick: () -> Unit,
+    title: String,
+    value: String,
+    icon: Int
+) {
 
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Row(
+            modifier = Modifier.padding(24.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-
-            Row(
-                modifier = Modifier.padding(24.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Icon(
+                painter = painterResource(id = icon),
+                contentDescription = null,
+                tint = SocialTheme.colors.iconSecondary
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = title,
+                fontFamily = Inter,
+                fontWeight = FontWeight.Normal,
+                fontSize = 16.sp,
+                color = SocialTheme.colors.iconSecondary
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Card(
+                shape = RoundedCornerShape(6.dp),
+                border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
+                onClick = onClick
             ) {
-                Icon(
-                    painter = painterResource(id = icon),
-                    contentDescription = null,
-                    tint = SocialTheme.colors.iconSecondary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = title,
-                    fontFamily = Inter,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 16.sp,
-                    color = SocialTheme.colors.iconSecondary
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Card(shape= RoundedCornerShape(6.dp), border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated), onClick = onClick){
-                    Box(modifier= Modifier
+                Box(
+                    modifier = Modifier
                         .background(color = SocialTheme.colors.uiBackground)
-                        .padding(vertical = 6.dp, horizontal = 12.dp)){
-                        ClickableText(text = AnnotatedString(value), style = TextStyle(fontSize = 16.sp, fontFamily = Inter,
-                            fontWeight = FontWeight.Normal), onClick ={onClick()})
-                    }
-
-
+                        .padding(vertical = 6.dp, horizontal = 12.dp)
+                ) {
+                    ClickableText(text = AnnotatedString(value), style = TextStyle(
+                        fontSize = 16.sp, fontFamily = Inter,
+                        fontWeight = FontWeight.Normal
+                    ), onClick = { onClick() })
                 }
+
 
             }
 
-            Divider()
         }
+
+        Divider()
+    }
 
 }
 
@@ -559,7 +647,7 @@ fun RequirementsField(
     onFocusClear: () -> Unit = {},
     focusManager: FocusManager,
     title: String,
-    value: String = "value",minState:TextFieldState,maxState:TextFieldState,
+    value: String = "value", minState: TextFieldState, maxState: TextFieldState,
     icon: Int
 ) {
     Column(
@@ -598,14 +686,14 @@ fun RequirementsField(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(6.dp))
-                RequirementsNumberField("Min", numberState = minState,focusManager=focusManager)
+                RequirementsNumberField("Min", numberState = minState, focusManager = focusManager)
             }
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(6.dp))
-                RequirementsNumberField("Max", numberState = maxState,focusManager=focusManager)
+                RequirementsNumberField("Max", numberState = maxState, focusManager = focusManager)
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
@@ -696,9 +784,11 @@ fun ConfigureField(
 }
 
 @Composable
-fun RequirementsNumberField(hint: String    ,numberState:TextFieldState,
-                            focusManager: FocusManager,
-                            imeAction: ImeAction = ImeAction.Done) {
+fun RequirementsNumberField(
+    hint: String, numberState: TextFieldState,
+    focusManager: FocusManager,
+    imeAction: ImeAction = ImeAction.Done
+) {
     val regex = Regex("^[0-9]+$")
     Card(
         modifier = Modifier
@@ -712,7 +802,7 @@ fun RequirementsNumberField(hint: String    ,numberState:TextFieldState,
     ) {
         Box(modifier = Modifier.background(color = SocialTheme.colors.uiBackground)) {
             TextField(
-                modifier = Modifier     .onFocusChanged { focusState ->
+                modifier = Modifier.onFocusChanged { focusState ->
                     numberState.onFocusChange(focusState.isFocused)
                     if (!focusState.isFocused) {
                         numberState.enableShowErrors()
@@ -723,8 +813,7 @@ fun RequirementsNumberField(hint: String    ,numberState:TextFieldState,
                 onValueChange = {
 
                     if (it.length < 4) {
-                        if(regex.containsMatchIn(it))
-                        {
+                        if (regex.containsMatchIn(it)) {
                             numberState.text = it
                         }
                     }
@@ -743,7 +832,9 @@ fun RequirementsNumberField(hint: String    ,numberState:TextFieldState,
                     errorIndicatorColor = Color.Transparent,
                     cursorColor = SocialTheme.colors.textPrimary
                 ),
-                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number), keyboardActions = KeyboardActions (onDone = {focusManager.clearFocus()}) )
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+            )
         }
     }
 
@@ -756,81 +847,6 @@ fun keyboardAsState(): State<Boolean> {
     return rememberUpdatedState(isImeVisible)
 }
 
-
-@Composable
-fun EditTextField(
-    hint: String = "What are you planning",
-    hideKeyboard: Boolean = false,
-    onFocusClear: () -> Unit = {},
-    textState: TextFieldState = remember { BasicTextFieldState() },
-    onClick: () -> Unit,
-    focusManager: FocusManager,
-    modifier: Modifier,
-    title: String,
-    icon: Int
-) {
-
-
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .padding(top = 24.dp), verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                painter = painterResource(id = icon),
-                contentDescription = null,
-                tint = SocialTheme.colors.iconSecondary
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = title,
-                fontFamily = Inter,
-                fontWeight = FontWeight.Normal,
-                fontSize = 16.sp,
-                color = SocialTheme.colors.iconSecondary
-            )
-            Spacer(modifier = Modifier.weight(1f))
-
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            shape = RoundedCornerShape(12.dp), elevation = 0.dp,
-            backgroundColor = SocialTheme.colors.uiBackground,
-            border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated)
-        ) {
-            Box(modifier = Modifier, contentAlignment = Alignment.Center) {
-                ActivityTextField(
-                    hint,
-                    textState,
-                    focusManager = focusManager
-                )
-            }
-        }
-        textState.getError()?.let { error ->
-            Row() {
-                Spacer(modifier = Modifier.width(24.dp))
-                TextFieldError(textError = error)
-            }
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Divider()
-    }
-
-    if (hideKeyboard) {
-        focusManager.clearFocus()
-        // Call onFocusClear to reset hideKeyboard state to false
-        onFocusClear()
-    }
-
-}
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable

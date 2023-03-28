@@ -1,38 +1,24 @@
 package com.example.socialk.create
 
-import android.content.res.Configuration
-import androidx.compose.foundation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material.Card
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Surface
-import androidx.compose.material.TextField
-import androidx.compose.material.TextFieldDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.onFocusEvent
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.socialk.Create
 import com.example.socialk.Destinations
 import com.example.socialk.R
-import com.example.socialk.bottomTabRowScreens
 import com.example.socialk.components.BottomBar
-import com.example.socialk.components.BottomBarRow
 import com.example.socialk.home.cardHighlited
 import com.example.socialk.home.cardnotHighlited
-import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 
 sealed class EventEvent{
@@ -73,7 +59,7 @@ fun EventScreen (onEvent: (EventEvent) -> Unit, bottomNavEvent:(Destinations)->U
                 modifier = Modifier, title = "Text",
                 icon = R.drawable.ic_edit, focusManager = focusManager, onClick = {})
 
-
+/*
             CreateClickableTextField(
                 modifier = Modifier,
                 onClick = {},
@@ -99,6 +85,7 @@ fun EventScreen (onEvent: (EventEvent) -> Unit, bottomNavEvent:(Destinations)->U
             Spacer(modifier = Modifier.height(48.dp))
             CreateActivityButton(onClick = {},"Create activity")
             Spacer(modifier = Modifier.height(64.dp))
+            */
         }
 
 
@@ -133,17 +120,3 @@ fun activityPickerEvent(isDark:Boolean,modifier: Modifier = Modifier, onEvent: (
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun previewEventScreen () {
-    SocialTheme{
-        EventScreen(onEvent = {}, bottomNavEvent = {})
-    }
-}
-@Preview(showBackground = true,uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun previewEventScreenDark(){
-    SocialTheme{
-        EventScreen(onEvent = {}, bottomNavEvent = {})
-    }
-}
