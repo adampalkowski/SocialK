@@ -49,7 +49,7 @@ class CreateGroupFragment:Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
-                    CreateGroupScreen(onEvent = {event->
+                    CreateGroupScreen(viewModel,onEvent = {event->
                         when(event){
                             is CreateGroupEvent.GoBack->activity?.onBackPressedDispatcher?.onBackPressed()
                         }

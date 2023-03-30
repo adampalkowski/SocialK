@@ -185,7 +185,7 @@ fun editField(
     label: String, maxLetters: Int, modifier: Modifier = Modifier,
     editTextState: TextFieldState = remember { TextFieldState() },
     imeAction: ImeAction = ImeAction.Next,
-    onImeAction: () -> Unit = {}
+    onImeAction: () -> Unit = {},
 ) {
     OutlinedTextField(
         value = editTextState.text,
@@ -201,7 +201,7 @@ fun editField(
                 style = MaterialTheme.typography.bodyMedium,
             )
         },
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .onFocusChanged { focusState ->
                 editTextState.onFocusChange(focusState.isFocused)
@@ -219,7 +219,7 @@ fun editField(
             onDone = {
                 onImeAction()
             }
-        ),
+        )
     )
     Text(
         text = "${editTextState.text.length} / $maxLetters",

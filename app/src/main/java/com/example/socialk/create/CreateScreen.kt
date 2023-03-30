@@ -41,6 +41,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -119,7 +120,7 @@ sealed class CreateEvent {
     ExperimentalMaterialApi::class
 )
 @Composable
-fun CreateScreen(
+fun CreateScreen(viewModel:CreateViewModel,
     location: String?,
     userViewModel: UserViewModel,
     activityViewModel: ActivityViewModel?,
@@ -135,6 +136,8 @@ fun CreateScreen(
     val activityTextState by rememberSaveable(stateSaver = ActivityTextStateSaver) {
         mutableStateOf(ActivityTextFieldState())
     }
+
+
     val descriptionTextState by rememberSaveable(stateSaver = BasicTextFieldStateSaver) {
         mutableStateOf(BasicTextFieldState())
     }
@@ -183,6 +186,7 @@ fun CreateScreen(
                 date = it
                 isDateDialogShown = false
                 dateState = date.toString()
+                viewModel.date.value=date.toString()
 
             })
     }
@@ -196,6 +200,7 @@ fun CreateScreen(
                 setSelectedTime(it)
                 isTimeDialogShown = false
                 timeState = it
+                viewModel.start_time.value=it.toString()
             },
             title = { Text(text = "Select time") }
         )
@@ -210,6 +215,7 @@ fun CreateScreen(
                 setSelectedTime(it)
                 isTimeLengthDialogShown = false
                 timeLengthState = it.toString()
+                viewModel.duration.value=it.toString()
             },
             title = { Text(text = "Select time") }
         )
@@ -242,7 +248,7 @@ fun CreateScreen(
     } else {
 
     }
-
+    var saved = remember{ mutableStateOf(false) }
     if (matchResult != null) {
         val lat = matchResult.groupValues[1].toDouble()
         val lng = matchResult.groupValues[2].toDouble()
@@ -250,6 +256,13 @@ fun CreateScreen(
         latlng.value = lat.toString() + "/" + lng.toString()
         cameraPositionState.position = CameraPosition.fromLatLngZoom(latLng, 13f)
     } else {
+    }
+    Log.d("CREATEFRAGMENT",viewModel.name.value)
+    if (!activityTextState.isFocused && viewModel.name.value.isNotEmpty()){
+        Log.d("CREATEFRAGMENT","assigning")
+        activityTextState.text=viewModel.name.value
+    }else{
+
     }
     Surface(
         modifier = Modifier
@@ -267,6 +280,7 @@ fun CreateScreen(
 
             activityPickerCreate(isSystemInDarkTheme(), onEvent = { event -> onEvent(event) })
             Spacer(modifier = Modifier.height(12.dp))
+                // todo finish saving the values of all the picks thorufh shared preferences
             EditTextField(hint = "Enter a name for your activity",
                 hideKeyboard = hideKeyboard,
                 onFocusClear = { hideKeyboard = false },
@@ -398,7 +412,7 @@ fun CreateScreen(
                         ) {
 
                             Spacer(modifier = Modifier.weight(1f))
-                            Switch2()
+                            Switch2(onCheckedChange = {})
                         }
                     }
                 }
@@ -833,19 +847,19 @@ fun keyboardAsState(): State<Boolean> {
 
 @Composable
 fun Switch2(
-    scale: Float = 2f,
+    scale: Float = 1.5f,
     width: Dp = 36.dp,
     height: Dp = 20.dp,
     strokeWidth: Dp = 2.dp,
-    checkedTrackColor: Color = Color(0xFF280664),
-    uncheckedTrackColor: Color =SocialTheme.colors.iconPrimary,
-    gapBetweenThumbAndTrackEdge: Dp = 4.dp
+    checkedTrackColor: Color = SocialTheme.colors.iconInteractive,
+    uncheckedTrackColor: Color =SocialTheme.colors.iconPrimary.copy(alpha=0.75f),
+    gapBetweenThumbAndTrackEdge: Dp = 1.dp,
+    onCheckedChange: ((Boolean) -> Unit)?
 ) {
 
     val switchON = remember {
-        mutableStateOf(true) // Initially the switch is ON
+        mutableStateOf(false) // Initially the switch is ON
     }
-
     val thumbRadius = (height / 2) - gapBetweenThumbAndTrackEdge
 
     // To move thumb, we need to calculate the position (along x axis)
@@ -855,40 +869,59 @@ fun Switch2(
         else
             with(LocalDensity.current) { (thumbRadius + gapBetweenThumbAndTrackEdge).toPx() }
     )
+    Box(modifier = Modifier.width(48.dp)){
+        Canvas(
+            modifier = Modifier.align(Center)
+                .size(width = width, height = height)
+                .scale(scale = scale)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            if(switchON.value){
+                                onCheckedChange?.invoke(false)
 
-    Canvas(
-        modifier = Modifier
-            .size(width = width, height = height)
-            .scale(scale = scale)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        // This is called when the user taps on the canvas
-                        switchON.value = !switchON.value
-                    }
-                )
-            }
-    ) {
-        // Track
-        drawRoundRect(
-            color = if (switchON.value) checkedTrackColor else uncheckedTrackColor,
-            cornerRadius = CornerRadius(x = 10.dp.toPx(), y = 10.dp.toPx()),
-            style = Stroke(width = strokeWidth.toPx())
-        )
+                            }else{
+                                onCheckedChange?.invoke(true)
 
-        // Thumb
-        drawCircle(
-            color = if (switchON.value) checkedTrackColor else uncheckedTrackColor,
-            radius = thumbRadius.toPx(),
-            center = Offset(
-                x = animatePosition.value,
-                y = size.height / 2
+                            }
+                            // This is called when the user taps on the canvas
+                            switchON.value = !switchON.value
+                        }
+                    )
+                }
+        ) {
+
+            // Track
+            drawRoundRect(
+                color = if (switchON.value) checkedTrackColor else uncheckedTrackColor,
+                cornerRadius = CornerRadius(x = 24.dp.toPx(), y = 24.dp.toPx()),
             )
-        )
+
+            // Thumb
+            drawCircle(
+                color =Color.White ,
+                radius = thumbRadius.toPx(),
+                center = Offset(
+                    x = animatePosition.value,
+                    y = size.height / 2
+                )
+            )
+        }
+
     }
 
     Spacer(modifier = Modifier.height(18.dp))
 
+}
+
+@Preview
+@Composable
+fun preview(){
+    SocialTheme{
+        Box(modifier=Modifier.background(color=SocialTheme.colors.uiBackground)){
+            Switch2(onCheckedChange = {})
+        }
+    }
 }
 
 

@@ -14,6 +14,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -25,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 import com.example.socialk.R
+import com.example.socialk.editField
 import com.example.socialk.signinsignup.TextFieldError
 import com.example.socialk.signinsignup.TextFieldState
 
@@ -108,6 +111,7 @@ fun EditTextField(
     iconTint: Color =SocialTheme.colors.textPrimary.copy(0.75f),
     titleColor: Color=SocialTheme.colors.textPrimary,
 ) {
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -135,7 +139,15 @@ fun EditTextField(
 
         }
         Spacer(modifier = Modifier.height(6.dp))
-        Card(
+        val descriptionFocusRequester = remember { FocusRequester() }
+        editField(
+            label = "Enter a name for your activity",
+            maxLetters = 30,
+            onImeAction = { },
+            editTextState = textState,
+            modifier = Modifier.padding(horizontal = 24.dp).focusRequester(descriptionFocusRequester)
+        )
+       /* Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp),
@@ -150,13 +162,13 @@ fun EditTextField(
                     focusManager = focusManager
                 )
             }
-        }
-        textState.getError()?.let { error ->
+        }*/
+        /*textState.getError()?.let { error ->
             Row() {
                 Spacer(modifier = Modifier.width(24.dp))
                 TextFieldError(textError = error)
             }
-        }
+        }*/
         Spacer(modifier = Modifier.height(12.dp))
 
         Divider()

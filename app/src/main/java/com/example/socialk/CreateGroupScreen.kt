@@ -42,7 +42,7 @@ sealed class CreateGroupEvent(){
 }
 
 @Composable
-fun CreateGroupScreen(onEvent:(CreateGroupEvent)->Unit,onSubmit:(group_name:String)->Unit){
+fun CreateGroupScreen(viewModel:CreateGroupViewModel,onEvent:(CreateGroupEvent)->Unit,onSubmit:(group_name:String)->Unit){
     var enabledButton by rememberSaveable {
         mutableStateOf(false)
     }
@@ -65,13 +65,14 @@ fun CreateGroupScreen(onEvent:(CreateGroupEvent)->Unit,onSubmit:(group_name:Stri
         Column() {
             ScreenHeading(onClick = { onEvent(CreateGroupEvent.GoBack)}, title = "Create group" )
             Spacer(modifier = Modifier.height(12.dp))
-            SocialTextField(hint ="group name" ,  onImeAction = { if(activityTextState.text.trim().length>0){onSubmit(activityTextState.text)} }, textState = activityTextState )
-           /* EditTextField(hint = "Group name",
+            /*SocialTextField(hint ="group name" ,
+                onImeAction = { if(activityTextState.text.trim().length>0){onSubmit(activityTextState.text)} }, textState = activityTextState )
+          */  EditTextField( hint = "Group name",
                 hideKeyboard = hideKeyboard,
                 onFocusClear = { hideKeyboard = false },
                 textState = activityTextState,
                 modifier = Modifier, title = "Text",
-                icon = R.drawable.ic_edit, focusManager = focusManager, onClick = {})*/
+                icon = R.drawable.ic_edit, focusManager = focusManager, onClick = {})
             Spacer(modifier = Modifier.weight(1f))
 
         }

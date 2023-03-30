@@ -1,5 +1,6 @@
 package com.example.socialk.create
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -36,6 +37,24 @@ class CreateFragment : Fragment() {
     private val authViewModel by viewModels<AuthViewModel>()
     private val userViewModel by viewModels<UserViewModel>()
     private val chatViewModel by viewModels<ChatViewModel>()
+    override fun onDestroyView() {
+        super.onDestroyView()
+        val sharedPref = requireActivity().getPreferences(Context.MODE_PRIVATE)
+        // Get a reference to the SharedPreferences editor
+        val editor = sharedPref.edit()
+        // Put the data you want to save in the editor
+        Log.d("CREATEFRAGMENT",viewModel.name.value.toString())
+        editor.putString("name",viewModel.name.value.toString())
+        editor.putString("description", viewModel.description.value.toString())
+        editor.putString("date", viewModel.date.value.toString())
+        editor.putString("start_time", viewModel.start_time.value.toString())
+        editor.putString("duration",  viewModel.duration.value.toString())
+        editor.putString("custom_location", viewModel.custom_location.value.toString())
+        editor.putString("max",  viewModel.max.value.toString())
+        editor.putString("min",  viewModel.min.value.toString())
+        // Save the changes
+        editor.apply()
+    }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -56,6 +75,26 @@ class CreateFragment : Fragment() {
             }
 
         }
+
+        val sharedPreferences = requireContext().getSharedPreferences("myPrefs", Context.MODE_PRIVATE)
+        val name = sharedPreferences.getString("name", "")
+        if (name!!.isNotEmpty()){viewModel.name.value=name}
+        val description = sharedPreferences.getString("description", "")
+        if (description!!.isNotEmpty()){viewModel.description.value=name}
+        val date = sharedPreferences.getString("date", "")
+        if (date!!.isNotEmpty()){viewModel.date.value=name}
+        val start_time = sharedPreferences.getString("start_time", "")
+        if (start_time!!.isNotEmpty()){viewModel.start_time.value=name}
+        val duration = sharedPreferences.getString("duration", "")
+        if (duration!!.isNotEmpty()){viewModel.duration.value=name}
+        val custom_location = sharedPreferences.getString("custom_location", "")
+        if (custom_location!!.isNotEmpty()){viewModel.custom_location.value=name}
+        val max = sharedPreferences.getString("max", "")
+        if (max!!.isNotEmpty()){viewModel.max.value=name}
+        val min = sharedPreferences.getString("min", "")
+        if (min!!.isNotEmpty()){viewModel.min.value=name}
+
+
         var location:String?=arguments?.getString("location")
         userViewModel.getFriends(authViewModel.currentUser!!.uid)
 
@@ -66,7 +105,7 @@ class CreateFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 SocialTheme {
-                    CreateScreen(location,userViewModel,activityViewModel, onEvent = { event ->
+                    CreateScreen(viewModel,location,userViewModel,activityViewModel, onEvent = { event ->
                         when (event) {
                             is CreateEvent.GoToProfile -> viewModel.handleGoToProfile()
                             is CreateEvent.GoToHome -> {

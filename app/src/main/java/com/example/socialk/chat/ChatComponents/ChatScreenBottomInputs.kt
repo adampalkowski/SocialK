@@ -1,5 +1,7 @@
 package com.example.socialk.chat.ChatComponents
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,19 +46,25 @@ fun ChatScreenBottomInputs(
         ) {
 
             if (!chatTextFieldFocused) {
-
                 Spacer(modifier = Modifier.width(12.dp))
-                ChatButton(onEvent = {onEvent(ChatEvent.OpenLocationDialog)}, R.drawable.ic_pin_drop)
-                Spacer(modifier = Modifier.width(6.dp))
-                ChatButton(
-                    onEvent = { onEvent(ChatEvent.OpenGallery) },
-                    R.drawable.ic_photo_library
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                ChatButton(onEvent = {
-                    onEvent(ChatEvent.Highlight)
 
-                }, R.drawable.ic_highlight, selected = highlight)
+                        ChatButton(onEvent = {onEvent(ChatEvent.OpenLocationDialog)}, R.drawable.ic_pin_drop)
+
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                    ChatButton(
+                        onEvent = { onEvent(ChatEvent.OpenGallery) },
+                        R.drawable.ic_photo_library
+                    )
+
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                    ChatButton(onEvent = {
+                        onEvent(ChatEvent.Highlight)
+
+                    }, R.drawable.ic_highlight, selected = highlight)
             } else {
                 Spacer(modifier = Modifier.width(6.dp))
                 ChatButton(onEvent = {
@@ -69,56 +77,58 @@ fun ChatScreenBottomInputs(
             Card(
                 modifier = Modifier
                     .weight(1f)
-                    .heightIn(48.dp, 128.dp),
+                    .heightIn(48.dp, 128.dp).animateContentSize (),
                 border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
                 shape = RoundedCornerShape(8.dp),
                 backgroundColor = SocialTheme.colors.uiBackground,
                 elevation = 0.dp
             ) {
-                Box(
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                    contentAlignment = Alignment.CenterStart
-                ) {
 
-                    BasicTextField(modifier = Modifier
-                        .fillMaxWidth()
-                        .onFocusChanged {
-                            if (it.isFocused) {
-                                chatTextFieldFocused = true
-                            }
-                        }, decorationBox = { innerTextField ->
-                        if (textState.text.isEmpty()) {
-                            Text(
-                                text = "Aa",
-                                color = SocialTheme.colors.iconPrimary,
-                                style = TextStyle(
-                                    fontSize = 18.sp,
-                                    fontFamily = Inter,
-                                    fontWeight = FontWeight.Normal
+                    Box(
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+
+                        BasicTextField(modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged {
+                                if (it.isFocused) {
+                                    chatTextFieldFocused = true
+                                }
+                            }, decorationBox = { innerTextField ->
+                            if (textState.text.isEmpty()) {
+                                Text(
+                                    text = "Aa",
+                                    color = SocialTheme.colors.iconPrimary,
+                                    style = TextStyle(
+                                        fontSize = 18.sp,
+                                        fontFamily = Inter,
+                                        fontWeight = FontWeight.Normal
+                                    )
                                 )
-                            )
-                        }
-                        innerTextField()
-                    },
-                        maxLines = 5, value = textState.text, onValueChange = {
-
-                            textState.text = it
-                            if (textState.text.length > 0) {
-                                chatTextFieldFocused = true
-                                textSendAvailable = true
                             }
-                            if (textState.text.length == 0) {
-                                chatTextFieldFocused = false
-                                textSendAvailable = false
-                            }
+                            innerTextField()
                         },
-                        textStyle = TextStyle(
-                            fontSize = 16.sp,
-                            fontFamily = Inter,
-                            fontWeight = FontWeight.Normal
+                            maxLines = 5, value = textState.text, onValueChange = {
+
+                                textState.text = it
+                                if (textState.text.length > 0) {
+                                    chatTextFieldFocused = true
+                                    textSendAvailable = true
+                                }
+                                if (textState.text.length == 0) {
+                                    chatTextFieldFocused = false
+                                    textSendAvailable = false
+                                }
+                            },
+                            textStyle = TextStyle(
+                                fontSize = 16.sp,
+                                fontFamily = Inter,
+                                fontWeight = FontWeight.Normal
+                            )
                         )
-                    )
-                }
+                    }
+
 
             }
             if (!chatTextFieldFocused) {

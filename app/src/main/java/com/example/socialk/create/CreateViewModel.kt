@@ -1,5 +1,6 @@
 package com.example.socialk.create
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -16,6 +17,17 @@ class CreateViewModel : ViewModel() {
     val navigateTo: LiveData<Event<Screen>> = _navigateTo
     private val _created_activity = MutableLiveData<Activity>()
     val created_activity: LiveData<Activity> = _created_activity
+
+
+    var name =mutableStateOf("")
+    var description =mutableStateOf("")
+    var date =mutableStateOf("")
+    var start_time =mutableStateOf("")
+    var duration =mutableStateOf("")
+    var custom_location =mutableStateOf("")
+    var max =mutableStateOf("")
+    var min =mutableStateOf("")
+
     fun handleGoToProfile( ) {
         _navigateTo.value = Event(Screen.Profile)
     }

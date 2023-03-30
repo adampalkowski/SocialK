@@ -1,5 +1,6 @@
 package com.example.socialk.create.FriendPicker
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -43,6 +44,7 @@ class FriendsPickerFragment : Fragment() {
     private val authViewModel by viewModels<AuthViewModel>()
     private val chatViewModel by viewModels<ChatViewModel>()
     private val activityViewModel by viewModels<ActivityViewModel>()
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -54,6 +56,8 @@ class FriendsPickerFragment : Fragment() {
             }
 
         }
+
+
         var activityCreated: Activity?=null
         if (arguments?.getSerializable("activity")!=null){
             activityCreated = arguments?.getSerializable("activity") as Activity

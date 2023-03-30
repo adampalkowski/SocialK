@@ -218,7 +218,7 @@ fun PickDisplay(
                 .align(Alignment.TopEnd)
                 .padding(end = 24.dp), enabled = enabledButton,
             text = if(type.equals("activity")){"Create activity"}else{"Create group"},
-            backGroundColor = SocialTheme.colors.uiBackground,
+            backGroundColor = SocialTheme.colors.iconInteractive,
             onEvent = {
                 var selected_list: ArrayList<String> = arrayListOf()
                 if (all_friends) {
@@ -238,11 +238,11 @@ fun PickDisplay(
                 } else {
                     onEvent(FriendsPickerEvent.CreateActivity(selected_list))
                 }}  ,
-                textColor = SocialTheme.colors.textPrimary,
+                textColor = SocialTheme.colors.textSecondary,
                 elevation = 2.dp,
                 icon = R.drawable.ic_start,
-                iconTint = SocialTheme.colors.textPrimary,
-                borderColor = SocialTheme.colors.uiFloated
+                iconTint = SocialTheme.colors.textSecondary,
+                borderColor = SocialTheme.colors.iconInteractive
                 )
             }
 
@@ -259,7 +259,7 @@ fun PickDisplay(
         onEvent: () -> Unit,
         shape: Dp = 8.dp,
         backGroundColor: Color = SocialTheme.colors.uiBackground,
-        elevation: Dp = 2.dp,
+        elevation: Dp = 4.dp,
         textColor: Color = SocialTheme.colors.textPrimary,
         textStyle: TextStyle = TextStyle(
             fontFamily = Inter,
@@ -295,7 +295,7 @@ fun PickDisplay(
                         tint = if (enabled) {
                             iconTint
                         } else {
-                            iconTint.copy(alpha = 0.5f)
+                            iconTint
                         },
                         contentDescription = null
                     )
@@ -304,7 +304,7 @@ fun PickDisplay(
                         text = text, style = textStyle, color = if (enabled) {
                             textColor
                         } else {
-                            textColor.copy(alpha = 0.5f)
+                            textColor
                         }
                     )
                 }
