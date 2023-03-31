@@ -57,7 +57,10 @@ fun EventScreen (onEvent: (EventEvent) -> Unit, bottomNavEvent:(Destinations)->U
 
             EditTextField(textState=activityTextState,
                 modifier = Modifier, title = "Text",
-                icon = R.drawable.ic_edit, focusManager = focusManager, onClick = {})
+                icon = R.drawable.ic_edit, focusManager = focusManager, onClick = {},
+            onSaveValueCall = {
+
+            })
 
 /*
             CreateClickableTextField(

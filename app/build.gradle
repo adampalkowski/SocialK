@@ -149,7 +149,7 @@ dependencies {
     implementation "com.google.accompanist:accompanist-pager-indicators:$accompanist_version" // Pager Indicato
 
     //date picker dialog
-    implementation "com.marosseleng.android:compose-material3-datetime-pickers:0.6.2"
+    implementation "com.marosseleng.android:compose-material3-datetime-pickers:0.7.0"
 }
 kapt {
     correctErrorTypes true

@@ -39,7 +39,7 @@ class CreateFragment : Fragment() {
     private val chatViewModel by viewModels<ChatViewModel>()
     override fun onDestroyView() {
         super.onDestroyView()
-        val sharedPref = requireActivity().getPreferences(Context.MODE_PRIVATE)
+        val sharedPref = requireContext().getSharedPreferences("create_data",Context.MODE_PRIVATE)
         // Get a reference to the SharedPreferences editor
         val editor = sharedPref.edit()
         // Put the data you want to save in the editor
@@ -52,6 +52,7 @@ class CreateFragment : Fragment() {
         editor.putString("custom_location", viewModel.custom_location.value.toString())
         editor.putString("max",  viewModel.max.value.toString())
         editor.putString("min",  viewModel.min.value.toString())
+        editor.putString("latlng",  viewModel.latlng.value.toString())
         // Save the changes
         editor.apply()
     }
@@ -76,26 +77,32 @@ class CreateFragment : Fragment() {
 
         }
 
-        val sharedPreferences = requireContext().getSharedPreferences("myPrefs", Context.MODE_PRIVATE)
+        val sharedPreferences = requireContext().getSharedPreferences("create_data", Context.MODE_PRIVATE)
         val name = sharedPreferences.getString("name", "")
-        if (name!!.isNotEmpty()){viewModel.name.value=name}
-        val description = sharedPreferences.getString("description", "")
-        if (description!!.isNotEmpty()){viewModel.description.value=name}
-        val date = sharedPreferences.getString("date", "")
-        if (date!!.isNotEmpty()){viewModel.date.value=name}
-        val start_time = sharedPreferences.getString("start_time", "")
-        if (start_time!!.isNotEmpty()){viewModel.start_time.value=name}
-        val duration = sharedPreferences.getString("duration", "")
-        if (duration!!.isNotEmpty()){viewModel.duration.value=name}
-        val custom_location = sharedPreferences.getString("custom_location", "")
-        if (custom_location!!.isNotEmpty()){viewModel.custom_location.value=name}
-        val max = sharedPreferences.getString("max", "")
-        if (max!!.isNotEmpty()){viewModel.max.value=name}
-        val min = sharedPreferences.getString("min", "")
-        if (min!!.isNotEmpty()){viewModel.min.value=name}
 
+        if (name!!.isNotEmpty()){
+            viewModel.name.value=name}
+        val description = sharedPreferences.getString("description", "")
+        if (description!!.isNotEmpty()){viewModel.description.value=description}
+        val date = sharedPreferences.getString("date", "")
+        if (date!!.isNotEmpty()){viewModel.date.value=date}
+        val start_time = sharedPreferences.getString("start_time", "")
+        if (start_time!!.isNotEmpty()){viewModel.start_time.value=start_time}
+        val duration = sharedPreferences.getString("duration", "")
+        if (duration!!.isNotEmpty()){viewModel.duration.value=duration}
+        val custom_location = sharedPreferences.getString("custom_location", "")
+        if (custom_location!!.isNotEmpty()){viewModel.custom_location.value=custom_location}
+        val max = sharedPreferences.getString("max", "")
+        if (max!!.isNotEmpty()){viewModel.max.value=max}
+        val min = sharedPreferences.getString("min", "")
+        if (min!!.isNotEmpty()){viewModel.min.value=min}
+        val latlng = sharedPreferences.getString("latlng", "")
+        if (latlng!!.isNotEmpty()){viewModel.latlng.value=latlng}
 
         var location:String?=arguments?.getString("location")
+        if(location!=null && location.isNotEmpty()){
+            viewModel.latlng.value=location
+        }
         userViewModel.getFriends(authViewModel.currentUser!!.uid)
 
         Log.d("mapscreen",location.toString())
@@ -113,6 +120,7 @@ class CreateFragment : Fragment() {
                                 viewModel.handleGoToHome()
                             }
                             is CreateEvent.LogOut -> viewModel.handleLogOut()
+                            is CreateEvent.GoBack ->activity?.onBackPressedDispatcher?.onBackPressed()
                             is CreateEvent.ClearState -> activityViewModel.activityAdded()
                             is CreateEvent.GoToSettings -> viewModel.handleGoToSettings()
                             is CreateEvent.GoToEvent -> viewModel.handleGoToEvent()

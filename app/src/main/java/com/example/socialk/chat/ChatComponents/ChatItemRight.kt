@@ -66,7 +66,6 @@ fun ChatItemRight(
             ) {
 
                 if (text_type.equals("uri")) {
-                    Log.d("ImagePicker", "display uri" + textMessage.toString())
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(textMessage)

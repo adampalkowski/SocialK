@@ -42,6 +42,7 @@ import com.example.socialk.model.User
 import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.*
 import com.example.socialk.ui.theme.Inter
+import com.example.socialk.ui.theme.SocialTheme
 
 sealed class EditProfileEvent {
     object GoToProfile : EditProfileEvent()
@@ -186,6 +187,7 @@ fun editField(
     editTextState: TextFieldState = remember { TextFieldState() },
     imeAction: ImeAction = ImeAction.Next,
     onImeAction: () -> Unit = {},
+    onSaveValueCall:(Boolean) -> Unit = {}
 ) {
     OutlinedTextField(
         value = editTextState.text,
@@ -199,14 +201,17 @@ fun editField(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyMedium,
+                color=SocialTheme.colors.textPrimary.copy(alpha = 0.75f)
             )
         },
         modifier = modifier
             .fillMaxWidth()
             .onFocusChanged { focusState ->
                 editTextState.onFocusChange(focusState.isFocused)
+                onSaveValueCall(focusState.isFocused)
                 if (!focusState.isFocused) {
                     editTextState.enableShowErrors()
+
                 }
             },
         textStyle = MaterialTheme.typography.bodyMedium,
@@ -219,7 +224,7 @@ fun editField(
             onDone = {
                 onImeAction()
             }
-        )
+        ), colors = TextFieldDefaults.outlinedTextFieldColors(textColor = SocialTheme.colors.textPrimary)
     )
     Text(
         text = "${editTextState.text.length} / $maxLetters",
@@ -233,3 +238,55 @@ fun editField(
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class) // OutlinedTextField is experimental in m3
+@Composable
+fun editNumberField(
+    label: String, maxLetters: Int, modifier: Modifier = Modifier,
+    editTextState: TextFieldState = remember { TextFieldState() },
+    imeAction: ImeAction = ImeAction.Next,regex:Regex,
+    onImeAction: () -> Unit = {},
+    onSaveValueCall:(Boolean) -> Unit = {},max:Int=999
+) {
+    OutlinedTextField(
+        value = editTextState.text,
+        onValueChange = {
+            Log.d("CREATESCREEN",it.length.toString())
+            if (regex.containsMatchIn(it)) {
+                    if (it.toIntOrNull() ?: 0 <= max) {
+                        editTextState.text = it
+                    }
+            }
+
+
+        },
+        label = {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        },
+        modifier = modifier
+            .fillMaxWidth()
+            .onFocusChanged { focusState ->
+                editTextState.onFocusChange(focusState.isFocused)
+                onSaveValueCall(focusState.isFocused)
+                if (!focusState.isFocused) {
+                    editTextState.enableShowErrors()
+
+                }
+            },
+        textStyle = MaterialTheme.typography.bodyMedium,
+        isError = editTextState.showErrors(),
+        keyboardOptions = KeyboardOptions.Default.copy(
+            imeAction = imeAction,
+            keyboardType = KeyboardType.Number
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = {
+                onImeAction()
+            }
+        )
+    )
+
+    editTextState.getError()?.let { error -> TextFieldError(textError = error) }
+}

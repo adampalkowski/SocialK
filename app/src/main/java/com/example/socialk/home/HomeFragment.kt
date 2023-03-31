@@ -70,7 +70,9 @@ class HomeFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        Log.d(TAG,"on start")
+        WindowCompat.setDecorFitsSystemWindows(requireActivity().window, false)
+        Log.d("CHATFRAGMENT",    ZoneId.getAvailableZoneIds().toString())
+
     }
 
     override fun onStop() {
@@ -135,12 +137,13 @@ class HomeFragment : Fragment() {
         }
     }
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(requireActivity().window, false)
-        Log.d("CHATFRAGMENT",    ZoneId.getAvailableZoneIds().toString())
+
 
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

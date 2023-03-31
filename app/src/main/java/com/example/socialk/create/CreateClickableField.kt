@@ -110,6 +110,8 @@ fun EditTextField(
     titleTextSize:Int=16,
     iconTint: Color =SocialTheme.colors.textPrimary.copy(0.75f),
     titleColor: Color=SocialTheme.colors.textPrimary,
+    maxLetters:Int=30,
+    onSaveValueCall:(Boolean)->Unit={}
 ) {
 
     Column(
@@ -141,45 +143,17 @@ fun EditTextField(
         Spacer(modifier = Modifier.height(6.dp))
         val descriptionFocusRequester = remember { FocusRequester() }
         editField(
-            label = "Enter a name for your activity",
-            maxLetters = 30,
+            label = hint,
+            maxLetters = maxLetters,
             onImeAction = { },
             editTextState = textState,
-            modifier = Modifier.padding(horizontal = 24.dp).focusRequester(descriptionFocusRequester)
+            modifier = Modifier.padding(horizontal = 24.dp).focusRequester(descriptionFocusRequester),
+            onSaveValueCall = onSaveValueCall
         )
-       /* Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            shape = RoundedCornerShape(12.dp), elevation = 0.dp,
-            backgroundColor = SocialTheme.colors.uiBackground,
-            border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated)
-        ) {
-            Box(modifier = Modifier, contentAlignment = Alignment.Center) {
-                ActivityTextField(
-                    hint,
-                    textState,
-                    focusManager = focusManager
-                )
-            }
-        }*/
-        /*textState.getError()?.let { error ->
-            Row() {
-                Spacer(modifier = Modifier.width(24.dp))
-                TextFieldError(textError = error)
-            }
-        }*/
         Spacer(modifier = Modifier.height(12.dp))
 
         Divider()
     }
-
-    /*  if (hideKeyboard) {
-          focusManager.clearFocus()
-          // Call onFocusClear to reset hideKeyboard state to false
-          onFocusClear()
-      }*/
-
 }
 
 @Composable
@@ -258,7 +232,9 @@ fun CustomLocationField(
     iconTint: Color =SocialTheme.colors.textPrimary.copy(0.75f),
     titleColor: Color=SocialTheme.colors.textPrimary,
     interactiveTextColor: Color=Color(0xFF034FB4),
-    interactiveTextSize:Int=16
+    interactiveTextSize:Int=16,
+    onSaveValueCall:(Boolean)->Unit= {},
+    maxLetters:Int=50
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -284,32 +260,25 @@ fun CustomLocationField(
                 color = titleColor
             )
             Spacer(modifier = Modifier.weight(1f))
-            Icon(modifier=Modifier.size(24.dp),painter = painterResource(id = R.drawable.ic_map_not_filled), tint =interactiveTextColor, contentDescription =null,)
+           /* Icon(modifier=Modifier.size(24.dp),painter = painterResource(id = R.drawable.ic_map_not_filled), tint =interactiveTextColor, contentDescription =null,)
             ClickableText(
                 text = AnnotatedString("Visit map"), style = TextStyle(
                     fontSize = interactiveTextSize.sp, fontFamily = Inter,
                     fontWeight = FontWeight.Normal, color = interactiveTextColor
                 ), onClick = {  },
-            )
+            )*/
 
         }
         Spacer(modifier = Modifier.height(6.dp))
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            shape = RoundedCornerShape(12.dp), elevation = 0.dp,
-            backgroundColor = SocialTheme.colors.uiBackground,
-            border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated)
-        ) {
-            Box(modifier = Modifier, contentAlignment = Alignment.Center) {
-                ActivityTextField(
-                    hint,
-                    textState,
-                    focusManager = focusManager
-                )
-            }
-        }
+        val descriptionFocusRequester = remember { FocusRequester() }
+        editField(
+            label = hint,
+            maxLetters = maxLetters,
+            onImeAction = { },
+            editTextState = textState,
+            modifier = Modifier.padding(horizontal = 24.dp).focusRequester(descriptionFocusRequester),
+            onSaveValueCall = onSaveValueCall
+        )
         textState.getError()?.let { error ->
             Row() {
                 Spacer(modifier = Modifier.width(24.dp))

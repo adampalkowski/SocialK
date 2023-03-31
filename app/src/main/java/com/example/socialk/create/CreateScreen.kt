@@ -8,19 +8,15 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.BottomCenter
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -30,7 +26,6 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -40,16 +35,13 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.socialk.*
 import com.example.socialk.R
-import com.example.socialk.components.BottomBar
 import com.example.socialk.components.CustomSocialDialog
-import com.example.socialk.components.UserPicker
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.UserViewModel
 import com.example.socialk.map.loadIcon
@@ -57,7 +49,6 @@ import com.example.socialk.model.Chat
 import com.example.socialk.model.Response
 import com.example.socialk.model.User
 import com.example.socialk.model.UserData
-import com.example.socialk.signinsignup.TextFieldError
 import com.example.socialk.signinsignup.TextFieldState
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
@@ -67,7 +58,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 import com.marosseleng.compose.material3.datetimepickers.date.domain.DatePickerShapes
 import com.marosseleng.compose.material3.datetimepickers.date.ui.dialog.DatePickerDialog
-import com.marosseleng.compose.material3.datetimepickers.time.domain.TimePickerColors
+import com.marosseleng.compose.material3.datetimepickers.time.domain.TimePickerDefaults
 import com.marosseleng.compose.material3.datetimepickers.time.domain.noSeconds
 import com.marosseleng.compose.material3.datetimepickers.time.ui.dialog.TimePickerDialog
 import java.time.LocalDate
@@ -76,6 +67,7 @@ import java.util.*
 
 sealed class CreateEvent {
     object GoToProfile : CreateEvent()
+    object GoBack : CreateEvent()
     object AllFriendsSelected : CreateEvent()
     object LogOut : CreateEvent()
     object GoToSettings : CreateEvent()
@@ -120,7 +112,8 @@ sealed class CreateEvent {
     ExperimentalMaterialApi::class
 )
 @Composable
-fun CreateScreen(viewModel:CreateViewModel,
+fun CreateScreen(
+    viewModel: CreateViewModel,
     location: String?,
     userViewModel: UserViewModel,
     activityViewModel: ActivityViewModel?,
@@ -151,7 +144,7 @@ fun CreateScreen(viewModel:CreateViewModel,
         mutableStateOf(NumberTextFieldState())
     }
     var timeState by rememberSaveable {
-        mutableStateOf(LocalTime.now().noSeconds().plusHours(1))
+        mutableStateOf(LocalTime.now().noSeconds().plusHours(1).toString())
     }
     var dateState by rememberSaveable {
         mutableStateOf(LocalDate.now().toString())
@@ -180,13 +173,21 @@ fun CreateScreen(viewModel:CreateViewModel,
     val (selectedTime, setSelectedTime) = rememberSaveable {
         mutableStateOf(LocalTime.now().noSeconds())
     }
+    val context = LocalContext.current
     if (isDateDialogShown) {
         DatePicker(onDismissRequest = { isDateDialogShown = false },
-            onDateChange = {
-                date = it
-                isDateDialogShown = false
-                dateState = date.toString()
-                viewModel.date.value=date.toString()
+            onDateChange = { selectedDate ->
+                if (selectedDate < LocalDate.now()) {
+                    Toast.makeText(
+                        context, "Pick future date", Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    date = selectedDate
+                    isDateDialogShown = false
+                    dateState = date.toString()
+                    viewModel.date.value = date.toString()
+                }
+
 
             })
     }
@@ -199,10 +200,11 @@ fun CreateScreen(viewModel:CreateViewModel,
 
                 setSelectedTime(it)
                 isTimeDialogShown = false
-                timeState = it
-                viewModel.start_time.value=it.toString()
+                timeState = it.toString()
+                viewModel.start_time.value = it.toString()
             },
-            title = { Text(text = "Select time") }
+            title = { Text(text = "Select time") }, shape = RoundedCornerShape(8.dp),
+            colors = TimePickerDefaults.colors(dialBackgroundColor = SocialTheme.colors.uiFloated)
         )
     }
     var hideKeyboard by remember { mutableStateOf(false) }
@@ -215,7 +217,7 @@ fun CreateScreen(viewModel:CreateViewModel,
                 setSelectedTime(it)
                 isTimeLengthDialogShown = false
                 timeLengthState = it.toString()
-                viewModel.duration.value=it.toString()
+                viewModel.duration.value = it.toString()
             },
             title = { Text(text = "Select time") }
         )
@@ -248,7 +250,7 @@ fun CreateScreen(viewModel:CreateViewModel,
     } else {
 
     }
-    var saved = remember{ mutableStateOf(false) }
+    var saved = remember { mutableStateOf(false) }
     if (matchResult != null) {
         val lat = matchResult.groupValues[1].toDouble()
         val lng = matchResult.groupValues[2].toDouble()
@@ -257,12 +259,30 @@ fun CreateScreen(viewModel:CreateViewModel,
         cameraPositionState.position = CameraPosition.fromLatLngZoom(latLng, 13f)
     } else {
     }
-    Log.d("CREATEFRAGMENT",viewModel.name.value)
-    if (!activityTextState.isFocused && viewModel.name.value.isNotEmpty()){
-        Log.d("CREATEFRAGMENT","assigning")
-        activityTextState.text=viewModel.name.value
-    }else{
-
+    Log.d("CREATEFRAGMENT", viewModel.name.value)
+    if (!activityTextState.isFocused && viewModel.name.value.isNotEmpty()) {
+        activityTextState.text = viewModel.name.value
+    }
+    if (!descriptionTextState.isFocused && viewModel.description.value.isNotEmpty()) {
+        descriptionTextState.text = viewModel.description.value
+    }
+    if (!isDateDialogShown && viewModel.date.value.isNotEmpty()) {
+        dateState = viewModel.date.value
+    }
+    if (!isTimeDialogShown && viewModel.start_time.value.isNotEmpty()) {
+        timeState = viewModel.start_time.value
+    }
+    if (!minTextState.isFocused && viewModel.min.value.isNotEmpty()) {
+        minTextState.text = viewModel.min.value
+    }
+    if (!maxTextState.isFocused && viewModel.max.value.isNotEmpty()) {
+        maxTextState.text = viewModel.max.value
+    }
+    if (!customLocationTextState.isFocused && viewModel.custom_location.value.isNotEmpty()) {
+        customLocationTextState.text = viewModel.custom_location.value
+    }
+    if (viewModel.latlng.value.isNotEmpty()) {
+       location.value=viewModel.latlng.value
     }
     Surface(
         modifier = Modifier
@@ -272,21 +292,33 @@ fun CreateScreen(viewModel:CreateViewModel,
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
-                .fillMaxSize()
-                .clickable { hideKeyboard = true },
+                .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            activityPickerCreate(isSystemInDarkTheme(), onEvent = { event -> onEvent(event) })
+            activityPickerCreate(isSystemInDarkTheme(), onEvent =onEvent)
             Spacer(modifier = Modifier.height(12.dp))
-                // todo finish saving the values of all the picks thorufh shared preferences
+            // todo finish saving the values of all the picks thorufh shared preferences
             EditTextField(hint = "Enter a name for your activity",
                 hideKeyboard = hideKeyboard,
                 onFocusClear = { hideKeyboard = false },
                 textState = activityTextState,
-                modifier = Modifier, title = "Name",
-                icon = R.drawable.ic_edit, focusManager = focusManager, onClick = {})
+                modifier = Modifier,
+                title = "Name",
+                icon = R.drawable.ic_edit,
+                focusManager = focusManager,
+                onClick = {},
+                maxLetters = 150,
+                onSaveValueCall = { focused ->
+                    if (focused) {
+
+                    } else {
+                        Log.d("CreateScreen", "UNFOCUSED")
+                        Log.d("CreateScreen", activityTextState.text)
+                        viewModel.name.value = activityTextState.text
+                    }
+                })
 
             //DATE FIELD
             CreateClickableTextField(
@@ -308,7 +340,7 @@ fun CreateScreen(viewModel:CreateViewModel,
                     isTimeDialogShown = true
                 },
                 title = "Start time",
-                text = timeState.toString(),
+                text = timeState,
                 icon = R.drawable.ic_schedule,
                 description = "Select the time for your activity"
             )
@@ -341,45 +373,77 @@ fun CreateScreen(viewModel:CreateViewModel,
                 icon = R.drawable.ic_hourglass
             )
 
+            EditTextField(hint = "Additional information",
+                hideKeyboard = hideKeyboard,
+                onFocusClear = { hideKeyboard = false },
+                textState = descriptionTextState,
+                modifier = Modifier,
+                title = "Description",
+                icon = R.drawable.ic_description,
+                focusManager = focusManager,
+                onClick = {},
+                maxLetters = 500,
+                onSaveValueCall = {
+                    if (it) {
 
-            if(location.value!=null){
-                //LOCATON FIELD
+                    } else {
+                        viewModel.description.value = descriptionTextState.text
+                    }
+                })
 
-                LocationField(  modifier = Modifier,
-                    onClick = {
-                        focusManager.clearFocus()
-                        //open dialog to change or remove location
-                        openDialog.value=true
-                    },
-                    title = "Location",
-                    value = "Already Selected",
-                    icon = R.drawable.ic_location_24)
-                Log.d("createscreen","val"+latlng.value)
-            }else{
-                //CUSTOM LOCATION FIELD
-                CustomLocationField(hint = "Describe the location",
-                    hideKeyboard = hideKeyboard,
-                    onFocusClear = { hideKeyboard = false },textState=customLocationTextState,
-                    modifier = Modifier, title = "Custom location",
-                    icon = R.drawable.ic_edit_location, focusManager = focusManager, onClick = {})
 
-            }
             AdvancedOptions(onClick = {
-                displayAdvancedOptions.value= !displayAdvancedOptions.value})
+                displayAdvancedOptions.value = !displayAdvancedOptions.value
+            }, displayAdvancedOptions.value)
 
 
-       
-            AnimatedVisibility(visible = displayAdvancedOptions.value,enter= expandVertically(),exit= shrinkVertically ()) {
+
+            AnimatedVisibility(
+                visible = displayAdvancedOptions.value,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
                 Column() {
-                    EditTextField(hint = "Additional information",
-                        hideKeyboard = hideKeyboard,
-                        onFocusClear = { hideKeyboard = false },textState=descriptionTextState,
-                        modifier = Modifier, title = "Description",
-                        icon = R.drawable.ic_description, focusManager = focusManager, onClick = {})
+                    if (location.value != null) {
+                        /*//LOCATON FIELD
+                        LocationField(
+                            modifier = Modifier,
+                            onClick = {
+                                focusManager.clearFocus()
+                                //open dialog to change or remove location
+                                openDialog.value = true
+                            },
+                            title = "Location",
+                            value = "Already Selected",
+                            icon = R.drawable.ic_location_24
+                        )
+                        Log.d("createscreen", "val" + latlng.value)*/
+                    } else {
+                        //CUSTOM LOCATION FIELD
+                        CustomLocationField(hint = "Describe the location",
+                            hideKeyboard = hideKeyboard,
+                            onFocusClear = { hideKeyboard = false },
+                            textState = customLocationTextState,
+                            modifier = Modifier,
+                            title = "Custom location",
+                            icon = R.drawable.ic_edit_location,
+                            focusManager = focusManager,
+                            onClick = {},
+                            onSaveValueCall = {
+                                if (!it) {
+                                    viewModel.custom_location.value = customLocationTextState.text
+                                }
+                            })
 
-                    CustomField(text = "Additional information",
-                        modifier = Modifier, title = "Participants limits",
-                        icon = R.drawable.ic_checklist,  onClick = {}, description = "Set maximum and minimum users limit for activity"){
+                    }
+                    CustomField(
+                        text = "Additional information",
+                        modifier = Modifier,
+                        title = "Participants limits",
+                        icon = R.drawable.ic_checklist,
+                        onClick = {},
+                        description = "Set maximum and minimum users limit for activity"
+                    ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -390,31 +454,49 @@ fun CreateScreen(viewModel:CreateViewModel,
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Spacer(modifier = Modifier.height(6.dp))
-                                RequirementsNumberField("Min", numberState = minTextState, focusManager = focusManager)
+                                RequirementsNumberField(
+                                    "Min",
+                                    numberState = minTextState,
+                                    focusManager = focusManager,
+                                    onSaveValueCall = {
+                                        if (!it) {
+                                            viewModel.min.value = minTextState.text
+
+                                        }
+                                    })
                             }
                             Column(
                                 modifier = Modifier.weight(1f),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Spacer(modifier = Modifier.height(6.dp))
-                                RequirementsNumberField("Max", numberState = maxTextState, focusManager = focusManager)
+                                RequirementsNumberField(
+                                    "Max",
+                                    numberState = maxTextState,
+                                    focusManager = focusManager,
+                                    onSaveValueCall = {
+                                        if (!it) {
+                                            viewModel.max.value = maxTextState.text
+                                        }
+
+                                    })
                             }
                         }
                     }
 
-                    CustomField(text = "Privacy",
-                        modifier = Modifier, title = "Reminders",
-                        icon = R.drawable.ic_notification_active,  onClick = {}, description = "Remind users about the activity an hour before start."){
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp)
-                        ) {
+                    /* CustomField(text = "Privacy",
+                         modifier = Modifier, title = "Reminders",
+                         icon = R.drawable.ic_notification_active,  onClick = {}, description = "Remind users about the activity an hour before start."){
+                         Row(
+                             modifier = Modifier
+                                 .fillMaxWidth()
+                                 .padding(horizontal = 24.dp)
+                         ) {
 
-                            Spacer(modifier = Modifier.weight(1f))
-                            Switch2(onCheckedChange = {})
-                        }
-                    }
+                             Spacer(modifier = Modifier.weight(1f))
+                             Switch2(onCheckedChange = {})
+                         }
+                     }*/
                 }
 
             }
@@ -424,24 +506,65 @@ fun CreateScreen(viewModel:CreateViewModel,
             Spacer(modifier = Modifier.height(48.dp))
 
 
-            CreateActivityButton(onClick = {
-                Log.d("Ready", "button" + latlng.value)
-                onEvent(
-                    CreateEvent.CreateActivity(
-                        title = activityTextState.text,
-                        date = dateState.toString(),
-                        start_time = timeState.toString(),
-                        time_length = timeLengthState.toString(),
-                        invited_users = arrayListOf(),
-                        description = descriptionTextState.text,
-                        location = latlng.value,
-                        min = minTextState.text,
-                        max = maxTextState.text,
-                        custom_location = customLocationTextState.text
-                    )
-                )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                GoToMapButton(
+                    borderColor = if (location.value != null) {
+                        Color(0xFF52b69a)
+                    } else {
+                        SocialTheme.colors.iconInteractive
+                    },
+                    textColor = if (location.value != null) {
+                        SocialTheme.colors.textSecondary
+                    } else {
+                        SocialTheme.colors.iconInteractive
+                    }, backgroundColor = if (location.value != null) {
+                        Color(0xFF52b69a)
+                    } else {
+                        Color.Transparent
+                    },
+                    onClick = {
+                        if (location.value != null) {
+                            focusManager.clearFocus()
+                            //open dialog to change or remove location
+                            openDialog.value = true
+                        } else {
+                            onEvent(CreateEvent.GoToMap)
+                        }
 
-            }, text = "Ready", modifier = Modifier)
+                    }, modifier = Modifier.width(200.dp), text = if (location.value != null) {
+                        "Preview"
+                    } else {
+                        "Visit map"
+                    }
+                )
+                Spacer(Modifier.width(24.dp))
+                CreateActivityButton(onClick = {
+                    if(minTextState.text.toInt()>maxTextState.text.toInt()){
+                        Toast.makeText(context,"Min participant limit greater than max",Toast.LENGTH_SHORT).show()
+                    }else{
+                        onEvent(
+                            CreateEvent.CreateActivity(
+                                title = activityTextState.text,
+                                date = dateState.toString(),
+                                start_time = timeState.toString(),
+                                time_length = timeLengthState.toString(),
+                                invited_users = arrayListOf(),
+                                description = descriptionTextState.text,
+                                location = latlng.value,
+                                min = minTextState.text,
+                                max = maxTextState.text,
+                                custom_location = customLocationTextState.text
+                            )
+                        )
+                    }
+
+
+                }, text = "Ready", modifier = Modifier.width(200.dp))
+            }
+
             Spacer(modifier = Modifier.height(64.dp))
         }
 
@@ -528,80 +651,48 @@ fun CreateScreen(viewModel:CreateViewModel,
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Card(
-                        shape = RoundedCornerShape(6.dp),
-                        border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
-                        onClick = { openDialog.value = false }) {
-                        Box(
-                            modifier = Modifier
-                                .background(color = SocialTheme.colors.uiBackground)
-                                .padding(vertical = 6.dp, horizontal = 12.dp)
-                        ) {
-                            ClickableText(text = AnnotatedString("Dismiss"), style = TextStyle(
-                                color = SocialTheme.colors.textPrimary,
-                                fontFamily = Inter,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 14.sp
-                            ), onClick = { openDialog.value = false })
-                        }
+                Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+
+                                ClickableText(text = AnnotatedString("Dismiss"), style = TextStyle(
+                                    color = SocialTheme.colors.textPrimary.copy(0.6f),
+                                    fontFamily = Inter,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 14.sp
+                                ), onClick = { openDialog.value = false })
+
+                        Spacer(modifier = Modifier.weight(1f))
+                                Icon(painter = painterResource(id = R.drawable.ic_fix),null,tint=SocialTheme.colors.iconInteractive)
+                                ClickableText(text = AnnotatedString("Change"), style = TextStyle(
+                                    color =SocialTheme.colors.iconInteractive,
+                                    fontFamily = Inter,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 14.sp
+                                ), onClick = {
+                                    openDialog.value = false
+                                    onEvent(CreateEvent.GoToMap)
+                                })
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Icon(painter = painterResource(id = R.drawable.ic_delete),null,tint=SocialTheme.colors.error)
+                                ClickableText(text = AnnotatedString("Remove"), style = TextStyle(
+                                    color = SocialTheme.colors.error,
+                                    fontFamily = Inter,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 14.sp
+                                ), onClick = {
+                                    openDialog.value = false
+                                    location.value = null
+                                    viewModel.latlng.value=""
+                                })
+
 
                     }
 
-
-                    Card(
-                        shape = RoundedCornerShape(6.dp),
-                        border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
-                        onClick = {
-                            openDialog.value = false
-                            onEvent(CreateEvent.GoToMap)
-                        }) {
-                        Box(
-                            modifier = Modifier
-                                .background(color = SocialTheme.colors.uiBackground)
-                                .padding(vertical = 6.dp, horizontal = 12.dp)
-                        ) {
-                            ClickableText(text = AnnotatedString("Change"), style = TextStyle(
-                                color = Color.Green,
-                                fontFamily = Inter,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 14.sp
-                            ), onClick = {
-                                openDialog.value = false
-                                onEvent(CreateEvent.GoToMap)
-                            })
-                        }
-
-                    }
-                    Card(
-                        shape = RoundedCornerShape(6.dp),
-                        border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
-                        onClick = {
-                            openDialog.value = false
-                            location.value = null
-                        }) {
-                        Box(
-                            modifier = Modifier
-                                .background(color = SocialTheme.colors.uiBackground)
-                                .padding(vertical = 6.dp, horizontal = 12.dp)
-                        ) {
-                            ClickableText(text = AnnotatedString("Remove"), style = TextStyle(
-                                color = Color.Red,
-                                fontFamily = Inter,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 14.sp
-                            ), onClick = {
-                                openDialog.value = false
-                                location.value = null
-                            })
-                        }
-                    }
-
-                }
 
             }
 
@@ -611,19 +702,28 @@ fun CreateScreen(viewModel:CreateViewModel,
 
 }
 
+
 @Composable
-fun AdvancedOptions(onClick: () -> Unit) {
-    Box(modifier = Modifier
-        .fillMaxWidth()
-        .clickable(onClick = onClick)) {
+fun AdvancedOptions(onClick: () -> Unit, displayed: Boolean) {
+    val icons = if (!displayed) {
+        painterResource(id = R.drawable.ic_down)
+    } else {
+        painterResource(id = R.drawable.ic_up)
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
         Column() {
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .padding(6.dp), contentAlignment = Center) {
+                    .padding(6.dp), contentAlignment = Center
+            ) {
                 Row(modifier = Modifier.align(Center)) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_down),
+                        painter = icons,
                         contentDescription = null,
                         tint = SocialTheme.colors.textPrimary
                     )
@@ -784,58 +884,23 @@ fun ConfigureField(
 fun RequirementsNumberField(
     hint: String, numberState: TextFieldState,
     focusManager: FocusManager,
-    imeAction: ImeAction = ImeAction.Done
+    imeAction: ImeAction = ImeAction.Done,
+    onSaveValueCall: (Boolean) -> Unit
 ) {
-    val regex = Regex("^[0-9]+$")
-    Card(
+    val regex = Regex("^[0-9]*$")
+    val descriptionFocusRequester = remember { FocusRequester() }
+    editNumberField(
+        label = hint,
+        editTextState = numberState,
+        maxLetters = 3,
+        onImeAction = { imeAction },
+        regex = regex,
         modifier = Modifier
             .widthIn(50.dp, 100.dp)
-            .height(48.dp)
-            .padding(0.dp),
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
-        elevation = 0.dp,
-        backgroundColor = SocialTheme.colors.uiBackground
-    ) {
-        Box(modifier = Modifier.background(color = SocialTheme.colors.uiBackground)) {
-            TextField(
-                modifier = Modifier.onFocusChanged { focusState ->
-                    numberState.onFocusChange(focusState.isFocused)
-                    if (!focusState.isFocused) {
-                        numberState.enableShowErrors()
-                    }
-                },
-                textStyle = TextStyle(fontSize = 14.sp),
-                value = numberState.text,
-                onValueChange = {
-
-                    if (it.length < 4) {
-                        if (regex.containsMatchIn(it)) {
-                            numberState.text = it
-                        }
-                    }
-                },
-                placeholder = {
-                    Text(
-                        color = Color(0xff757575),
-                        text = hint
-                    )
-                },
-                colors = TextFieldDefaults.textFieldColors(
-                    backgroundColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                    errorIndicatorColor = Color.Transparent,
-                    cursorColor = SocialTheme.colors.textPrimary
-                ),
-                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
-            )
-        }
-    }
-
-
+            .height(56.dp)
+            .focusRequester(descriptionFocusRequester),
+        onSaveValueCall = onSaveValueCall
+    )
 }
 
 @Composable
@@ -852,7 +917,7 @@ fun Switch2(
     height: Dp = 20.dp,
     strokeWidth: Dp = 2.dp,
     checkedTrackColor: Color = SocialTheme.colors.iconInteractive,
-    uncheckedTrackColor: Color =SocialTheme.colors.iconPrimary.copy(alpha=0.75f),
+    uncheckedTrackColor: Color = SocialTheme.colors.iconPrimary.copy(alpha = 0.75f),
     gapBetweenThumbAndTrackEdge: Dp = 1.dp,
     onCheckedChange: ((Boolean) -> Unit)?
 ) {
@@ -869,18 +934,19 @@ fun Switch2(
         else
             with(LocalDensity.current) { (thumbRadius + gapBetweenThumbAndTrackEdge).toPx() }
     )
-    Box(modifier = Modifier.width(48.dp)){
+    Box(modifier = Modifier.width(48.dp)) {
         Canvas(
-            modifier = Modifier.align(Center)
+            modifier = Modifier
+                .align(Center)
                 .size(width = width, height = height)
                 .scale(scale = scale)
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onTap = {
-                            if(switchON.value){
+                            if (switchON.value) {
                                 onCheckedChange?.invoke(false)
 
-                            }else{
+                            } else {
                                 onCheckedChange?.invoke(true)
 
                             }
@@ -899,7 +965,7 @@ fun Switch2(
 
             // Thumb
             drawCircle(
-                color =Color.White ,
+                color = Color.White,
                 radius = thumbRadius.toPx(),
                 center = Offset(
                     x = animatePosition.value,
@@ -916,9 +982,9 @@ fun Switch2(
 
 @Preview
 @Composable
-fun preview(){
-    SocialTheme{
-        Box(modifier=Modifier.background(color=SocialTheme.colors.uiBackground)){
+fun preview() {
+    SocialTheme {
+        Box(modifier = Modifier.background(color = SocialTheme.colors.uiBackground)) {
             Switch2(onCheckedChange = {})
         }
     }
@@ -933,7 +999,6 @@ fun DatePicker(onDismissRequest: () -> Unit, onDateChange: (LocalDate) -> Unit) 
         onDateChange = onDateChange,
         // Optional but recommended parameter to provide the title for the dialog
         title = { Text(text = "Select date") },
-        containerColor = SocialTheme.colors.uiBackground,
         titleContentColor = SocialTheme.colors.textPrimary,
         shapes = object : DatePickerShapes {
             override val currentMonthDaySelected: Shape
@@ -950,7 +1015,8 @@ fun DatePicker(onDismissRequest: () -> Unit, onDateChange: (LocalDate) -> Unit) 
                 get() = RoundedCornerShape(4.dp)
             override val year: Shape
                 get() = RoundedCornerShape(4.dp)
-        }
+        },
+        shape = RoundedCornerShape(8.dp)
     )
 
 }

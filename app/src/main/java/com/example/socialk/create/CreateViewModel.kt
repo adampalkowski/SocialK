@@ -27,6 +27,7 @@ class CreateViewModel : ViewModel() {
     var custom_location =mutableStateOf("")
     var max =mutableStateOf("")
     var min =mutableStateOf("")
+    var latlng =mutableStateOf("")
 
     fun handleGoToProfile( ) {
         _navigateTo.value = Event(Screen.Profile)

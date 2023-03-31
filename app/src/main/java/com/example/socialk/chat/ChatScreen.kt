@@ -39,8 +39,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.socialk.R
+import com.example.socialk.camera.BackPressHandler
+import com.example.socialk.camera.CameraButton
+import com.example.socialk.camera.CameraEvent
 import com.example.socialk.chat.ChatComponents.*
 import com.example.socialk.components.*
 import com.example.socialk.create.ActivityTextFieldState
@@ -62,6 +66,7 @@ import kotlinx.coroutines.launch
 
 sealed class ChatEvent {
     object GoToProfile : ChatEvent()
+    object BackPressed : ChatEvent()
     object CreateNonExistingChatCollection : ChatEvent()
     object LiveInvite : ChatEvent()
     class ShareLocation(val latLng: LatLng) : ChatEvent()
@@ -220,6 +225,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
     var highlite_message by remember { mutableStateOf(false) }
     var highlited_message_text by remember { mutableStateOf("") }
     var highlight_dialog by remember { mutableStateOf(false) }
+    var display_picture by remember { mutableStateOf("") }
 
     var uri by remember { mutableStateOf<Uri?>(null) }
     val uriReceived by chatViewModel.uriReceived
@@ -314,19 +320,24 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
             ) {
                 items(data.value!!) {
                     if (it.sender_id == UserData.user!!.id) {
-                        if (it.message_type.equals("uri")) {
-                        }
+
                         Spacer(modifier = Modifier.height(4.dp))
                         ChatItemRight(text_type = it.message_type,
                             textMessage = it.text,
                             date = it.sent_time,
                             onLongPress = { messageOptionsVisibility = true }, onClick = {
+                                Log.d("CHATSCREEN","clicked")
                                 if (highlite_message) {
                                     if(it.message_type.equals("live")||it.message_type.equals("latLng")){
 
                                     }else{
                                         openDialog.value = true
                                         highlited_message_text = it.text
+                                    }
+                                }else{
+                                    if(it.message_type.equals("uri")){
+                                        Log.d("CHATSCREEN","display_picture")
+                                        display_picture=it.text
                                     }
                                 }
                             }, onEvent = { event ->
@@ -556,6 +567,9 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                 )
             }else{
 
+            }
+            if(display_picture.isNotEmpty()){
+                DisplayPictureScreen(display_picture,onEvent=onEvent)
             }
             if (highlight_dialog) {
                 HighLightDialog(modifier = Modifier.align(TopCenter), onEvent = { it ->
@@ -957,5 +971,29 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
     },
     activeUsersViewModel = activeUsersViewModel
     )
+
+}
+
+@Composable
+fun DisplayPictureScreen(photoUri: String,onEvent:(ChatEvent)->Unit) {
+    BackPressHandler(onBackPressed = { onEvent(ChatEvent.BackPressed) })
+    Surface(modifier = Modifier.fillMaxSize()) {
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = androidx.compose.ui.graphics.Color.Black)
+        ) {
+            Image(
+                painter = rememberImagePainter(photoUri),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+
+
+        }
+
+    }
 
 }

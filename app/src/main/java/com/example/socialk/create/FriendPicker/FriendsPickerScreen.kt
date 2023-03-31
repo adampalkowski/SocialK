@@ -240,7 +240,7 @@ fun PickDisplay(
                 }}  ,
                 textColor = SocialTheme.colors.textSecondary,
                 elevation = 2.dp,
-                icon = R.drawable.ic_start,
+                icon = R.drawable.ic_done,
                 iconTint = SocialTheme.colors.textSecondary,
                 borderColor = SocialTheme.colors.iconInteractive
                 )
@@ -257,7 +257,7 @@ fun PickDisplay(
         iconTint: Color = SocialTheme.colors.iconPrimary,
         text: String,
         onEvent: () -> Unit,
-        shape: Dp = 8.dp,
+        shape: Dp = 100.dp,
         backGroundColor: Color = SocialTheme.colors.uiBackground,
         elevation: Dp = 4.dp,
         textColor: Color = SocialTheme.colors.textPrimary,
@@ -287,7 +287,7 @@ fun PickDisplay(
             Box(
                 modifier = Modifier
                     .background(color = backGroundColor)
-                    .padding(vertical = 12.dp, horizontal = 16.dp)
+                    .padding(vertical = 12.dp, horizontal = 24.dp)
             ) {
                 Row {
                     Icon(

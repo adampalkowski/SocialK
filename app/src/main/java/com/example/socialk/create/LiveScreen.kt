@@ -186,7 +186,7 @@ fun LiveScreenContent(activeUsersViewModel:ActiveUsersViewModel,onEvent: (LiveEv
             },
 
             icon = R.drawable.ic_hourglass,
-            description ="Enter the duration of your live activity"
+            description ="Select the time for your activity"
 
         )
         CurrentLocationTextField( onClick = {  focusManager.clearFocus()},

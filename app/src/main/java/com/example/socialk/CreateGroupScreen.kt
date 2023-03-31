@@ -82,15 +82,15 @@ fun CreateGroupScreen(viewModel:CreateGroupViewModel,onEvent:(CreateGroupEvent)-
                     .align(Alignment.BottomEnd).focusRequester(focusRequester)
                     .padding(end = 24.dp) .padding( bottom= 24.dp), enabled = enabledButton,
                 text = "Pick friends",
-                backGroundColor = SocialTheme.colors.uiBackground,
+                backGroundColor = SocialTheme.colors.iconInteractive,
                 onEvent = {
                     activityTextState.enableShowErrors()
                     if(activityTextState.text.trim().length>0){onSubmit(activityTextState.text)}
                         },
-                textColor = SocialTheme.colors.textPrimary,
+                textColor = SocialTheme.colors.textSecondary,
                 elevation = 2.dp,
                 icon = R.drawable.ic_start,
-                iconTint = SocialTheme.colors.textPrimary,
+                iconTint = SocialTheme.colors.textSecondary,
                 borderColor = SocialTheme.colors.uiFloated
             )
         }
