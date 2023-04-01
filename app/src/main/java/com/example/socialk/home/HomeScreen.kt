@@ -8,9 +8,11 @@ import androidx.compose.animation.AnimatedContentScope.SlideDirection.Companion.
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement.Absolute.Center
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
@@ -22,11 +24,20 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.socialk.*
 import com.example.socialk.R
 import com.example.socialk.camera.CameraEvent
@@ -38,13 +49,18 @@ import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.model.*
 import com.example.socialk.signinsignup.AuthViewModel
+import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 import com.google.accompanist.systemuicontroller.SystemUiController
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.*
 import java.util.concurrent.Executor
+import com.example.socialk.home.MapBox as MapBox1
 
 sealed class ActivityEvent() {
     class OpenActivitySettings(activity: Activity) : ActivityEvent() {
@@ -73,6 +89,10 @@ sealed class ActivityEvent() {
     }
 
     class OpenCamera(val activity_id: String) : ActivityEvent()
+}
+sealed class ActivityPreviewEvent{
+    class GoToProfile(val id:String) :ActivityPreviewEvent()
+    class OpenActivitySettings(val activity: Activity) :ActivityPreviewEvent()
 }
 
 sealed class HomeEvent {
@@ -146,6 +166,8 @@ fun HomeScreen(
     val scaffoldState = rememberScaffoldState()
     val showDialogState: Boolean by homeViewModel?.showDialog!!.collectAsState()
     var bottomSheetActivity by rememberSaveable { mutableStateOf(Activity()) }
+    var displayActivity by remember { mutableStateOf(false) }
+
 
     androidx.compose.material.Scaffold(modifier = Modifier.systemBarsPadding(),
         scaffoldState = scaffoldState,
@@ -211,6 +233,9 @@ fun HomeScreen(
                     onEvent = { homeEvent ->
 
                         onEvent(homeEvent)
+                    }, onLongClick = { activity ->
+                        bottomSheetActivity = activity
+                        displayActivity = true
                     })
             }
 
@@ -329,7 +354,6 @@ fun HomeScreen(
         }
     }
 
-
     activityViewModel?.activityState?.value.let { event ->
         when (event) {
             is Response.Success -> {
@@ -358,6 +382,11 @@ fun HomeScreen(
             homeViewModel?.removeActivity()
             Log.d("homescreen", "falseeee")
         })
+    AnimatedVisibility(visible=displayActivity, enter = scaleIn(animationSpec = tween(500)), exit =scaleOut( tween(500)) ){
+        Dialog(onDismissRequest = { displayActivity = false }) {
+            ActivityPreview(modifier=Modifier,bottomSheetActivity, onEvent = {event->})
+        }
+    }
 
     BottomDialog(
         state = bottomSheetState,
@@ -402,6 +431,276 @@ fun HomeScreen(
 
 }
 
+@Composable
+fun ActivityPreview(modifier: Modifier = Modifier, bottomSheetActivity: Activity,onEvent:(ActivityPreviewEvent)->Unit) {
+
+
+    Box(modifier=modifier) {
+        Column() {
+            if(bottomSheetActivity.location.isNotEmpty()){
+            MapBox1(location=bottomSheetActivity.location)
+            Spacer(modifier = Modifier.height(16.dp))
+           }else{
+                DataBox(icon = R.drawable.ic_location_24,bottomSheetActivity.custom_location)
+                Spacer(modifier = Modifier.height(4.dp))
+           }
+
+           /* androidx.compose.material3.Card(shape= RoundedCornerShape(12.dp)) {
+                Box(
+                    Modifier
+                        .background(color = SocialTheme.colors.uiBackground)
+                        .padding(8.dp)){
+                    Column() {
+                        ActivityItemCreatorBox(
+                            onClick = { onEvent(ActivityPreviewEvent.GoToProfile(bottomSheetActivity.creator_id)) },
+                            pictureUrl = bottomSheetActivity.creator_profile_picture,
+                            username = bottomSheetActivity.creator_username,
+                            timeLeft = bottomSheetActivity.time_left,
+                            onSettingsClick = { onEvent(ActivityPreviewEvent.OpenActivitySettings(bottomSheetActivity)) })
+                        Spacer(modifier = Modifier.height(12.dp))
+                        ActivityTextBox(modifier = Modifier, title =bottomSheetActivity.title , description =bottomSheetActivity.description )
+                    }
+
+                }
+            }*/
+
+            Spacer(modifier = Modifier.height(4.dp))
+            DataBox(icon=R.drawable.ic_date_24,bottomSheetActivity.date)
+            Spacer(modifier = Modifier.height(4.dp))
+            DataBox(icon=R.drawable.ic_timer_24,bottomSheetActivity.start_time + " - " + bottomSheetActivity.end_time)
+            //ChatMessageBox()
+            Spacer(modifier = Modifier.height(4.dp))
+            ParticipantsBox(bottomSheetActivity.participants_usernames,bottomSheetActivity.participants_profile_pictures)
+
+        }
+
+
+    }
+}
+@Composable
+fun DataBox(icon:Int,text:String) {
+    androidx.compose.material3.Card(
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.background(color = Color.Transparent),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .background(color = Color.Black.copy(alpha = 0.3f))
+        ) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),horizontalArrangement = Arrangement.Start,
+            ) {
+                androidx.compose.material3.Icon(
+                    painter = painterResource(id = icon),
+                    contentDescription = null,
+                    tint = Color.White
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = text,color=Color.White,
+                    style = TextStyle(
+                        fontFamily = Inter,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                )
+            }
+        }
+    }
+}
+@Composable
+fun ParticipantsBox(participantsUsernames: HashMap<String, String>, participantsProfilePictures: HashMap<String, String>) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+               ) {
+                    Column() {
+                        DataBox(icon =R.drawable.ic_person_done , text = "Participants" )
+                        Spacer(modifier = Modifier.height(2.dp))
+                    Row(Modifier.horizontalScroll(rememberScrollState())){
+                        participantsProfilePictures.forEach{
+                            ParticipantBoxItem(it.value,participantsUsernames[it.key]!!)
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                    }
+                    }
+
+        }
+}
+
+@Composable
+fun ParticipantBoxItem(picture_url: String, username: String) {
+    androidx.compose.material3.Card(shape=RoundedCornerShape(8.dp),modifier=Modifier.background(color=Color.Transparent),     colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+        Box(
+            Modifier
+                .background(color = Color.Black.copy(0.3f))
+                .padding(8.dp)){
+            Column(horizontalAlignment = Alignment.CenterHorizontally){
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(picture_url)
+                        .crossfade(true)
+                        .build(),
+                    placeholder = painterResource(R.drawable.ic_person),
+                    contentDescription = "image sent",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                )
+                Text(text = username,color=Color.White)
+            }
+        }
+    }
+
+
+
+}
+
+@Composable
+fun MapBox(location:String){
+    val cameraPositionState: CameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 11f)
+    }
+    var uiSettings by remember {
+        mutableStateOf(
+            MapUiSettings(
+                zoomControlsEnabled = false,
+                myLocationButtonEnabled = true,
+                indoorLevelPickerEnabled = true
+            )
+        )
+    }
+    val latLngVA = location.split("/")
+    val latitude = latLngVA[0].toDouble()
+    val longitude = latLngVA[1].toDouble()
+    val latLng = LatLng(latitude, longitude)
+    cameraPositionState.position = CameraPosition.fromLatLngZoom(latLng, 13f)
+
+
+
+
+    var isMapLoaded by remember { mutableStateOf(false) }
+    var properties by remember {
+        mutableStateOf(MapProperties(mapType = MapType.NORMAL))
+    }
+    androidx.compose.material3.Card(
+        Modifier
+            .fillMaxWidth()
+            .height(200.dp), shape = RoundedCornerShape(12.dp)
+    ) {
+        GoogleMap(
+            Modifier.fillMaxSize(),
+            cameraPositionState,
+            properties = properties, onMapLoaded = {
+                isMapLoaded = true
+            },
+            uiSettings = uiSettings
+        ) {
+            MarkerInfoWindow(
+                state = MarkerState(
+                    position = latLng
+                )
+            ) {
+                Column() {
+                    androidx.compose.material3.Card(shape = RoundedCornerShape(6.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .background(color = SocialTheme.colors.uiBackground)
+                                .padding(6.dp)
+                        ) {
+                            androidx.compose.material.Text(
+                                text = "Current location",
+                                style = TextStyle(
+                                    fontFamily = Inter,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 14.sp
+                                ),
+                                color = SocialTheme.colors.textPrimary
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
+            }
+        }
+    }
+
+}
+@Composable
+fun TimeBox(time: String) {
+    androidx.compose.material3.Card(shape = RoundedCornerShape(100.dp)) {
+        Box(
+            Modifier
+                .background(color = SocialTheme.colors.uiBackground)
+                .fillMaxWidth()) {
+            Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                androidx.compose.material3.Icon(painter = painterResource(id = R.drawable.ic_timer_24), contentDescription =null, tint = SocialTheme.colors.iconPrimary )
+                Spacer(modifier = Modifier.width(24.dp))
+                Text(
+                    text = time,
+                    style = TextStyle(
+                        fontFamily = Inter,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                )
+            }
+        }
+    }
+
+}
+
+@Composable
+fun DateBox(date: String) {
+    androidx.compose.material3.Card(shape = RoundedCornerShape(100.dp)) {
+        Box(
+            Modifier
+                .background(color = SocialTheme.colors.uiBackground)
+                .fillMaxWidth()) {
+            Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                androidx.compose.material3.Icon(painter = painterResource(id = R.drawable.ic_date_24), contentDescription =null, tint = SocialTheme.colors.iconPrimary )
+                Spacer(modifier = Modifier.width(24.dp))
+                Text(
+                    text = date,
+                    style = TextStyle(
+                        fontFamily = Inter,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                )
+            }
+        }}
+
+}
+@Composable
+fun LocationBox(customLocation: String) {
+    androidx.compose.material3.Card(shape = RoundedCornerShape(100.dp)) {
+        Box(
+            Modifier
+                .background(color = SocialTheme.colors.uiBackground)
+                .fillMaxWidth()) {
+            Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                androidx.compose.material3.Icon(painter = painterResource(id = R.drawable.ic_location_24), contentDescription =null, tint = SocialTheme.colors.iconPrimary )
+                Spacer(modifier = Modifier.width(24.dp))
+                Text(
+                    text = customLocation,
+                    style = TextStyle(
+                        fontFamily = Inter,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                )
+            }
+        }}
+
+}
+
 
 @Composable
 fun activityDialog(activity: Activity?, activityDialogState: Boolean, onEvent: () -> Unit) {
@@ -411,7 +710,6 @@ fun activityDialog(activity: Activity?, activityDialogState: Boolean, onEvent: (
             onConfirm = { },
             onCancel = {
                 onEvent()
-
             },
             title = "asd",
             info = "ass",
@@ -434,8 +732,8 @@ fun HomeScreenContent(
     padding: PaddingValues,
     isDark: Boolean,
     onEvent: (HomeEvent) -> Unit,
-    homeViewModel: HomeViewModel
-
+    homeViewModel: HomeViewModel,
+    onLongClick: (Activity) -> Unit
 ) {
 
     val refreshScope = rememberCoroutineScope()
@@ -505,8 +803,8 @@ fun HomeScreenContent(
     }
     val state = rememberPullRefreshState(refreshing, ::refresh)
     if (liveActivityDialog != null) {
-        Log.d("HOMESCREEN",liveActivityDialog!!)
-        Log.d("HOMESCREEN",liveActivityParticipantsValue.toString()!!)
+        Log.d("HOMESCREEN", liveActivityDialog!!)
+        Log.d("HOMESCREEN", liveActivityParticipantsValue.toString()!!)
 
         SocialDialog(
             onDismiss = { liveActivityDialog = null },
@@ -514,8 +812,9 @@ fun HomeScreenContent(
                 //check if destroy or leave live activity
                 if (liveActivityParticipantsValue > 1) {
 
-                    Log.d("HOMESCREEN","CLICKED")
-                    onEvent( HomeEvent.LeaveLiveActivity(
+                    Log.d("HOMESCREEN", "CLICKED")
+                    onEvent(
+                        HomeEvent.LeaveLiveActivity(
                             liveActivityDialog!!.toString(),
                             UserData.user!!.id
                         )
@@ -531,7 +830,7 @@ fun HomeScreenContent(
             title = "Leave live activity?",
             info = "Others wont see you in this live activity, if you are the only participant the activity will be destroyed",
             icon = R.drawable.ic_log_out,
-            actionButtonText="Leave"
+            actionButtonText = "Leave"
         )
     }
     Box(
@@ -554,12 +853,12 @@ fun HomeScreenContent(
                                     Spacer(modifier = Modifier.width(24.dp))
                                     ActiveUserItem(
                                         onClick = {
-                                            Log.d("HOMESCREEN",liveActivity.toString())
+                                            Log.d("HOMESCREEN", liveActivity.toString())
                                             if (liveActivity.participants_profile_pictures.keys.contains(
                                                     UserData.user!!.id
                                                 )
                                             ) {
-                                                Log.d("HOMESCREEN",liveActivity.id)
+                                                Log.d("HOMESCREEN", liveActivity.id)
                                                 liveActivityDialog = liveActivity.creator_id
                                                 liveActivityParticipantsValue =
                                                     liveActivity.participants_profile_pictures.size
@@ -658,7 +957,8 @@ fun HomeScreenContent(
                                 //todo add the time end
                                 timePeriod = item.start_time + " - " + item.end_time,
                                 custom_location = item.custom_location,
-                                location = item.location, lockPhotoButton = uploading
+                                location = item.location, lockPhotoButton = uploading,
+                                onLongClick = { onLongClick(item) }
                             )
 
                         }

@@ -24,7 +24,7 @@ import com.example.socialk.ui.theme.SocialTheme
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun CreateActivityButton(modifier:Modifier, onClick: () -> Unit, text: String, color:Color=SocialTheme.colors.iconInteractive, textColor:Color=Color.White ) {
+fun CreateActivityButton(modifier:Modifier=Modifier, onClick: () -> Unit, text: String, color:Color=SocialTheme.colors.iconInteractive, textColor:Color=Color.White,icon:Int=R.drawable.ic_done ) {
     Card(
         modifier = modifier
             .height(48.dp)

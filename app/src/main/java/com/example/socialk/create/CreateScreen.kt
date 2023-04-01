@@ -542,7 +542,8 @@ fun CreateScreen(
                 )
                 Spacer(Modifier.width(24.dp))
                 CreateActivityButton(onClick = {
-                    if(minTextState.text.toInt()>maxTextState.text.toInt()){
+
+                    if(minTextState.text.isNotEmpty() &&maxTextState.text.isNotEmpty() && minTextState.text.toInt()>maxTextState.text.toInt()){
                         Toast.makeText(context,"Min participant limit greater than max",Toast.LENGTH_SHORT).show()
                     }else{
                         onEvent(

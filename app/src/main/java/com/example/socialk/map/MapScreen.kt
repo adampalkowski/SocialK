@@ -27,6 +27,7 @@ import com.bumptech.glide.request.target.CustomTarget
 import com.example.socialk.Destinations
 import com.example.socialk.R
 import com.example.socialk.components.*
+import com.example.socialk.create.CreateActivityButton
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.home.ActivityEvent
 import com.example.socialk.model.Activity
@@ -376,34 +377,8 @@ fun MapScreen(latLngInitial: LatLng?,activityViewModel:ActivityViewModel,
                                         )
                                         .padding(bottom = 48.dp, end = 24.dp)
                                 ) {
-                                    Card(
-                                        onClick = { onEvent(MapEvent.GoToCreateActivity(it))
-                                                  Log.d("mapscreen","card clicked")},
-                                        elevation = 2.dp,
-                                        shape = RoundedCornerShape(6.dp)
-                                    ) {
-                                        Row(     modifier = Modifier
-                                            .background(color = SocialTheme.colors.uiBackground)
-                                            .padding(8.dp)) {
+                                    CreateActivityButton(modifier=Modifier.width(200.dp),text="Add location",onClick={onEvent(MapEvent.GoToCreateActivity(it))},icon= R.drawable.ic_right)
 
-                                                Text(
-                                                    text = "Create activity",
-                                                    style = TextStyle(
-                                                        fontFamily = Inter,
-                                                        fontWeight = FontWeight.Normal,
-                                                        fontSize = 16.sp
-                                                    ),
-                                                    color = SocialTheme.colors.textPrimary
-                                                )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Icon(
-                                                painter = painterResource(id = R.drawable.ic_right),
-                                                contentDescription = null, tint = SocialTheme.colors.iconPrimary
-                                            )
-                                        }
-
-
-                                    }
                                     Spacer(modifier = Modifier.height(64.dp))
                                 }
                             }

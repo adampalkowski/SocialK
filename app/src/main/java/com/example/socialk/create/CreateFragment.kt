@@ -167,7 +167,7 @@ class CreateFragment : Fragment() {
                                 )
 
                                 viewModel.handleGoToFriendsPicker(activity)
-
+                                clearSharedPrefs()
 
 
                             }
@@ -186,6 +186,13 @@ class CreateFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun clearSharedPrefs() {
+        val sharedPref = requireContext().getSharedPreferences("create_data", Context.MODE_PRIVATE)
+        val editor = sharedPref.edit()
+        editor.clear()
+        editor.apply()
     }
 
 }

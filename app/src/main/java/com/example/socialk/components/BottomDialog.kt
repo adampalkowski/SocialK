@@ -149,10 +149,11 @@ fun DisplayParticipants(activity: Activity,onEvent:(BottomDialogEvent)->Unit) {
 
 @Composable
 fun UserDisplay(value: String, s: String) {
-    Box(modifier = Modifier
-        .fillMaxWidth()
-        .background(color = SocialTheme.colors.uiBackground)
-        .padding(horizontal = 24.dp, vertical = 8.dp)){
+    Card(elevation = 0.dp, shape = RoundedCornerShape(100.dp)) {
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .background(color = SocialTheme.colors.uiBackground)
+            .padding(horizontal = 24.dp, vertical = 12.dp)){
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
                     painter = rememberAsyncImagePainter(value),
@@ -162,10 +163,12 @@ fun UserDisplay(value: String, s: String) {
 
                 )
                 Spacer(modifier = Modifier.width(24.dp))
-                Text(text = s, modifier = Modifier,style = TextStyle(fontFamily = Inter, fontSize = 14.sp, fontWeight = FontWeight.SemiBold))
+                Text(text = s, modifier = Modifier,style = TextStyle(fontFamily = Inter, fontSize = 14.sp, fontWeight = FontWeight.SemiBold),color=SocialTheme.colors.textPrimary)
             }
 
+        }
     }
+
 }
 @Composable
 fun ActivitySettingsContent(context:Context,

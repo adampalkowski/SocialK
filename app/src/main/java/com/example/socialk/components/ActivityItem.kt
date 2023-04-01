@@ -3,6 +3,7 @@ package com.example.socialk.components
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
@@ -21,6 +22,7 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -128,84 +130,26 @@ fun ActivityItem(modifier:Modifier=Modifier,
     custom_location: String,
     location: String,
     liked: Boolean,
-    onEvent: (ActivityEvent) -> Unit,lockPhotoButton:Boolean=false
+    onEvent: (ActivityEvent) -> Unit,lockPhotoButton:Boolean=false,
+                 onLongClick:()->Unit= {}
 ) {
     var liked = rememberSaveable { mutableStateOf(liked) }
     Box(
-        modifier = modifier
+        modifier = Modifier.pointerInput(Unit){detectTapGestures(onLongPress = {onLongClick()})}
             .padding(start = 12.dp)
             .padding(end = 12.dp)
             .padding(vertical = 12.dp)
+
     ) {
         Column() {
             //ACtivity top content
-            Row(
-                modifier = Modifier.clickable() { onEvent(ActivityEvent.GoToProfile(activity.creator_id)) },
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            ActivityItemCreatorBox(onClick = {onEvent(ActivityEvent.GoToProfile(activity.creator_id))},pictureUrl=activity.creator_profile_picture,username=activity.creator_username,timeLeft=activity.time_left,onSettingsClick={ onEvent(ActivityEvent.OpenActivitySettings(activity))})
 
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(profilePictureUrl)
-                        .crossfade(true)
-                        .build(),
-                    placeholder = painterResource(R.drawable.ic_person),
-                    contentDescription = "image sent",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier) {
-                    Text(
-                        text = username,
-                        style = com.example.socialk.ui.theme.Typography.h5,
-                        fontWeight = FontWeight.Light,
-                        color = SocialTheme.colors.textPrimary
-                    )
-                    Text(
-                        text ="Starts in "+timeLeft,
-                        style = com.example.socialk.ui.theme.Typography.subtitle1,
-                        textAlign = TextAlign.Center,
-                        color = SocialTheme.colors.textPrimary
-                    )
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = { onEvent(ActivityEvent.OpenActivitySettings(activity)) }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_more),
-                        contentDescription = null,
-                        tint = SocialTheme.colors.iconPrimary
-                    )
-
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-            }
             Spacer(modifier = Modifier.height(12.dp))
             //TEXT AND CONTROLS ROW
             Row(modifier = Modifier, verticalAlignment = Alignment.CenterVertically) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 8.dp), verticalArrangement = Arrangement.Top
-                ) {
-                    Text(
-                        text = title,
-                        style = com.example.socialk.ui.theme.Typography.h3,
-                        fontWeight = FontWeight.Normal,
-                        color = SocialTheme.colors.textPrimary,
-                        textAlign = TextAlign.Left
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = description,
-                        style = com.example.socialk.ui.theme.Typography.h5,
-                        fontWeight = FontWeight.Light,
-                        color = SocialTheme.colors.iconPrimary,
-                        textAlign = TextAlign.Left
-                    )
-                }
+                ActivityTextBox(modifier=Modifier.weight(1f),title,description)
+
                 controls(onEvent = { event ->
                     when (event) {
                         is ActivityItemEvent.NotLikedActivity -> {
@@ -248,6 +192,77 @@ fun ActivityItem(modifier:Modifier=Modifier,
 
 
         }
+    }
+}
+
+@Composable
+fun ActivityTextBox(modifier: Modifier,title: String, description: String) {
+    Column(
+        modifier = modifier
+            .padding(end = 8.dp), verticalArrangement = Arrangement.Top
+    ) {
+        Text(
+            text = title,
+            style = com.example.socialk.ui.theme.Typography.h3,
+            fontWeight = FontWeight.Normal,
+            color = SocialTheme.colors.textPrimary,
+            textAlign = TextAlign.Left
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = description,
+            style = com.example.socialk.ui.theme.Typography.h5,
+            fontWeight = FontWeight.Light,
+            color = SocialTheme.colors.iconPrimary,
+            textAlign = TextAlign.Left
+        )
+    }
+}
+
+@Composable
+fun ActivityItemCreatorBox(onClick:()->Unit,pictureUrl:String,username:String,timeLeft: String,onSettingsClick:()->Unit) {
+    Row(
+        modifier = Modifier.pointerInput(Unit) { detectTapGestures(onTap ={ onClick() }) },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(pictureUrl)
+                .crossfade(true)
+                .build(),
+            placeholder = painterResource(R.drawable.ic_person),
+            contentDescription = "image sent",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier) {
+            Text(
+                text = username,
+                style = com.example.socialk.ui.theme.Typography.h5,
+                fontWeight = FontWeight.Light,
+                color = SocialTheme.colors.textPrimary
+            )
+            Text(
+                text ="Starts in "+timeLeft,
+                style = com.example.socialk.ui.theme.Typography.subtitle1,
+                textAlign = TextAlign.Center,
+                color = SocialTheme.colors.textPrimary
+            )
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        IconButton(onClick = { onSettingsClick()}) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_more),
+                contentDescription = null,
+                tint = SocialTheme.colors.iconPrimary
+            )
+
+        }
+        Spacer(modifier = Modifier.width(12.dp))
     }
 }
 
