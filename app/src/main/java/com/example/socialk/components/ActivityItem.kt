@@ -1,6 +1,7 @@
 package com.example.socialk.components
 
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -34,7 +35,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
+import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.example.socialk.R
 import com.example.socialk.chat.ChatComponents.ChatButton
 import com.example.socialk.chat.checkIfToday
@@ -205,7 +209,7 @@ fun ActivityTextBox(modifier: Modifier,title: String, description: String) {
             text = title,
             style = com.example.socialk.ui.theme.Typography.h3,
             fontWeight = FontWeight.Normal,
-            color = SocialTheme.colors.textPrimary,
+            color = Color.White,
             textAlign = TextAlign.Left
         )
         Spacer(modifier = Modifier.height(12.dp))
@@ -213,44 +217,39 @@ fun ActivityTextBox(modifier: Modifier,title: String, description: String) {
             text = description,
             style = com.example.socialk.ui.theme.Typography.h5,
             fontWeight = FontWeight.Light,
-            color = SocialTheme.colors.iconPrimary,
+            color = Color.White,
             textAlign = TextAlign.Left
         )
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun ActivityItemCreatorBox(onClick:()->Unit,pictureUrl:String,username:String,timeLeft: String,onSettingsClick:()->Unit) {
     Row(
         modifier = Modifier.pointerInput(Unit) { detectTapGestures(onTap ={ onClick() }) },
         verticalAlignment = Alignment.CenterVertically
     ) {
-
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(pictureUrl)
-                .crossfade(true)
-                .build(),
-            placeholder = painterResource(R.drawable.ic_person),
-            contentDescription = "image sent",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
+        GlideImage(
+            model = pictureUrl,
+            contentDescription = null,
+            modifier = Modifier.size(48.dp).clip(CircleShape).clickable(onClick = onClick),
+                    contentScale = ContentScale.Crop,
         )
+
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier) {
             Text(
                 text = username,
                 style = com.example.socialk.ui.theme.Typography.h5,
                 fontWeight = FontWeight.Light,
-                color = SocialTheme.colors.textPrimary
+                color = Color.White
             )
             Text(
                 text ="Starts in "+timeLeft,
                 style = com.example.socialk.ui.theme.Typography.subtitle1,
                 textAlign = TextAlign.Center,
-                color = SocialTheme.colors.textPrimary
+                color = Color.White
             )
         }
         Spacer(modifier = Modifier.weight(1f))
@@ -258,9 +257,8 @@ fun ActivityItemCreatorBox(onClick:()->Unit,pictureUrl:String,username:String,ti
             Icon(
                 painter = painterResource(id = R.drawable.ic_more),
                 contentDescription = null,
-                tint = SocialTheme.colors.iconPrimary
+                tint = Color.White
             )
-
         }
         Spacer(modifier = Modifier.width(12.dp))
     }

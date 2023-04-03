@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.example.socialk.*
 import com.example.socialk.R
 import com.example.socialk.camera.CameraEvent
@@ -433,15 +435,13 @@ fun HomeScreen(
 
 @Composable
 fun ActivityPreview(modifier: Modifier = Modifier, bottomSheetActivity: Activity,onEvent:(ActivityPreviewEvent)->Unit) {
-
-
     Box(modifier=modifier) {
         Column() {
             if(bottomSheetActivity.location.isNotEmpty()){
             MapBox1(location=bottomSheetActivity.location)
             Spacer(modifier = Modifier.height(16.dp))
            }else{
-                DataBox(icon = R.drawable.ic_location_24,bottomSheetActivity.custom_location)
+                DataBox(icon = R.drawable.ic_location_24,bottomSheetActivity.custom_location,title="Location")
                 Spacer(modifier = Modifier.height(4.dp))
            }
 
@@ -465,9 +465,9 @@ fun ActivityPreview(modifier: Modifier = Modifier, bottomSheetActivity: Activity
             }*/
 
             Spacer(modifier = Modifier.height(4.dp))
-            DataBox(icon=R.drawable.ic_date_24,bottomSheetActivity.date)
+            DataBox(icon=R.drawable.ic_date_24,bottomSheetActivity.date,title="Date")
             Spacer(modifier = Modifier.height(4.dp))
-            DataBox(icon=R.drawable.ic_timer_24,bottomSheetActivity.start_time + " - " + bottomSheetActivity.end_time)
+            DataBox(icon=R.drawable.ic_timer_24,bottomSheetActivity.start_time + " - " + bottomSheetActivity.end_time,title="Time")
             //ChatMessageBox()
             Spacer(modifier = Modifier.height(4.dp))
             ParticipantsBox(bottomSheetActivity.participants_usernames,bottomSheetActivity.participants_profile_pictures)
@@ -478,7 +478,8 @@ fun ActivityPreview(modifier: Modifier = Modifier, bottomSheetActivity: Activity
     }
 }
 @Composable
-fun DataBox(icon:Int,text:String) {
+fun DataBox(icon:Int,text:String,title:String) {
+
     androidx.compose.material3.Card(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.background(color = Color.Transparent),
@@ -501,6 +502,15 @@ fun DataBox(icon:Int,text:String) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
+                    text = "$title:",color=Color.White,
+                    style = TextStyle(
+                        fontFamily = Inter,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
                     text = text,color=Color.White,
                     style = TextStyle(
                         fontFamily = Inter,
@@ -508,6 +518,7 @@ fun DataBox(icon:Int,text:String) {
                         fontSize = 14.sp
                     )
                 )
+
             }
         }
     }
@@ -519,7 +530,7 @@ fun ParticipantsBox(participantsUsernames: HashMap<String, String>, participants
                 .fillMaxWidth()
                ) {
                     Column() {
-                        DataBox(icon =R.drawable.ic_person_done , text = "Participants" )
+                        DataBox(icon =R.drawable.ic_person_done , text = "" ,title="Participants")
                         Spacer(modifier = Modifier.height(2.dp))
                     Row(Modifier.horizontalScroll(rememberScrollState())){
                         participantsProfilePictures.forEach{
@@ -532,6 +543,7 @@ fun ParticipantsBox(participantsUsernames: HashMap<String, String>, participants
         }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun ParticipantBoxItem(picture_url: String, username: String) {
     androidx.compose.material3.Card(shape=RoundedCornerShape(8.dp),modifier=Modifier.background(color=Color.Transparent),     colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
@@ -540,18 +552,13 @@ fun ParticipantBoxItem(picture_url: String, username: String) {
                 .background(color = Color.Black.copy(0.3f))
                 .padding(8.dp)){
             Column(horizontalAlignment = Alignment.CenterHorizontally){
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(picture_url)
-                        .crossfade(true)
-                        .build(),
-                    placeholder = painterResource(R.drawable.ic_person),
-                    contentDescription = "image sent",
+                GlideImage(
+                    model = picture_url,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp).clip(CircleShape),
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
                 )
+
                 Text(text = username,color=Color.White)
             }
         }

@@ -11,10 +11,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -29,7 +31,8 @@ import com.example.socialk.R
 import com.example.socialk.components.*
 import com.example.socialk.create.CreateActivityButton
 import com.example.socialk.di.ActivityViewModel
-import com.example.socialk.home.ActivityEvent
+import com.example.socialk.home.*
+import com.example.socialk.home.ActivityPreview
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
 import com.example.socialk.model.UserData
@@ -79,7 +82,7 @@ fun loadIcon(
 
                 }
             })
-        return BitmapDescriptorFactory.fromBitmap(bitmap!!)
+        return BitmapDescriptorFactory.fromBitmap(bitmap!!.copy(bitmap!!.config, bitmap!!.isMutable))
     } catch (e: Exception) {
         e.printStackTrace()
         return null
@@ -236,12 +239,16 @@ fun MapScreen(latLngInitial: LatLng?,activityViewModel:ActivityViewModel,
                                             if(activity.location.isNotEmpty()){
                                                 val values=activity.location.split("/")
                                                 val latLng= LatLng(values.get(0).toDouble(),values.get(1).toDouble())
-                                                MarkerInfoWindow(
+                                                MarkerInfoWindow(zIndex=0.5f,
                                                     state = MarkerState(
                                                         position = latLng
                                                     ), icon = loadIcon(LocalContext.current, activity.creator_profile_picture, R.drawable.ic_person)
                                                 ) {
-                                                    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                                                    MapActivityPreview(
+                                                        bottomSheetActivity =activity ,
+                                                        onEvent = {}
+                                                    )
+                                                   /* Column(modifier = Modifier.padding(horizontal = 24.dp)) {
                                                         androidx.compose.material3.Card(
                                                             shape = RoundedCornerShape(
                                                                 16.dp
@@ -269,7 +276,7 @@ fun MapScreen(latLngInitial: LatLng?,activityViewModel:ActivityViewModel,
 
                                                                 Spacer(modifier = Modifier.height(4.dp))
                                                             }
-
+                                                            */
                                                         }
                                             }
 
@@ -292,7 +299,11 @@ fun MapScreen(latLngInitial: LatLng?,activityViewModel:ActivityViewModel,
                                                         position = latLng
                                                     ), icon = loadIcon(LocalContext.current, activity.creator_profile_picture, R.drawable.ic_person)
                                                 ) {
-                                                    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                                                    MapActivityPreview(
+                                                        bottomSheetActivity =activity ,
+                                                        onEvent = {}
+                                                    )
+                                                  /*  Column(modifier = Modifier.padding(horizontal = 24.dp)) {
                                                         androidx.compose.material3.Card(
                                                             shape = RoundedCornerShape(
                                                                 16.dp
@@ -319,7 +330,7 @@ fun MapScreen(latLngInitial: LatLng?,activityViewModel:ActivityViewModel,
 
 
                                                         Spacer(modifier = Modifier.height(4.dp))
-                                                    }
+                                                    }*/
 
                                                 }
                                             }
@@ -425,7 +436,43 @@ fun MapScreen(latLngInitial: LatLng?,activityViewModel:ActivityViewModel,
         )
     }
 }
+@Composable
+fun MapActivityPreview(modifier: Modifier = Modifier, bottomSheetActivity: Activity,onEvent:(ActivityPreviewEvent)->Unit) {
+    Box(modifier=modifier) {
+        Column(Modifier.padding(horizontal=24.dp)) {
 
+            androidx.compose.material3.Card(shape= RoundedCornerShape(12.dp),   colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+                 Box(
+                     Modifier
+                         .background(color = Color.Black.copy(0.3f))
+                         .padding(12.dp)){
+                     Column() {
+                         ActivityItemCreatorBox(
+                             onClick = { onEvent(ActivityPreviewEvent.GoToProfile(bottomSheetActivity.creator_id)) },
+                             pictureUrl = bottomSheetActivity.creator_profile_picture,
+                             username = bottomSheetActivity.creator_username,
+                             timeLeft = bottomSheetActivity.time_left,
+                             onSettingsClick = { onEvent(ActivityPreviewEvent.OpenActivitySettings(bottomSheetActivity)) })
+                         Spacer(modifier = Modifier.height(12.dp))
+                         ActivityTextBox(modifier = Modifier, title =bottomSheetActivity.title , description =bottomSheetActivity.description )
+                     }
+
+                 }
+             }
+
+            Spacer(modifier = Modifier.height(4.dp))
+            DataBox(icon=R.drawable.ic_date_24,bottomSheetActivity.date,title="Date")
+            Spacer(modifier = Modifier.height(4.dp))
+            DataBox(icon=R.drawable.ic_timer_24,bottomSheetActivity.start_time + " - " + bottomSheetActivity.end_time,title="Time")
+            //ChatMessageBox()
+            Spacer(modifier = Modifier.height(4.dp))
+            ParticipantsBox(bottomSheetActivity.participants_usernames,bottomSheetActivity.participants_profile_pictures)
+
+        }
+
+
+    }
+}
 @Composable
 fun MapActivityItem(
     activity: Activity,
@@ -513,7 +560,7 @@ fun MapActivityItem(
             //DETAILS
             Spacer(modifier = Modifier.height(12.dp))
             //todo either custom location or latlng
-            ActivityDetailsBar(custom_location = null,location = null, date = date, timePeriod = timePeriod, onEvent = {}, participants_pictures = activity.participants_profile_pictures,min=activity.minUserCount,max=activity.maxUserCount)
+            //ActivityDetailsBar(custom_location = null,location = null, date = date, timePeriod = timePeriod, onEvent = {}, participants_pictures = activity.participants_profile_pictures,min=activity.minUserCount,max=activity.maxUserCount)
             Spacer(modifier = Modifier.height(8.dp))
             Box(
                 modifier = Modifier
