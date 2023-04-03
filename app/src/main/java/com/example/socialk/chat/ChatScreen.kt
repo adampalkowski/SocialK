@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Alignment.Companion.TopCenter
+import androidx.compose.ui.Alignment.Companion.TopStart
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,8 +44,6 @@ import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.socialk.R
 import com.example.socialk.camera.BackPressHandler
-import com.example.socialk.camera.CameraButton
-import com.example.socialk.camera.CameraEvent
 import com.example.socialk.chat.ChatComponents.*
 import com.example.socialk.components.*
 import com.example.socialk.create.ActivityTextFieldState
@@ -54,7 +53,6 @@ import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.map.loadIcon
 import com.example.socialk.model.*
-import com.example.socialk.signinsignup.ProgressBar
 import com.example.socialk.signinsignup.TextFieldState
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
@@ -64,6 +62,10 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.launch
 
+sealed class ImagePreviewEvent {
+    object GoBack : ImagePreviewEvent()
+    object BackPressed : ImagePreviewEvent()
+}
 sealed class ChatEvent {
     object GoToProfile : ChatEvent()
     object BackPressed : ChatEvent()
@@ -302,11 +304,14 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = CenterHorizontally) {
         ChatScreenTopBar(chat, onEvent = onEvent)
         Divider()
+
         Box(
+
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 12.dp)
         ) {
+            var previousMessage:ChatMessage? =null
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -318,206 +323,60 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
                     },
                 reverseLayout = true
             ) {
-                items(data.value!!) {
-                    if (it.sender_id == UserData.user!!.id) {
+                items(data.value!!) { chat->
+                    val shouldGroup = previousMessage != null && previousMessage!!.sender_id == chat.sender_id
 
-                        Spacer(modifier = Modifier.height(4.dp))
-                        ChatItemRight(text_type = it.message_type,
-                            textMessage = it.text,
-                            date = it.sent_time,
-                            onLongPress = { messageOptionsVisibility = true }, onClick = {
-                                Log.d("CHATSCREEN","clicked")
-                                if (highlite_message) {
-                                    if(it.message_type.equals("live")||it.message_type.equals("latLng")){
+                    ChatBox(chat, onLongPress = { messageOptionsVisibility = true },highlite_message=highlite_message, displayPicture = {display_picture=it}, highliteMessage = {highlited_message_text=it}, openDialog =  {openDialog.value=true
+                    },onEvent={ event ->
+                        when (event) {
+                            is ChatItemEvent.OpenLocation -> {
+                                val values = event.latLng.split("/")
+                                displayLocationDialog.value = LatLng(values.get(0).toDouble(), values.get(1).toDouble())
+                            }
+                            is ChatItemEvent.JoinLive->{
+                                dialogJoinLive.value=event.live_activity_id
+                            }
+                        }
 
-                                    }else{
-                                        openDialog.value = true
-                                        highlited_message_text = it.text
-                                    }
-                                }else{
-                                    if(it.message_type.equals("uri")){
-                                        Log.d("CHATSCREEN","display_picture")
-                                        display_picture=it.text
-                                    }
-                                }
-                            }, onEvent = { event ->
-                                when (event) {
-                                    is ChatItemEvent.OpenLocation -> {
-                                        val values = event.latLng.split("/")
-                                        val lat = values.get(0).toDouble()
-                                        val lng = values.get(1).toDouble()
-                                        displayLocationDialog.value = LatLng(lat, lng)
-                                    }
-                                    is ChatItemEvent.JoinLive->{
-                                    }
-                                }
+                    },shouldGroup=shouldGroup)
+                    previousMessage=chat
+                }
+                items(frist_data.value!!) {chat->
 
-                            })
-                        Spacer(modifier = Modifier.height(4.dp))
-                    } else {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        ChatItemLeft(text_type = it.message_type,
-                            textMessage = it.text,
-                            date = it.sent_time,
-                            onLongPress = { messageOptionsVisibility = true },
-                            picture_url = it.sender_picture_url, onClick = {
-                                if (highlite_message) {
-                                    if(it.message_type.equals("live")||it.message_type.equals("latLng")){
+                    val shouldGroup = previousMessage != null && previousMessage!!.sender_id == chat.sender_id
+                    Log.d("CHATSCREENLOG",shouldGroup.toString())
+                    Log.d("CHATSCREENLOG",chat.sender_id)
+                    ChatBox(chat, onLongPress = { messageOptionsVisibility = true },highlite_message=highlite_message, displayPicture = {display_picture=it}, highliteMessage = {highlited_message_text=it}, openDialog =  {openDialog.value=true
+                    },onEvent={ event ->
+                        when (event) {
+                            is ChatItemEvent.OpenLocation -> {
+                                val values = event.latLng.split("/")
+                                displayLocationDialog.value = LatLng(values.get(0).toDouble(), values.get(1).toDouble())
+                            }
+                            is ChatItemEvent.JoinLive->{
+                                dialogJoinLive.value=event.live_activity_id
+                            }
+                        }
 
-                                    }else{
-                                        openDialog.value = true
-                                        highlited_message_text = it.text
-                                    }
-
-                                }
-                            }, onEvent = { event ->
-                                when (event) {
-                                    is ChatItemEvent.OpenLocation -> {
-                                        val values = event.latLng.split("/")
-                                        val lat = values.get(0).toDouble()
-                                        val lng = values.get(1).toDouble()
-                                        displayLocationDialog.value = LatLng(lat, lng)
-                                    }
-                                    is ChatItemEvent.JoinLive->{
-                                        dialogJoinLive.value=event.live_activity_id
-                                    }
-                                }
-
-                            })
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                    }
+                    },shouldGroup=shouldGroup)
+                    previousMessage=chat
 
                 }
-                items(frist_data.value!!) {
-                    if (it.sender_id == UserData.user!!.id) {
-                        if (it.message_type.equals("uri")) {
+                items(data_new.value!!) {chat->
+                    val shouldGroup = previousMessage != null && previousMessage!!.sender_id == chat.sender_id
+                    ChatBox(chat, onLongPress = { messageOptionsVisibility = true },highlite_message=highlite_message, displayPicture = {display_picture=it}, highliteMessage = {highlited_message_text=it}, openDialog =  {openDialog.value=true
+                    },onEvent={ event ->
+                        when (event) {
+                            is ChatItemEvent.OpenLocation -> {
+                                val values = event.latLng.split("/")
+                                displayLocationDialog.value = LatLng(values.get(0).toDouble(), values.get(1).toDouble())
+                            }
+                            is ChatItemEvent.JoinLive->{
+                                dialogJoinLive.value=event.live_activity_id
+                            }
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        ChatItemRight(text_type = it.message_type,
-                            textMessage = it.text,
-                            date = it.sent_time,
-                            onLongPress = { messageOptionsVisibility = true }, onClick = {
-                                if (highlite_message) {
-                                    if(it.message_type.equals("live")||it.message_type.equals("latLng")){
 
-                                    }else{
-                                        openDialog.value = true
-                                        highlited_message_text = it.text
-                                    }
-                                }
-                            }, onEvent = { event ->
-                                when (event) {
-                                    is ChatItemEvent.OpenLocation -> {
-                                        val values = event.latLng.split("/")
-                                        val lat = values.get(0).toDouble()
-                                        val lng = values.get(1).toDouble()
-                                        displayLocationDialog.value = LatLng(lat, lng)
-                                    }
-                                    is ChatItemEvent.JoinLive->{
-
-                                    }
-                                }
-
-                            })
-                        Spacer(modifier = Modifier.height(4.dp))
-                    } else {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        ChatItemLeft(text_type = it.message_type,
-                            textMessage = it.text,
-                            date = it.sent_time,
-                            onLongPress = { messageOptionsVisibility = true },
-                            picture_url = it.sender_picture_url, onClick = {
-                                if (highlite_message) {
-                                    if(it.message_type.equals("live")||it.message_type.equals("latLng")){
-
-                                    }else{
-                                        openDialog.value = true
-                                        highlited_message_text = it.text
-                                    }
-                                }
-                            }, onEvent = { event ->
-                                when (event) {
-                                    is ChatItemEvent.OpenLocation -> {
-                                        val values = event.latLng.split("/")
-                                        val lat = values.get(0).toDouble()
-                                        val lng = values.get(1).toDouble()
-                                        displayLocationDialog.value = LatLng(lat, lng)
-                                    }
-                                    is ChatItemEvent.JoinLive->{
-                                        dialogJoinLive.value=event.live_activity_id
-                                }
-                                }
-
-                            })
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                    }
-
-                }
-                items(data_new.value!!) {
-                    if (it.sender_id == UserData.user!!.id) {
-                        if (it.message_type.equals("uri")) {
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        ChatItemRight(text_type = it.message_type,
-                            textMessage = it.text,
-                            date = it.sent_time,
-                            onLongPress = { messageOptionsVisibility = true }, onClick = {
-                                if (highlite_message) {
-                                    if(it.message_type.equals("live")||it.message_type.equals("latLng")){
-
-                                    }else{
-                                        openDialog.value = true
-                                        highlited_message_text = it.text
-                                    }
-                                }
-                            }, onEvent = { event ->
-                                when (event) {
-                                    is ChatItemEvent.OpenLocation -> {
-                                        val values = event.latLng.split("/")
-                                        val lat = values.get(0).toDouble()
-                                        val lng = values.get(1).toDouble()
-                                        displayLocationDialog.value = LatLng(lat, lng)
-                                    }
-                                    is ChatItemEvent.JoinLive->{
-                                    }
-                                }
-
-                            })
-                        Spacer(modifier = Modifier.height(4.dp))
-                    } else {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        ChatItemLeft(text_type = it.message_type,
-                            textMessage = it.text,
-                            date = it.sent_time,
-                            onLongPress = { messageOptionsVisibility = true },
-                            picture_url = it.sender_picture_url, onClick = {
-                                if (highlite_message) {
-                                    if(it.message_type.equals("live")||it.message_type.equals("latLng")){
-
-                                    }else{
-                                        openDialog.value = true
-                                        highlited_message_text = it.text
-                                    }
-                                }
-                            }, onEvent = { event ->
-                                when (event) {
-                                    is ChatItemEvent.OpenLocation -> {
-                                        val values = event.latLng.split("/")
-                                        val lat = values.get(0).toDouble()
-                                        val lng = values.get(1).toDouble()
-                                        displayLocationDialog.value = LatLng(lat, lng)
-                                    }
-                                    is ChatItemEvent.JoinLive->{
-                                        dialogJoinLive.value=event.live_activity_id
-                                    }
-                                }
-
-                            })
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                    }
+                    },shouldGroup=shouldGroup)
 
                 }
                 item {
@@ -568,9 +427,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
             }else{
 
             }
-            if(display_picture.isNotEmpty()){
-                DisplayPictureScreen(display_picture,onEvent=onEvent)
-            }
+
             if (highlight_dialog) {
                 HighLightDialog(modifier = Modifier.align(TopCenter), onEvent = { it ->
                     when (it) {
@@ -613,7 +470,7 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
 
                                         Box(
                                             modifier = Modifier
-                                                .background(color = Color(0xff0F0F30))
+                                                .background(color = SocialTheme.colors.iconInteractive)
                                                 .padding(12.dp)
                                         )
                                         {
@@ -950,6 +807,9 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
 
 
     }
+    if(display_picture.isNotEmpty()){
+        DisplayPictureScreen(display_picture,onEvent= {display_picture=""})
+    }
     BottomDialogLiveActivity(
             state = bottomSheetState,
     onEvent = { event ->
@@ -975,25 +835,93 @@ fun ChatContent(chat: Chat, onEvent: (ChatEvent) -> Unit, chatViewModel: ChatVie
 }
 
 @Composable
-fun DisplayPictureScreen(photoUri: String,onEvent:(ChatEvent)->Unit) {
-    BackPressHandler(onBackPressed = { onEvent(ChatEvent.BackPressed) })
-    Surface(modifier = Modifier.fillMaxSize()) {
+fun ChatBox(chat: ChatMessage,highlite_message:Boolean,onLongPress:()->Unit,onEvent: (ChatItemEvent) -> Unit,openDialog:()->Unit,displayPicture:(String)->Unit,highliteMessage:(String)->Unit,shouldGroup:Boolean=false) {
+    var padding= 12.dp
+    if(shouldGroup){
+        padding=0.dp
+    }
+    if (chat.sender_id == UserData.user!!.id) {
+        ChatItemRight(text_type = chat.message_type,
+            textMessage = chat.text,
+            date = chat.sent_time,
+            onLongPress = {onLongPress()}, onClick = {
 
+                if (highlite_message) {
+                    if(chat.message_type.equals("live")||chat.message_type.equals("latLng")){
+
+                    }else{
+                        openDialog()
+                        highliteMessage(chat.text)
+                    }
+                }else{
+                    if(chat.message_type.equals("uri")){
+                        displayPicture(chat.text)
+
+                    }
+                }
+            }, onEvent = onEvent)
+        Spacer(modifier = Modifier.height(padding))
+    } else {
+        ChatItemLeft(text_type = chat.message_type,
+            textMessage = chat.text,
+            date = chat.sent_time,
+            onLongPress ={onLongPress()},
+            picture_url = chat.sender_picture_url, onClick = {
+
+                if (highlite_message) {
+                    if(chat.message_type.equals("live")||chat.message_type.equals("latLng")){
+                    }else{
+                        openDialog()
+                        highliteMessage(chat.text)
+                    }
+                }else{
+                    if(chat.message_type.equals("uri")){
+                        displayPicture(chat.text)
+                    }
+                }
+            }, onEvent = onEvent, displayPicture = !shouldGroup)
+        Spacer(modifier = Modifier.height(padding))
+
+    }
+
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun DisplayPictureScreen(photoUri: String,onEvent:(ImagePreviewEvent)->Unit) {
+    BackPressHandler(onBackPressed = { onEvent(ImagePreviewEvent.BackPressed) })
+    Surface(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(color = androidx.compose.ui.graphics.Color.Black)
         ) {
+
+
+
             Image(
                 painter = rememberImagePainter(photoUri),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
+            Row(
+                Modifier
+                    .align(TopStart)
+                    .padding(top = 24.dp)) {
+                Spacer(modifier = Modifier.width(24.dp))
+                Card(modifier = Modifier, shape = RoundedCornerShape(12.dp), backgroundColor = Color.Black.copy(alpha=0.5f), onClick = { onEvent(ImagePreviewEvent.GoBack)}) {
+                    Box(modifier = Modifier
+                        .padding(12.dp)
+                        .background(color = Color.Transparent)){
+                        Icon(painter = painterResource(id = R.drawable.ic_back),      tint = Color.White,  contentDescription = null,modifier = Modifier.background(color=Color.Transparent))
 
+                    }
 
+                }
+
+            }
         }
-
     }
 
 }

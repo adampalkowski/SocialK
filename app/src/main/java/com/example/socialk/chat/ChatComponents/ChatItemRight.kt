@@ -26,6 +26,7 @@ import coil.request.ImageRequest
 import com.example.socialk.R
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
+import okhttp3.internal.wait
 
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -45,7 +46,7 @@ fun ChatItemRight(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             if (itemClickedState) {
                 Text(
-                    text = date, color = SocialTheme.colors.iconPrimary,
+                    text = date, color = SocialTheme.colors.textPrimary,
                     style = TextStyle(
                         fontSize = 10.sp,
                         fontFamily = Inter,
@@ -57,7 +58,7 @@ fun ChatItemRight(
             }
             Card(modifier = Modifier.align(Alignment.End),
                 shape = RoundedCornerShape(8.dp),
-                backgroundColor = Color(0xff0F0F30),
+                backgroundColor =SocialTheme.colors.iconInteractive,
                 elevation = 0.dp,
                 onClick = {
                     onClick()
@@ -66,6 +67,7 @@ fun ChatItemRight(
             ) {
 
                 if (text_type.equals("uri")) {
+                    Log.d("CHATSCREENLOG","URI")
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(textMessage)
@@ -126,7 +128,7 @@ fun ChatItemRight(
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 14.sp
                             ),
-                            color = SocialTheme.colors.textSecondary
+                            color = Color.White
                         )
                     }
                 }

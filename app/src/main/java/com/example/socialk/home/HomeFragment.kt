@@ -175,7 +175,11 @@ class HomeFragment : Fragment() {
                     val bundle = Bundle()
                     bundle.putSerializable("activity", viewModel.clicked_chat_activity.value)
                     navigate(navigateTo, Screen.Home, bundle)
-                } else if (navigateTo == Screen.Map) {
+                } else if (navigateTo == Screen.FriendsPicker) {
+                    val bundle = Bundle()
+                    bundle.putSerializable("activity", viewModel.clicked_chat_activity.value)
+                    navigate(navigateTo, Screen.Home, bundle)
+                }else if (navigateTo == Screen.Map) {
                     val bundle = Bundle()
                     bundle.putSerializable("latlng", viewModel.clicked_location_activity.value)
                     navigate(navigateTo, Screen.Home, bundle)
@@ -284,6 +288,10 @@ class HomeFragment : Fragment() {
                                         }
                                         is HomeEvent.DestroyLiveActivity->{
                                             activeUsersViewModel.deleteActiveUser(event.id)
+                                        }
+                                        is HomeEvent.GoToFriendsPicker->{
+                                            Log.d("HOmesCreen","FRIENDSPICKER")
+                                            viewModel.handleGoToFriendsPicker(event.activity)
                                         }
                                     }
                                 },

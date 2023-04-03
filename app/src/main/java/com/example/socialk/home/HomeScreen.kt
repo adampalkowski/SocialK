@@ -107,6 +107,7 @@ sealed class HomeEvent {
     object GoToMemories : HomeEvent()
     object BackPressed : HomeEvent()
     object GoToSettings : HomeEvent()
+    class GoToFriendsPicker(val activity :Activity) : HomeEvent()
     object RemovePhotoFromGallery : HomeEvent()
     class GoToMap(latlng: String) : HomeEvent() {
         val latlng = latlng
@@ -396,19 +397,8 @@ fun HomeScreen(
         type = bottomSheetType,
         onEvent = { event ->
             when (event) {
-                is BottomDialogEvent.SendMessage -> {
-                    chatViewModel.addMessage(
-                        bottomSheetActivity.id,
-                        //todo set sender picture_url
-                        ChatMessage(
-                            text = event.message,
-                            sender_picture_url = UserData.user?.pictureUrl!!,
-                            sent_time = "",
-                            sender_id = UserData.user!!.id,
-                            message_type = "text",
-                            id = ""
-                        )
-                    )
+                is BottomDialogEvent.GoToFriendsPicker -> {
+                        onEvent(HomeEvent.GoToFriendsPicker(event.activity))
                 }
                 is BottomDialogEvent.removeUserFromActivity -> {
                     activityViewModel?.removeUserFromActivityInvites(

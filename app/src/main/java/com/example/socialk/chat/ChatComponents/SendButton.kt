@@ -22,9 +22,9 @@ fun SendButton(onEvent: () -> Unit, icon: Int, available: Boolean) {
         modifier = Modifier.size(48.dp),
         shape = RoundedCornerShape(12.dp),
         backgroundColor = if (available) {
-            Color(0xff0F0F30)
+            SocialTheme.colors.iconInteractive
         } else {
-            SocialTheme.colors.iconPrimary
+            SocialTheme.colors.iconInteractiveInactive
         },
         onClick = onEvent,
         elevation = 0.dp
@@ -34,7 +34,7 @@ fun SendButton(onEvent: () -> Unit, icon: Int, available: Boolean) {
                 painter = painterResource(id = icon),
                 contentDescription = null,
 
-                tint = SocialTheme.colors.textSecondary
+                tint = Color.White
             )
         }
     }

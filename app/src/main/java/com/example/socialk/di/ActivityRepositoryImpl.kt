@@ -100,6 +100,16 @@ class ActivityRepositoryImpl @Inject constructor(
             emit(Response.Failure(e= SocialException("AddActivity exception",Exception())))
         }
     }
+    override suspend fun updateActivityInvites(activity_id: String,invites:ArrayList<String>) :Flow<Response<Void?>> = flow {
+        try {
+            emit(Response.Loading)
+            val addition = activitiesRef.document(activity_id).update("invited_users",invites).await()
+            emit(Response.Success(addition))
+
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("AddActivity exception",Exception())))
+        }
+    }
 
     override suspend fun addUserToActivityInvites(activity: Activity,user_id:String): Flow<Response<Void?>> =flow {
         try {

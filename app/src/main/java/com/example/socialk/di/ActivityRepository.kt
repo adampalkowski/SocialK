@@ -22,6 +22,7 @@ interface ActivityRepository {
     suspend fun unlikeActivity(id:String,user:User) : Flow<Response<Void?>>
 
     suspend fun addActivity(activity:Activity) : Flow<Response<Void?>>
+    suspend fun updateActivityInvites(activity_id: String,invites:ArrayList<String>) : Flow<Response<Void?>>
     suspend fun addUserToActivityInvites(activity: Activity,user_id:String) : Flow<Response<Void?>>
     suspend fun leaveLiveActivity(activity_id: String,user_id:String) : Flow<Response<Void?>>
     suspend fun removeUserFromActivityInvites(activity: Activity,user_id:String) : Flow<Response<Void?>>

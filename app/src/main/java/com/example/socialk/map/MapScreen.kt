@@ -4,9 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.util.Log
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -90,7 +88,7 @@ fun loadIcon(
 
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun MapScreen(latLngInitial: LatLng?,activityViewModel:ActivityViewModel,
     onEvent: (MapEvent) -> Unit,
@@ -101,6 +99,7 @@ fun MapScreen(latLngInitial: LatLng?,activityViewModel:ActivityViewModel,
     var currentLocation: LatLng? by remember { mutableStateOf(null) }
     var location_picked_flow = viewModel.locations_picked.collectAsState()
     var isMapLoaded by remember { mutableStateOf(false) }
+    var displayCreateButton by remember { mutableStateOf(false) }
     /*if (ActivityCompat.checkSelfPermission(
             LocalContext.current,
             Manifest.permission.ACCESS_FINE_LOCATION
@@ -195,7 +194,6 @@ fun MapScreen(latLngInitial: LatLng?,activityViewModel:ActivityViewModel,
                                 isMapLoaded = true
                             }, onMapLongClick = { latlng ->
                                 viewModel.setLocationPicked(latlng)
-
                                 //add marker to the map by adding it to the list of markers that should be displayed'
 
                             },
@@ -379,19 +377,25 @@ fun MapScreen(latLngInitial: LatLng?,activityViewModel:ActivityViewModel,
                             }
                         }
                         location_picked_flow.value.let {
-                            if (it != null) {
+                            if (it != null){
+                                displayCreateButton=true
+                            }else{
+                                displayCreateButton=false
+                            }
+                        }
 
-                                Box(
-                                    modifier = Modifier
-                                        .align(
-                                            Alignment.BottomEnd
-                                        )
-                                        .padding(bottom = 48.dp, end = 24.dp)
-                                ) {
-                                    CreateActivityButton(modifier=Modifier.width(200.dp),text="Add location",onClick={onEvent(MapEvent.GoToCreateActivity(it))},icon= R.drawable.ic_right)
+                        Box(
+                            modifier = Modifier
+                                .align(
+                                    Alignment.BottomEnd
+                                )
+                                .padding(bottom = 48.dp, end = 24.dp)
+                        ) {
+                          AnimatedVisibility(visible =displayCreateButton, enter = scaleIn(),exit= scaleOut() ) {
 
-                                    Spacer(modifier = Modifier.height(64.dp))
-                                }
+                                CreateActivityButton(modifier=Modifier.width(200.dp),text="Add location",onClick={onEvent(MapEvent.GoToCreateActivity(location_picked_flow.value!!))},icon= R.drawable.ic_right)
+
+                                Spacer(modifier = Modifier.height(64.dp))
                             }
                         }
                     }

@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.example.socialk.Chats
@@ -65,12 +66,16 @@ class FriendsPickerFragment : Fragment() {
 
         var group_name: String? = arguments?.getString("group_name")
 
-        val type: String = if (activityCreated != null) {
+        var type: String = if (activityCreated != null ) {
             "activity"
         } else if (group_name != null) {
             "group"
-        } else {
+        }else{
             "activity"
+        }
+
+        if(activityCreated!=null && activityCreated.end_time.isNotEmpty()){
+            type="update"
         }
         userViewModel.getFriends(authViewModel.currentUser!!.uid)
         chatViewModel.getGroups(authViewModel.currentUser!!.uid)
@@ -109,6 +114,18 @@ class FriendsPickerFragment : Fragment() {
                                 )
                                 chatViewModel.addChatCollection(chat)
                                 viewModel.handleGoToHome()
+                            }
+                            is FriendsPickerEvent.UpdateInvites -> {
+                                if(activityCreated!=null){
+                                    val new_invites=    activityCreated.invited_users
+                                    new_invites.addAll(event.selected_ids)
+                                    val distinctList = new_invites.distinct()
+                                    new_invites.clear()
+                                    new_invites.addAll(distinctList)
+                                    activityViewModel.updateActivityInvites(activityCreated.id,new_invites)
+                                    viewModel.handleGoToHome()
+                                    Toast.makeText(activity,"Invites sent",Toast.LENGTH_SHORT).show()
+                                }
                             }
                             is FriendsPickerEvent.CreateActivity -> {
                                 event.selected_ids.add(UserData.user!!.id)

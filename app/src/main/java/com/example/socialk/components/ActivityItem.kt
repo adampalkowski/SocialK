@@ -209,7 +209,7 @@ fun ActivityTextBox(modifier: Modifier,title: String, description: String) {
             text = title,
             style = com.example.socialk.ui.theme.Typography.h3,
             fontWeight = FontWeight.Normal,
-            color = Color.White,
+            color = SocialTheme.colors.textPrimary,
             textAlign = TextAlign.Left
         )
         Spacer(modifier = Modifier.height(12.dp))
@@ -217,7 +217,7 @@ fun ActivityTextBox(modifier: Modifier,title: String, description: String) {
             text = description,
             style = com.example.socialk.ui.theme.Typography.h5,
             fontWeight = FontWeight.Light,
-            color = Color.White,
+            color =  SocialTheme.colors.textPrimary,
             textAlign = TextAlign.Left
         )
     }
@@ -243,13 +243,13 @@ fun ActivityItemCreatorBox(onClick:()->Unit,pictureUrl:String,username:String,ti
                 text = username,
                 style = com.example.socialk.ui.theme.Typography.h5,
                 fontWeight = FontWeight.Light,
-                color = Color.White
+                color = SocialTheme.colors.textPrimary
             )
             Text(
                 text ="Starts in "+timeLeft,
                 style = com.example.socialk.ui.theme.Typography.subtitle1,
                 textAlign = TextAlign.Center,
-                color = Color.White
+                color =  SocialTheme.colors.textPrimary
             )
         }
         Spacer(modifier = Modifier.weight(1f))
@@ -257,7 +257,7 @@ fun ActivityItemCreatorBox(onClick:()->Unit,pictureUrl:String,username:String,ti
             Icon(
                 painter = painterResource(id = R.drawable.ic_more),
                 contentDescription = null,
-                tint = Color.White
+                tint = SocialTheme.colors.iconPrimary
             )
         }
         Spacer(modifier = Modifier.width(12.dp))
@@ -462,12 +462,26 @@ fun controls(onEvent: (ActivityItemEvent) -> Unit, activity: Activity, liked: Bo
             )
 
         }
+        if(!activity.disableChat){
+            if(activity.privateChat){
+                if(activity.participants_usernames.containsKey(UserData.user!!.id)) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    ChatButton(
+                        onEvent = { onEvent(ActivityItemEvent.OpenActivityChat(activity)) },
+                        icon = R.drawable.ic_chat
+                    )
+                }
+            }else{
+                Spacer(modifier = Modifier.height(6.dp))
+                ChatButton(
+                    onEvent = { onEvent(ActivityItemEvent.OpenActivityChat(activity)) },
+                    icon = R.drawable.ic_chat
+                )
+            }
 
-        Spacer(modifier = Modifier.height(6.dp))
-        ChatButton(
-            onEvent = { onEvent(ActivityItemEvent.OpenActivityChat(activity)) },
-            icon = R.drawable.ic_chat
-        )
+
+        }
+
         Spacer(modifier = Modifier.height(6.dp))
         if (activity.pictures.containsKey(UserData.user!!.id)){
                 val photo_url=activity.pictures.get(UserData.user!!.id)
@@ -486,19 +500,22 @@ fun controls(onEvent: (ActivityItemEvent) -> Unit, activity: Activity, liked: Bo
             }
         }else{
 
-            ChatButton(
-                onEvent = {
-                    if(lockPhotoButton){
+            if(!activity.disablePictures){
+                ChatButton(
+                    onEvent = {
+                        if(lockPhotoButton){
 
-                    }else{
-                        onEvent(ActivityItemEvent.OpenCamera(activity.id))
-                    }
+                        }else{
+                            onEvent(ActivityItemEvent.OpenCamera(activity.id))
+                        }
 
-               },
-                icon = R.drawable.ic_add_photo)
+                    },
+                    icon = R.drawable.ic_add_photo)
+            }else{
+
+            }
+
         }
-
-
 
     }
 

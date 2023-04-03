@@ -99,7 +99,10 @@ class HomeViewModel : ViewModel() {
         _navigateTo.value = Event(Screen.Create)
     }
 
-
+    fun handleGoToFriendsPicker(activity: Activity) {
+        _clicked_chat_activity.value = activity
+        _navigateTo.value = Event(Screen.FriendsPicker)
+    }
 
 
 }

@@ -128,7 +128,6 @@ class CreateFragment : Fragment() {
                             is CreateEvent.GoToActivity -> viewModel.handleGoToActivity()
                             is CreateEvent.GoToMap -> viewModel.handleGoToMap()
                             is CreateEvent.CreateActivity -> {
-
                                 val uuid: UUID = UUID.randomUUID()
                                 val id: String = uuid.toString()
                                 val participants_profile_pictures: HashMap<String,String> = hashMapOf()
@@ -157,13 +156,15 @@ class CreateFragment : Fragment() {
                                     time_left = "",
                                     custom_location = event.custom_location,
                                     end_time = "",latLng="",minUserCount=if(event.min.equals("")){0}else{event.min.toInt()},maxUserCount=if(event.max.equals("")){0}else{event.max.toInt()},
-                                    disableChat = false, disableMemories = false, likes = 0,
+                                    disableChat = event.disableChat,  likes = 0,
                                     invited_users = arrayListOf(),
                                     participants_profile_pictures =participants_profile_pictures ,
                                     participants_usernames =participants_usernames,
                                     creation_time = current,
                                     location=event.location,
-                                    pictures=HashMap()
+                                    pictures=HashMap(),
+                                    enableActivitySharing=event.enableActivitySharing,disablePictures=event.disablePictures,disableNotification=event.disableNotification,privateChat=event.privateChat
+
                                 )
 
                                 viewModel.handleGoToFriendsPicker(activity)

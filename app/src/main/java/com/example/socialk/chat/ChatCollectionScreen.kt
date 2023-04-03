@@ -71,7 +71,8 @@ fun ChatCollectionScreen(
             ) {
                 Text(
                     text = "Chats",
-                    style = com.example.socialk.ui.theme.Typography.h3
+                    style = com.example.socialk.ui.theme.Typography.h3,
+                    color=SocialTheme.colors.textPrimary
                 )
 
             }
@@ -265,7 +266,8 @@ fun chatItem(
                             } else {
                                 ""
                             },
-                            style = Typography.h2
+                            style = Typography.h2,
+                            color=SocialTheme.colors.textPrimary
                         )
 
 
@@ -279,7 +281,8 @@ fun chatItem(
                         } else {
                             ""
                         },
-                        style = Typography.h6
+                        style = Typography.h6,
+                        color=SocialTheme.colors.textPrimary
                     )
                 }
                 val parts= lastMessageDate?.split(" ")
@@ -307,7 +310,8 @@ fun chatItem(
                     } else {
                         ""
                     },
-                    style = Typography.h5
+                    style = Typography.h5,
+                    color=SocialTheme.colors.textPrimary
                 )
             }
             }

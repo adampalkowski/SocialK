@@ -224,7 +224,7 @@ fun editField(
             onDone = {
                 onImeAction()
             }
-        ), colors = TextFieldDefaults.outlinedTextFieldColors(textColor = SocialTheme.colors.textPrimary)
+        ), colors = TextFieldDefaults.outlinedTextFieldColors(textColor = SocialTheme.colors.textPrimary, unfocusedBorderColor =SocialTheme.colors.iconPrimary.copy(0.7f))
     )
     Text(
         text = "${editTextState.text.length} / $maxLetters",

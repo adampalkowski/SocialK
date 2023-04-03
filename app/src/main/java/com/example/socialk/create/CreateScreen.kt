@@ -103,8 +103,13 @@ sealed class CreateEvent {
         val max: String,
         val custom_location: String,
         val location: String,
-        val invited_users: List<User>
-    ) : CreateEvent()
+        val invited_users: List<User>,
+        val enableActivitySharing: Boolean,
+        val disablePictures: Boolean,
+        val disableNotification: Boolean,
+        val privateChat: Boolean,
+        val disableChat:Boolean,
+        ) : CreateEvent()
 }
 
 @OptIn(
@@ -130,6 +135,21 @@ fun CreateScreen(
         mutableStateOf(ActivityTextFieldState())
     }
 
+    var enableActivitySharing by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var disablePictures by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var disableNotification by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var privateChat by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var disableChat by rememberSaveable {
+        mutableStateOf(false)
+    }
 
     val descriptionTextState by rememberSaveable(stateSaver = BasicTextFieldStateSaver) {
         mutableStateOf(BasicTextFieldState())
@@ -282,7 +302,7 @@ fun CreateScreen(
         customLocationTextState.text = viewModel.custom_location.value
     }
     if (viewModel.latlng.value.isNotEmpty()) {
-       location.value=viewModel.latlng.value
+        location.value = viewModel.latlng.value
     }
     Surface(
         modifier = Modifier
@@ -297,7 +317,7 @@ fun CreateScreen(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            activityPickerCreate(isSystemInDarkTheme(), onEvent =onEvent)
+            activityPickerCreate(isSystemInDarkTheme(), onEvent = onEvent)
             Spacer(modifier = Modifier.height(12.dp))
             // todo finish saving the values of all the picks thorufh shared preferences
             EditTextField(hint = "Enter a name for your activity",
@@ -484,24 +504,66 @@ fun CreateScreen(
                         }
                     }
 
-                    /* CustomField(text = "Privacy",
-                         modifier = Modifier, title = "Reminders",
-                         icon = R.drawable.ic_notification_active,  onClick = {}, description = "Remind users about the activity an hour before start."){
-                         Row(
-                             modifier = Modifier
-                                 .fillMaxWidth()
-                                 .padding(horizontal = 24.dp)
-                         ) {
+                    CustomField(
+                        text = "Privacy",
+                        modifier = Modifier,
+                        title = "Activity settings",
+                        icon = R.drawable.ic_privacy,
+                        onClick = {},
+                        description = "",
+                        disableDescription = true
+                    ) {
+                        ActivitySettingsBox(
+                            "Activity sharing",
+                            "Allow invited users to invite others to the activity.",
+                            onSwitch = {  enableActivitySharing=it})
+                        ActivitySettingsBox(
+                            "Pictures",
+                            "Disable attach pictures to the activity.",
+                            onSwitch = { disablePictures=it })
+                        ActivitySettingsBox(
+                            "Notification",
+                            "Don't notify invited users.",
+                            onSwitch = { disableNotification=it})
 
-                             Spacer(modifier = Modifier.weight(1f))
-                             Switch2(onCheckedChange = {})
-                         }
-                     }*/
+                        ActivitySettingsChatBox(                            "Chat",
+                            "Make chat visible only for activity participants.", secondDescription = "Disable chat ", onSwitch = {privateChat=it}, secondOnSwitch = {disableChat=it})
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column() {
+                                Text(
+                                    text = "Chat",
+                                    fontFamily = Inter,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 14.sp,
+                                    color = SocialTheme.colors.textPrimary
+                                )
+                                Text(
+                                    text = "Make chat visible only for activity participants.",
+                                    fontFamily = Inter,
+                                    fontWeight = FontWeight.Light,
+                                    fontSize = 12.sp,
+                                    color = SocialTheme.colors.textPrimary
+                                )
+                                Text(
+                                    text = "Disable chat.",
+                                    fontFamily = Inter,
+                                    fontWeight = FontWeight.Light,
+                                    fontSize = 12.sp,
+                                    color = SocialTheme.colors.textPrimary
+                                )
+                            }
+                            Spacer(modifier = Modifier.weight(1f))
+                            Switch2(onCheckedChange = {})
+                        }
+                    }
                 }
 
             }
-
-
 
             Spacer(modifier = Modifier.height(48.dp))
 
@@ -543,9 +605,13 @@ fun CreateScreen(
                 Spacer(Modifier.width(24.dp))
                 CreateActivityButton(onClick = {
 
-                    if(minTextState.text.isNotEmpty() &&maxTextState.text.isNotEmpty() && minTextState.text.toInt()>maxTextState.text.toInt()){
-                        Toast.makeText(context,"Min participant limit greater than max",Toast.LENGTH_SHORT).show()
-                    }else{
+                    if (minTextState.text.isNotEmpty() && maxTextState.text.isNotEmpty() && minTextState.text.toInt() > maxTextState.text.toInt()) {
+                        Toast.makeText(
+                            context,
+                            "Min participant limit greater than max",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
                         onEvent(
                             CreateEvent.CreateActivity(
                                 title = activityTextState.text,
@@ -557,9 +623,13 @@ fun CreateScreen(
                                 location = latlng.value,
                                 min = minTextState.text,
                                 max = maxTextState.text,
-                                custom_location = customLocationTextState.text
-                            )
-                        )
+                                custom_location = customLocationTextState.text,
+                                enableActivitySharing =enableActivitySharing,
+                                disablePictures =disablePictures,
+                                disableNotification =disableNotification,
+                                privateChat =privateChat, disableChat = disableChat
+
+                                ))
                     }
 
 
@@ -654,51 +724,132 @@ fun CreateScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
 
-                                ClickableText(text = AnnotatedString("Dismiss"), style = TextStyle(
-                                    color = SocialTheme.colors.textPrimary.copy(0.6f),
-                                    fontFamily = Inter,
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 14.sp
-                                ), onClick = { openDialog.value = false })
+                    ClickableText(text = AnnotatedString("Dismiss"), style = TextStyle(
+                        color = SocialTheme.colors.textPrimary.copy(0.6f),
+                        fontFamily = Inter,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.sp
+                    ), onClick = { openDialog.value = false })
 
-                        Spacer(modifier = Modifier.weight(1f))
-                                Icon(painter = painterResource(id = R.drawable.ic_fix),null,tint=SocialTheme.colors.iconInteractive)
-                                ClickableText(text = AnnotatedString("Change"), style = TextStyle(
-                                    color =SocialTheme.colors.iconInteractive,
-                                    fontFamily = Inter,
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 14.sp
-                                ), onClick = {
-                                    openDialog.value = false
-                                    onEvent(CreateEvent.GoToMap)
-                                })
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Icon(painter = painterResource(id = R.drawable.ic_delete),null,tint=SocialTheme.colors.error)
-                                ClickableText(text = AnnotatedString("Remove"), style = TextStyle(
-                                    color = SocialTheme.colors.error,
-                                    fontFamily = Inter,
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 14.sp
-                                ), onClick = {
-                                    openDialog.value = false
-                                    location.value = null
-                                    viewModel.latlng.value=""
-                                })
+                    Spacer(modifier = Modifier.weight(1f))
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_fix),
+                        null,
+                        tint = SocialTheme.colors.iconInteractive
+                    )
+                    ClickableText(text = AnnotatedString("Change"), style = TextStyle(
+                        color = SocialTheme.colors.iconInteractive,
+                        fontFamily = Inter,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.sp
+                    ), onClick = {
+                        openDialog.value = false
+                        onEvent(CreateEvent.GoToMap)
+                    })
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_delete),
+                        null,
+                        tint = SocialTheme.colors.error
+                    )
+                    ClickableText(text = AnnotatedString("Remove"), style = TextStyle(
+                        color = SocialTheme.colors.error,
+                        fontFamily = Inter,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.sp
+                    ), onClick = {
+                        openDialog.value = false
+                        location.value = null
+                        viewModel.latlng.value = ""
+                    })
 
 
-                    }
+                }
 
 
             }
 
 
         }
+    }
+
+}
+@Composable
+fun ActivitySettingsChatBox(title: String, description: String, secondDescription: String, onSwitch: (Boolean) -> Unit,secondOnSwitch: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp), verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column() {
+                Text(
+                    text = title,
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp,
+                    color = SocialTheme.colors.textPrimary
+                )
+
+        Row() {
+
+        Text(
+                text = description,
+                fontFamily = Inter,
+                fontWeight = FontWeight.Light,
+                fontSize = 12.sp,
+                color = SocialTheme.colors.textPrimary
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Switch2(onCheckedChange = { it -> onSwitch(it) })
+        }
+            Row() {
+
+                Text(
+                    text = secondDescription,
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.Light,
+                    fontSize = 12.sp,
+                    color = SocialTheme.colors.textPrimary
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Switch2(onCheckedChange = { it -> secondOnSwitch(it) })
+            }
+        }
+
+    }
+
+}
+@Composable
+fun ActivitySettingsBox(title: String, description: String, onSwitch: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp), verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column() {
+            Text(
+                text = title,
+                fontFamily = Inter,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                color = SocialTheme.colors.textPrimary
+            )
+            Text(
+                text = description,
+                fontFamily = Inter,
+                fontWeight = FontWeight.Light,
+                fontSize = 12.sp,
+                color = SocialTheme.colors.textPrimary
+            )
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        Switch2(onCheckedChange = { it -> onSwitch(it) })
     }
 
 }

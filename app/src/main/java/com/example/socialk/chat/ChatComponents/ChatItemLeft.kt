@@ -43,7 +43,7 @@ fun ChatItemLeft(text_type:String,
                  textMessage: String,
                  onLongPress: () -> Unit,
                  picture_url: String,
-                 onClick: () -> Unit,onEvent:(ChatItemEvent)->Unit
+                 onClick: () -> Unit,onEvent:(ChatItemEvent)->Unit,displayPicture:Boolean=true
 ) {
     var itemClickedState by remember {
         mutableStateOf(false)
@@ -63,14 +63,20 @@ fun ChatItemLeft(text_type:String,
 
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = rememberAsyncImagePainter(picture_url),
-                    contentScale = ContentScale.Crop,
-                    contentDescription = "profile image",
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                )
+                if(displayPicture)
+                {
+                    Image(
+                        painter = rememberAsyncImagePainter(picture_url),
+                        contentScale = ContentScale.Crop,
+                        contentDescription = "profile image",
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                    )
+                }else{
+                    Spacer(modifier = Modifier.width(32.dp))
+                }
+
                 Spacer(modifier = Modifier.width(6.dp))
 
                 Card(

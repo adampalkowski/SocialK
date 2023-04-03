@@ -43,6 +43,7 @@ import com.example.socialk.ui.theme.SocialTheme
 sealed class FriendsPickerEvent() {
     object GoBack : FriendsPickerEvent()
     class CreateActivity(val selected_ids: ArrayList<String>) : FriendsPickerEvent()
+    class UpdateInvites(val selected_ids: ArrayList<String>) : FriendsPickerEvent()
     class CreateGroup(val selected_ids: ArrayList<String>) : FriendsPickerEvent()
 }
 
@@ -175,7 +176,6 @@ fun PickDisplay(
                 Divider()
                 LazyRow(
                     Modifier
-
                 ) {
                     item {
                         Spacer(modifier = Modifier.width(24.dp))
@@ -191,9 +191,7 @@ fun PickDisplay(
                                         fontSize = 12.sp, textDecoration = TextDecoration.Underline
                                     ), color = SocialTheme.colors.textPrimary.copy(alpha = 0.6f)
                                 )
-
                             }
-
                         }
                     }
 
@@ -217,7 +215,7 @@ fun PickDisplay(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(end = 24.dp), enabled = enabledButton,
-            text = if(type.equals("activity")){"Create activity"}else{"Create group"},
+            text = if(type.equals("activity")){"Create activity"}else if(type.equals("group")){"Create group"}else{"Invite users"},
             backGroundColor = SocialTheme.colors.iconInteractive,
             onEvent = {
                 var selected_list: ArrayList<String> = arrayListOf()
@@ -233,7 +231,9 @@ fun PickDisplay(
                 }
                 if (type.equals("activity")) {
                     onEvent(FriendsPickerEvent.CreateActivity(selected_list))
-                } else if (type.equals("group")) {
+                } else if(type.equals("update")){
+                      onEvent(FriendsPickerEvent.UpdateInvites(selected_list))
+                }else if (type.equals("group")) {
                     onEvent(FriendsPickerEvent.CreateGroup(selected_list))
                 } else {
                     onEvent(FriendsPickerEvent.CreateActivity(selected_list))

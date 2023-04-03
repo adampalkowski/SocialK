@@ -20,18 +20,21 @@ data class Activity(
     val minUserCount:Int,
     val maxUserCount:Int,
     val disableChat:Boolean,
-    val disableMemories:Boolean,
     val likes:Int,
     var invited_users:ArrayList<String>,
     val participants_profile_pictures:HashMap<String,String>,
     val participants_usernames:HashMap<String,String>,
     val creation_time:String,
     val location:String,
-    val pictures:HashMap<String,String>
+    val pictures:HashMap<String,String>,
+    val enableActivitySharing:Boolean,
+    val disablePictures:Boolean,
+    val disableNotification:Boolean,
+    val privateChat: Boolean,
 
 ):java.io.Serializable{
     constructor(): this("", "","", "","", "","",
         "","","", "","","","",
-        0,100,false,false,0, ArrayList(), HashMap(),HashMap
-    (),"","", HashMap())
+        0,100,disableChat=false,0, ArrayList(), HashMap(),HashMap
+    (),"","", HashMap(),enableActivitySharing=false,disablePictures=false,disableNotification=false,privateChat=false)
 }

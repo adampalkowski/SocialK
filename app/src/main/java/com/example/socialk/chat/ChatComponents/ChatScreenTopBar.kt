@@ -108,7 +108,7 @@ fun ChatScreenTopBar(chat: Chat, onEvent: (ChatEvent) -> Unit) {
                     fontFamily = Inter,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
-                )
+                ),color=SocialTheme.colors.textPrimary
             )
             Spacer(modifier = Modifier.weight(1f))
             IconButton(onClick = { onEvent(ChatEvent.GoToChatUserSettings) }) {

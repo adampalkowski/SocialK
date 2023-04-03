@@ -40,6 +40,7 @@ class ActivityViewModel @Inject constructor(
 
     private val _isImageAddedToStorageState = MutableStateFlow<Response<String>?>(null)
     val isImageAddedToStorageFlow: StateFlow<Response<String>?> = _isImageAddedToStorageState
+
     private val _isImageDeletedFromStorage = MutableStateFlow<Response<String>?>(null)
     val isImageDeletedFromStorage: StateFlow<Response<String>?> = _isImageDeletedFromStorage
 
@@ -76,7 +77,9 @@ class ActivityViewModel @Inject constructor(
     private val _isInviteRemovedFromActivity =
         mutableStateOf<Response<Void?>?>(Response.Success(null))
     val isInviteRemovedFromActivity: State<Response<Void?>?> = _isInviteRemovedFromActivity
-
+    private val _isActivityInvitesUpdated =
+        mutableStateOf<Response<Void?>?>(Response.Success(null))
+    val isActivityInvitesUpdated: State<Response<Void?>?> = _isActivityInvitesUpdated
     init {
         // getActivities()
     }
@@ -208,6 +211,13 @@ class ActivityViewModel @Inject constructor(
             activity.end_time = addTimes(activity.start_time, activity.time_length)
             repo.addActivity(activity).collect { response ->
                 _isActivityAddedState.value = response
+            }
+        }
+    }
+    fun updateActivityInvites(activity_id: String,invites:ArrayList<String>) {
+        viewModelScope.launch {
+            repo.updateActivityInvites(activity_id,invites).collect { response ->
+                _isActivityInvitesUpdated.value = response
             }
         }
     }

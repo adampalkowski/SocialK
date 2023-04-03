@@ -48,6 +48,7 @@ sealed class BottomDialogEvent {
     }
 
     object GoToProfile : BottomDialogEvent()
+    class GoToFriendsPicker (val activity :Activity): BottomDialogEvent()
     object LogOut : BottomDialogEvent()
     object GoToSettings : BottomDialogEvent()
     object GoToHome : BottomDialogEvent()
@@ -91,6 +92,9 @@ fun BottomDialog(state:ModalBottomSheetState=rememberModalBottomSheetState(Modal
                             }
                             is BottomDialogEvent.LeaveActivity->{
                                 onEvent(BottomDialogEvent.LeaveActivity(activity))
+                            }
+                            is BottomDialogEvent.GoToFriendsPicker->{
+                                onEvent(BottomDialogEvent.GoToFriendsPicker(event.activity))
                             }
                             else->{}
                         }
@@ -179,6 +183,11 @@ fun ActivitySettingsContent(context:Context,
     Box(modifier = Modifier.background(color=SocialTheme.colors.uiBackground)){
         Column() {
             Spacer(modifier = Modifier.width(12.dp))
+            if(activity.enableActivitySharing){
+                SettingsItem(text="Invite other users to activity",icon=R.drawable.ic_share,  onClick ={
+                    onEvent(BottomDialogEvent.GoToFriendsPicker(activity))
+                } )
+            }
             SettingsItem(text="Leave activity",icon=R.drawable.ic_log_out, onClick ={onEvent(BottomDialogEvent.LeaveActivity(activity))} )
             SettingsItem(text="Display participants",icon=R.drawable.ic_group_not_filled, onClick ={displayParticipants.value=!displayParticipants.value} )
             SettingsItem(text="Hide activity",icon=R.drawable.ic_visibility_off,  onClick ={onEvent(BottomDialogEvent.AlertHideActivity)})
@@ -195,7 +204,7 @@ fun ActivitySettingsContent(context:Context,
                 onEvent(BottomDialogEvent.HideBottomDialog)
                 Toast.makeText(context,"Copied activity link to clipboard",Toast.LENGTH_LONG).show()
             }  )
-            SettingsItem(text="Share activity",icon=R.drawable.ic_share,  onClick ={/*TODO*/} )
+
             SettingsItem(text="Delete posted picture",icon=R.drawable.ic_hide_image, onClick ={/*TODO*/})
             SettingsItem(text="Suggest time change",icon=R.drawable.ic_update_time,  onClick ={/*TODO*/} )
             SettingsItem(text="Suggest date change",icon=R.drawable.ic_update_date, onClick ={/*TODO*/} )

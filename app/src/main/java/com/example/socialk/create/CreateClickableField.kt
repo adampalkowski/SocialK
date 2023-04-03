@@ -173,7 +173,8 @@ fun CustomField(
     titleColor: Color=SocialTheme.colors.textPrimary,
     descriptionColor: Color=SocialTheme.colors.textPrimary.copy(alpha=0.5f),
     interactiveTextColor: Color=Color(0xFF034FB4),
-    content: @Composable () -> Unit
+    disableDescription:Boolean=false,
+            content: @Composable () -> Unit,
 ) {
     Column(modifier = modifier) {
 
@@ -198,13 +199,16 @@ fun CustomField(
                     fontSize = titleTextSize.sp,
                     color = titleColor
                 )
-                Text(
-                    text = description,
-                    fontFamily = Inter,
-                    fontWeight = FontWeight.Light,
-                    fontSize = descriptionTextSize.sp,
-                    color = descriptionColor
-                )
+                if(!disableDescription){
+                    Text(
+                        text = description,
+                        fontFamily = Inter,
+                        fontWeight = FontWeight.Light,
+                        fontSize = descriptionTextSize.sp,
+                        color = descriptionColor
+                    )
+                }
+
             }
 
             Spacer(modifier = Modifier.weight(1f))
