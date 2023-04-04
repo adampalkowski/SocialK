@@ -56,6 +56,7 @@ import com.example.socialk.ui.theme.SocialTheme
 import com.google.accompanist.systemuicontroller.SystemUiController
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -545,7 +546,9 @@ fun ParticipantBoxItem(picture_url: String, username: String) {
                 GlideImage(
                     model = picture_url,
                     contentDescription = null,
-                    modifier = Modifier.size(64.dp).clip(CircleShape),
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape),
                     contentScale = ContentScale.Crop,
                 )
 
@@ -729,19 +732,17 @@ fun HomeScreenContent(
     padding: PaddingValues,
     isDark: Boolean,
     onEvent: (HomeEvent) -> Unit,
-    homeViewModel: HomeViewModel,
+    homeViewModel: HomeViewModel?,
     onLongClick: (Activity) -> Unit
+    ,closeBottomSheet: () -> Unit={}
 ) {
-
-    val refreshScope = rememberCoroutineScope()
-    var refreshing by remember { mutableStateOf(false) }
+    /*val refreshScope = rememberCoroutineScope()
+    var refreshing by remember { mutableStateOf(false) }*/
     var activitiesExist = remember { mutableStateOf(false) }
-    fun refresh() = refreshScope.launch {
+   /* fun refresh() = refreshScope.launch {
         refreshing = true
         activityViewModel?.getActivitiesForUser(viewModel?.currentUser!!.uid)
-
-    }
-
+    }*/
     val flowImageAddition = activityViewModel?.addImageToActivityState?.collectAsState()
     val flowImageDelete = activityViewModel?.isImageRemoveFromActivityState?.collectAsState()
 
@@ -784,13 +785,13 @@ fun HomeScreenContent(
             is Response.Failure -> {
                 uploading = false
                 // on failure to add image DISPLAY ERROR BAR
-                refreshScope.launch {
+                /*refreshScope.launch {
                     uploadingError = true
                     delay(3000) // wait for 2 seconds
                     uploadingError = false // set uploadingError to false
                     activityViewModel?.addImageToActivityState?.value =
                         null // set the state to null becasue it is Response.Failure
-                }
+                }*/
             }
             is Response.Loading -> {
                 uploading = true
@@ -798,7 +799,7 @@ fun HomeScreenContent(
             else -> {}
         }
     }
-    val state = rememberPullRefreshState(refreshing, ::refresh)
+   /* val state = rememberPullRefreshState(refreshing, ::refresh)*/
     if (liveActivityDialog != null) {
         Log.d("HOMESCREEN", liveActivityDialog!!)
         Log.d("HOMESCREEN", liveActivityParticipantsValue.toString()!!)
@@ -832,215 +833,223 @@ fun HomeScreenContent(
     }
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .pullRefresh(state)
+
+            .background(color = SocialTheme.colors.uiBackground) /*   .pullRefresh(state)*/
     ) {
-        LazyColumn {
-            //Space for the header
-            item {
-                Spacer(modifier = Modifier.height(64.dp))
+        Column(){
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(24.dp), contentAlignment = Alignment.Center){
+                androidx.compose.material.Card(modifier=Modifier.width(48.dp).height(4.dp), onClick = {closeBottomSheet()},shape= RoundedCornerShape(12.dp), backgroundColor = SocialTheme.colors.iconPrimary,elevation=0.dp) {
+
+                }
             }
-            //display of active users
-            activeUsersViewModel?.activeUsersListState?.value.let {
-                when (it) {
-                    is Response.Success -> {
-                        item {
-                            LazyRow {
-                                items(it.data) { liveActivity ->
-                                    Spacer(modifier = Modifier.width(24.dp))
-                                    ActiveUserItem(
-                                        onClick = {
-                                            Log.d("HOMESCREEN", liveActivity.toString())
-                                            if (liveActivity.participants_profile_pictures.keys.contains(
-                                                    UserData.user!!.id
-                                                )
-                                            ) {
-                                                Log.d("HOMESCREEN", liveActivity.id)
-                                                liveActivityDialog = liveActivity.creator_id
-                                                liveActivityParticipantsValue =
-                                                    liveActivity.participants_profile_pictures.size
-                                            }
-                                        },
-                                        profileUrls = liveActivity.participants_profile_pictures,
-                                        usernames = liveActivity.participants_usernames
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
+            LazyColumn {
+
+                //display of active users
+                activeUsersViewModel?.activeUsersListState?.value.let {
+                    when (it) {
+                        is Response.Success -> {
+                            item {
+                                LazyRow {
+                                    items(it.data) { liveActivity ->
+                                        Spacer(modifier = Modifier.width(24.dp))
+                                        ActiveUserItem(
+                                            onClick = {
+                                                Log.d("HOMESCREEN", liveActivity.toString())
+                                                if (liveActivity.participants_profile_pictures.keys.contains(
+                                                        UserData.user!!.id
+                                                    )
+                                                ) {
+                                                    Log.d("HOMESCREEN", liveActivity.id)
+                                                    liveActivityDialog = liveActivity.creator_id
+                                                    liveActivityParticipantsValue =
+                                                        liveActivity.participants_profile_pictures.size
+                                                }
+                                            },
+                                            profileUrls = liveActivity.participants_profile_pictures,
+                                            usernames = liveActivity.participants_usernames
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                    }
                                 }
                             }
                         }
+                        else -> {}
                     }
-                    else -> {}
                 }
-            }
-            //divider bettwen active users and activities
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 32.dp)
-                        .height(1.dp)
-                        .background(color = SocialTheme.colors.uiFloated)
-                )
-            }
-            item {
-                AnimatedVisibility(
-                    visible = uploading,
-                    enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
-                    exit = scaleOut()
-                ) {
-
-                    UploadBar(
-                        icon_anim = true,
-                        text = "Uploading image",
-                        icon = R.drawable.ic_add_photo
+                //divider bettwen active users and activities
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 32.dp)
+                            .height(1.dp)
+                            .background(color = SocialTheme.colors.uiFloated)
                     )
                 }
-            }
-            item {
-                AnimatedVisibility(
-                    visible = uploadingError,
-                    enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
-                    exit = scaleOut()
-                ) {
+                item {
+                    AnimatedVisibility(
+                        visible = uploading,
+                        enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
+                        exit = scaleOut()
+                    ) {
 
-
-                    ErrorBar(
-                        icon_anim = true,
-                        text = "Error while uploading the image",
-                        icon = R.drawable.ic_error
-                    )
+                        UploadBar(
+                            icon_anim = true,
+                            text = "Uploading image",
+                            icon = R.drawable.ic_add_photo
+                        )
+                    }
                 }
-            }
-            item {
-                AnimatedVisibility(
-                    visible = deletingImage,
-                    enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
-                    exit = scaleOut()
-                ) {
+                item {
+                    AnimatedVisibility(
+                        visible = uploadingError,
+                        enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
+                        exit = scaleOut()
+                    ) {
 
-                    ErrorBar(icon_anim = true, text = "Removing image", icon = R.drawable.ic_remove)
+
+                        ErrorBar(
+                            icon_anim = true,
+                            text = "Error while uploading the image",
+                            icon = R.drawable.ic_error
+                        )
+                    }
                 }
-            }
+                item {
+                    AnimatedVisibility(
+                        visible = deletingImage,
+                        enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
+                        exit = scaleOut()
+                    ) {
 
-            activityViewModel?.activitiesListState?.value.let {
-                when (it) {
-                    is Response.Success -> {
-                        refreshing = false
-                        //display activities
+                        ErrorBar(icon_anim = true, text = "Removing image", icon = R.drawable.ic_remove)
+                    }
+                }
 
-                        items(it.data) { item ->
-                            if (updateActivity) {
-                                if (item.id == homeViewModel.camera_activity_id.value) {
-                                    item.pictures[UserData.user!!.id] = photo_url
+                activityViewModel?.activitiesListState?.value.let {
+                    when (it) {
+                        is Response.Success -> {
+                            /* refreshing = false*/
+                            //display activities
+
+                            items(it.data) { item ->
+                                /*if (updateActivity) {
+                                    if (item.id == homeViewModel.camera_activity_id.value) {
+                                        item.pictures[UserData.user!!.id] = photo_url
+                                    }
+                                    updateActivity = false
                                 }
-                                updateActivity = false
-                            }
-                            if (updateDeleteActivity) {
-                                if (item.id == homeViewModel.camera_activity_id.value) {
-                                    item.pictures.remove(UserData.user!!.id)
-                                }
-                                updateDeleteActivity = false
-                            }
-                            ActivityItem(
-                                activity = item,
-                                onEvent = activityEvent,
-                                username = item.creator_username,
-                                profilePictureUrl = item.creator_profile_picture,
-                                timeLeft = item.time_left,
-                                title = item.title,
-                                description = item.description,
-                                date = item.date,
-                                liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
-                                //todo add the time end
-                                timePeriod = item.start_time + " - " + item.end_time,
-                                custom_location = item.custom_location,
-                                location = item.location, lockPhotoButton = uploading,
-                                onLongClick = { onLongClick(item) }
-                            )
+                                if (updateDeleteActivity) {
+                                    if (item.id == homeViewModel.camera_activity_id.value) {
+                                        item.pictures.remove(UserData.user!!.id)
+                                    }
+                                    updateDeleteActivity = false
+                                }*/
+                                ActivityItem(
+                                    activity = item,
+                                    onEvent = activityEvent,
+                                    username = item.creator_username,
+                                    profilePictureUrl = item.creator_profile_picture,
+                                    timeLeft = item.time_left,
+                                    title = item.title,
+                                    description = item.description,
+                                    date = item.date,
+                                    liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
+                                    //todo add the time end
+                                    timePeriod = item.start_time + " - " + item.end_time,
+                                    custom_location = item.custom_location,
+                                    location = item.location, lockPhotoButton = uploading,
+                                    onLongClick = { onLongClick(item) }
+                                )
 
+                            }
+                            activitiesExist.value = true
                         }
-                        activitiesExist.value = true
+                        else -> {}
                     }
-                    else -> {}
                 }
-            }
-            activityViewModel?.moreActivitiesListState?.value.let {
-                when (it) {
-                    is Response.Success -> {
-                        refreshing = false
-                        //display activities
-                        Log.d("homescreen", it.data.toString())
-                        items(it.data) { item ->
-                            if (updateActivity) {
-                                if (item.id == homeViewModel.camera_activity_id.value) {
-                                    item.pictures[UserData.user!!.id] = photo_url
-                                }
-                                updateActivity = false
+                activityViewModel?.moreActivitiesListState?.value.let {
+                    when (it) {
+                        is Response.Success -> {
+                            /*refreshing = false*/
+                            //display activities
+                            Log.d("homescreen", it.data.toString())
+                            items(it.data) { item ->
+                                /*  if (updateActivity) {
+                                      if (item.id == homeViewModel.camera_activity_id.value) {
+                                          item.pictures[UserData.user!!.id] = photo_url
+                                      }
+                                      updateActivity = false
+
+                                  }
+                                  if (updateDeleteActivity) {
+                                      if (item.id == homeViewModel.camera_activity_id.value) {
+                                          item.pictures.remove(UserData.user!!.id)
+                                      }
+                                      updateDeleteActivity = false
+                                  }*/
+                                ActivityItem(
+                                    activity = item,
+                                    onEvent = activityEvent,
+                                    username = item.creator_username,
+                                    profilePictureUrl = item.creator_profile_picture,
+                                    timeLeft = item.time_left,
+                                    title = item.title,
+                                    description = item.description,
+                                    date = item.date,
+                                    liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
+                                    //todo add the time end
+                                    timePeriod = item.start_time + " - " + item.end_time,
+                                    custom_location = item.custom_location,
+                                    location = item.location,
+                                    lockPhotoButton = uploading
+                                )
 
                             }
-                            if (updateDeleteActivity) {
-                                if (item.id == homeViewModel.camera_activity_id.value) {
-                                    item.pictures.remove(UserData.user!!.id)
-                                }
-                                updateDeleteActivity = false
-                            }
-                            ActivityItem(
-                                activity = item,
-                                onEvent = activityEvent,
-                                username = item.creator_username,
-                                profilePictureUrl = item.creator_profile_picture,
-                                timeLeft = item.time_left,
-                                title = item.title,
-                                description = item.description,
-                                date = item.date,
-                                liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
-                                //todo add the time end
-                                timePeriod = item.start_time + " - " + item.end_time,
-                                custom_location = item.custom_location,
-                                location = item.location,
-                                lockPhotoButton = uploading
-                            )
-
+                        }
+                        else -> {}
+                    }
+                }
+                item {
+                    LaunchedEffect(true) {
+                        if (activitiesExist.value) {
+                            activityViewModel?.getMoreActivitiesForUser(UserData.user!!.id)
                         }
                     }
-                    else -> {}
+                }
+                //space for bottom bar
+                item {
+                    Spacer(modifier = Modifier.height(56.dp))
                 }
             }
-            item {
-                LaunchedEffect(true) {
-                    if (activitiesExist.value) {
-                        activityViewModel?.getMoreActivitiesForUser(UserData.user!!.id)
-                    }
-                }
-            }
-            //space for bottom bar
-            item {
-                Spacer(modifier = Modifier.height(56.dp))
-            }
+
+            /* PullRefreshIndicator(
+                 /*refreshing,
+                 state,*/
+                 Modifier
+                     .align(Alignment.TopCenter)
+                     .padding(top = 64.dp),
+                 backgroundColor = SocialTheme.colors.uiBackground,
+                 contentColor = SocialTheme.colors.textPrimary
+             )*/
+        }
+        /*  Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(56.dp)
+                .padding(vertical = 12.dp), contentAlignment = Alignment.TopCenter
+        ) {
+            topBar(
+                isDark,
+                onEvent = { onEvent(HomeEvent.GoToMemories) },
+                picked_screen = "Activities"
+            )
+        }*/
         }
 
-        PullRefreshIndicator(
-            refreshing,
-            state,
-            Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 64.dp),
-            backgroundColor = SocialTheme.colors.uiBackground,
-            contentColor = SocialTheme.colors.textPrimary
-        )
-    }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(56.dp)
-            .padding(vertical = 12.dp), contentAlignment = Alignment.TopCenter
-    ) {
-        topBar(
-            isDark,
-            onEvent = { onEvent(HomeEvent.GoToMemories) },
-            picked_screen = "Activities"
-        )
-    }
 
 }
 

@@ -17,7 +17,7 @@ class SignInViewModel() : ViewModel() {
      * Consider all sign ins successful
      */
     fun signIn() {
-        _navigateTo.value = Event(Screen.Home)
+        _navigateTo.value = Event(Screen.Map)
     }
     fun handleGoToPickUsername() {
         _navigateTo.value = Event(Screen.PickUsername)

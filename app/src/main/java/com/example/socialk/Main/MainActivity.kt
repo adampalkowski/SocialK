@@ -40,14 +40,9 @@ class MainActivity : AppCompatActivity() {
                     deepLink = pendingDynamicLinkData.link
                 }
                 if (   deepLink?.pathSegments?.get(0).equals("Activity")){
-
                     Log.d("HomeFragment", deepLink?.pathSegments?.get(1).toString())
-                    viewModel.setActivityLink(   deepLink?.pathSegments?.get(1).toString())
-
+                    viewModel.setActivityLink( deepLink?.pathSegments?.get(1).toString())
                 }
-
-
-
 
             }
             .addOnFailureListener(this) { e -> Log.w(ContentValues.TAG, "getDynamicLink:onFailure", e) }

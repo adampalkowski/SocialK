@@ -4,17 +4,29 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.util.Log
+import android.widget.Space
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -22,18 +34,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.example.socialk.Destinations
 import com.example.socialk.R
 import com.example.socialk.components.*
 import com.example.socialk.create.CreateActivityButton
+import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
+import com.example.socialk.di.ChatViewModel
 import com.example.socialk.home.*
 import com.example.socialk.home.ActivityPreview
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
 import com.example.socialk.model.UserData
+import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 import com.google.android.gms.location.LocationCallback
@@ -42,9 +59,12 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 sealed class MapEvent {
     object GoToProfile : MapEvent()
+    object GoToChats : MapEvent()
     object LogOut : MapEvent()
     object GoToHome : MapEvent()
     object GoToSettings : MapEvent()
@@ -80,7 +100,12 @@ fun loadIcon(
 
                 }
             })
-        return BitmapDescriptorFactory.fromBitmap(bitmap!!.copy(bitmap!!.config, bitmap!!.isMutable))
+        return BitmapDescriptorFactory.fromBitmap(
+            bitmap!!.copy(
+                bitmap!!.config,
+                bitmap!!.isMutable
+            )
+        )
     } catch (e: Exception) {
         e.printStackTrace()
         return null
@@ -90,11 +115,16 @@ fun loadIcon(
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
-fun MapScreen(latLngInitial: LatLng?,activityViewModel:ActivityViewModel,
+fun MapScreen(
+    latLngInitial: LatLng?,
+    activityViewModel: ActivityViewModel,
     onEvent: (MapEvent) -> Unit,
     bottomNavEvent: (Destinations) -> Unit,
     viewModel: MapViewModel,
-    locationCallback: LocationCallback
+    locationCallback: LocationCallback,
+    activeUsersViewModel: ActiveUsersViewModel?,
+    chatViewModel: ChatViewModel,
+    authViewModel: AuthViewModel?
 ) {
     var currentLocation: LatLng? by remember { mutableStateOf(null) }
     var location_picked_flow = viewModel.locations_picked.collectAsState()
@@ -120,7 +150,10 @@ fun MapScreen(latLngInitial: LatLng?,activityViewModel:ActivityViewModel,
     }*/
     val permission_flow = viewModel.granted_permission.collectAsState()
     val location_flow = viewModel.location.collectAsState()
-
+    var bottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.HalfExpanded)
+    var bottomSheetType by remember {
+        mutableStateOf("settings")
+    }
     val cameraPositionState: CameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 11f)
     }
@@ -142,341 +175,461 @@ fun MapScreen(latLngInitial: LatLng?,activityViewModel:ActivityViewModel,
         modifier = Modifier
             .fillMaxSize(), color = SocialTheme.colors.uiBackground
     ) {
+
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(56.dp), contentAlignment = Alignment.TopEnd
+                .fillMaxSize()
+                , contentAlignment = Alignment.TopEnd
         ) {
-            permission_flow.value.let {
-                if (it) {
-                    location_flow.value.let { location ->
-                        if (location != null) {
-                            viewModel.setLocation(
-                                LatLng(
-                                    location?.latitude!!,
-                                    location?.longitude!!
+            MapBottomDialog(modifier=Modifier,
+                state = bottomSheetState,
+                type = bottomSheetType,
+                onEvent = { event ->},
+                activeUsersViewModel =activeUsersViewModel,
+                activityViewModel =activityViewModel,
+                chatViewModel =chatViewModel,
+                viewModel =authViewModel,
+              ){
+                Box(Modifier.fillMaxSize().background(color=SocialTheme.colors.uiBackground)){
+                    if (!isMapLoaded) {
+                        SocialTheme {
+                            AnimatedVisibility(
+                                modifier = Modifier
+                                    .matchParentSize(),
+                                visible = !isMapLoaded,
+                                enter = EnterTransition.None,
+                                exit = fadeOut()
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .wrapContentSize()
                                 )
-                            )
-
-                            if (currentLocation==null){
-                                currentLocation = LatLng(location?.latitude!!, location?.longitude!!)
-                                Log.d("Mapfragment"," dats")
-                                if (latLngInitial==null){
-                                    cameraPositionState.position =
-                                        CameraPosition.fromLatLngZoom(currentLocation!!, 13f)
-                                }else{
-                                    cameraPositionState.position =
-                                        CameraPosition.fromLatLngZoom(latLngInitial!!, 13f)
-                                }
-
-                            }else{
-                                currentLocation = LatLng(location?.latitude!!, location?.longitude!!)
                             }
-
-                            Log.d("MapScreen", "got location")
                         }
                     }
-                    if (currentLocation == null) {
-                        SocialDialog(
-                            onDismiss = { onEvent(MapEvent.GoToHome) },
-                            onConfirm = { },
-                            onCancel = { onEvent(MapEvent.GoToHome) },
-                            title = "Turn on location",
-                            info = "To access the map please turn on you location",
-                            icon = R.drawable.ic_location_24,
-                            actionButtonText = "",
-                            actionButtonTextColor = SocialTheme.colors.textInteractive
-                        )
-                    } else {
-                        GoogleMap(
-                            Modifier.fillMaxSize(), cameraPositionState,
-                            properties = properties, onMapLoaded = {
-                                isMapLoaded = true
-                            }, onMapLongClick = { latlng ->
-                                viewModel.setLocationPicked(latlng)
-                                //add marker to the map by adding it to the list of markers that should be displayed'
 
-                            },
-                            uiSettings = uiSettings
-                        ) {
-                            location_flow.value.let {
+                    permission_flow.value.let {
+                        if (it) {
+                            location_flow.value.let { location ->
+                                if (location != null) {
+                                    viewModel.setLocation(
+                                        LatLng(
+                                            location?.latitude!!,
+                                            location?.longitude!!
+                                        )
+                                    )
 
-                                MarkerInfoWindow(
-                                    state = MarkerState(
-                                        position = it!!
-                                    ), icon = bitmap
+                                    if (currentLocation == null) {
+                                        currentLocation =
+                                            LatLng(location?.latitude!!, location?.longitude!!)
+                                        Log.d("Mapfragment", " dats")
+                                        if (latLngInitial == null) {
+                                            cameraPositionState.position =
+                                                CameraPosition.fromLatLngZoom(currentLocation!!, 13f)
+                                        } else {
+                                            cameraPositionState.position =
+                                                CameraPosition.fromLatLngZoom(latLngInitial!!, 13f)
+                                        }
+
+                                    } else {
+                                        currentLocation =
+                                            LatLng(location?.latitude!!, location?.longitude!!)
+                                    }
+
+                                    Log.d("MapScreen", "got location")
+                                }
+                            }
+                            if (currentLocation == null) {
+                                SocialDialog(
+                                    onDismiss = { onEvent(MapEvent.GoToHome) },
+                                    onConfirm = { },
+                                    onCancel = { onEvent(MapEvent.GoToHome) },
+                                    title = "Turn on location",
+                                    info = "To access the map please turn on you location",
+                                    icon = R.drawable.ic_location_24,
+                                    actionButtonText = "",
+                                    actionButtonTextColor = SocialTheme.colors.textInteractive
+                                )
+                            } else {
+                                GoogleMap(
+                                    Modifier.fillMaxSize(), cameraPositionState,
+                                    properties = properties, onMapLoaded = {
+                                        isMapLoaded = true
+                                    }, onMapLongClick = { latlng ->
+                                        viewModel.setLocationPicked(latlng)
+                                        //add marker to the map by adding it to the list of markers that should be displayed'
+
+                                    },
+                                    uiSettings = uiSettings
                                 ) {
-                                    Column() {
-                                        Card(shape = RoundedCornerShape(6.dp)) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .background(color = SocialTheme.colors.uiBackground)
-                                                    .padding(6.dp)
-                                            ) {
-                                                Text(
-                                                    text = "Current location",
-                                                    style = TextStyle(
-                                                        fontFamily = Inter,
-                                                        fontWeight = FontWeight.Normal,
-                                                        fontSize = 14.sp
-                                                    ),
-                                                    color = SocialTheme.colors.textPrimary
-                                                )
+                                    location_flow.value.let {
+
+                                        MarkerInfoWindow(
+                                            state = MarkerState(
+                                                position = it!!
+                                            ), icon = bitmap
+                                        ) {
+                                            Column() {
+                                                Card(shape = RoundedCornerShape(6.dp)) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .background(color = SocialTheme.colors.uiBackground)
+                                                            .padding(6.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = "Current location",
+                                                            style = TextStyle(
+                                                                fontFamily = Inter,
+                                                                fontWeight = FontWeight.Normal,
+                                                                fontSize = 14.sp
+                                                            ),
+                                                            color = SocialTheme.colors.textPrimary
+                                                        )
+                                                    }
+                                                }
+                                                Spacer(modifier = Modifier.height(4.dp))
                                             }
+
                                         }
-                                        Spacer(modifier = Modifier.height(4.dp))
+
                                     }
-
-                                }
-
-                            }
-                            activityViewModel.activitiesListState.value.let {
-                                when(it){
-                                    is Response.Success ->{
-                                        it.data.forEach {activity->
-                                            if(activity.location.isNotEmpty()){
-                                                val values=activity.location.split("/")
-                                                val latLng= LatLng(values.get(0).toDouble(),values.get(1).toDouble())
-                                                MarkerInfoWindow(zIndex=0.5f,
-                                                    state = MarkerState(
-                                                        position = latLng
-                                                    ), icon = loadIcon(LocalContext.current, activity.creator_profile_picture, R.drawable.ic_person)
-                                                ) {
-                                                    MapActivityPreview(
-                                                        bottomSheetActivity =activity ,
-                                                        onEvent = {}
-                                                    )
-                                                   /* Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-                                                        androidx.compose.material3.Card(
-                                                            shape = RoundedCornerShape(
-                                                                16.dp
+                                    activityViewModel.activitiesListState.value.let {
+                                        when (it) {
+                                            is Response.Success -> {
+                                                it.data.forEach { activity ->
+                                                    if (activity.location.isNotEmpty()) {
+                                                        val values = activity.location.split("/")
+                                                        val latLng = LatLng(
+                                                            values.get(0).toDouble(),
+                                                            values.get(1).toDouble()
+                                                        )
+                                                        MarkerInfoWindow(
+                                                            zIndex = 0.5f,
+                                                            state = MarkerState(
+                                                                position = latLng
+                                                            ),
+                                                            icon = loadIcon(
+                                                                LocalContext.current,
+                                                                activity.creator_profile_picture,
+                                                                R.drawable.ic_person
                                                             )
                                                         ) {
-                                                            Box(modifier = Modifier.background(color = SocialTheme.colors.uiBackground),) {
-                                                                MapActivityItem(
-                                                                    activity = activity,
-                                                                    username = activity.creator_username,
-                                                                    profilePictureUrl = activity.creator_profile_picture,
-                                                                    timeLeft = activity.time_left,
-                                                                    title = activity.title,
-                                                                    description = activity.description,
-                                                                    date = activity.date,
-                                                                    timePeriod = activity.start_time + "-" + activity.end_time,
-                                                                    custom_location = activity.custom_location,
-                                                                    liked = activity.participants_usernames.containsKey(
-                                                                        UserData.user!!.id
-                                                                    ),
-                                                                    onEvent = {}
-                                                                )
+                                                            MapActivityPreview(
+                                                                bottomSheetActivity = activity,
+                                                                onEvent = {}
+                                                            )
+                                                            /* Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                                                                 androidx.compose.material3.Card(
+                                                                     shape = RoundedCornerShape(
+                                                                         16.dp
+                                                                     )
+                                                                 ) {
+                                                                     Box(modifier = Modifier.background(color = SocialTheme.colors.uiBackground),) {
+                                                                         MapActivityItem(
+                                                                             activity = activity,
+                                                                             username = activity.creator_username,
+                                                                             profilePictureUrl = activity.creator_profile_picture,
+                                                                             timeLeft = activity.time_left,
+                                                                             title = activity.title,
+                                                                             description = activity.description,
+                                                                             date = activity.date,
+                                                                             timePeriod = activity.start_time + "-" + activity.end_time,
+                                                                             custom_location = activity.custom_location,
+                                                                             liked = activity.participants_usernames.containsKey(
+                                                                                 UserData.user!!.id
+                                                                             ),
+                                                                             onEvent = {}
+                                                                         )
 
-                                                            }}
+                                                                     }}
 
 
-                                                                Spacer(modifier = Modifier.height(4.dp))
-                                                            }
-                                                            */
+                                                                         Spacer(modifier = Modifier.height(4.dp))
+                                                                     }
+                                                                     */
                                                         }
+                                                    }
+
+                                                }
+
                                             }
-
+                                            is Response.Loading -> {}
+                                            is Response.Failure -> {}
                                         }
-
                                     }
-                                    is Response.Loading ->{}
-                                    is Response.Failure ->{}
-                                }
-                            }
-                            activityViewModel.moreActivitiesListState.value.let {
-                                when(it){
-                                    is Response.Success ->{
-                                        it.data.forEach {activity->
-                                            if(activity.location.isNotEmpty()){
-                                                val values=activity.location.split("/")
-                                                val latLng= LatLng(values.get(0).toDouble(),values.get(1).toDouble())
-                                                MarkerInfoWindow(
-                                                    state = MarkerState(
-                                                        position = latLng
-                                                    ), icon = loadIcon(LocalContext.current, activity.creator_profile_picture, R.drawable.ic_person)
-                                                ) {
-                                                    MapActivityPreview(
-                                                        bottomSheetActivity =activity ,
-                                                        onEvent = {}
-                                                    )
-                                                  /*  Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-                                                        androidx.compose.material3.Card(
-                                                            shape = RoundedCornerShape(
-                                                                16.dp
+                                    activityViewModel.moreActivitiesListState.value.let {
+                                        when (it) {
+                                            is Response.Success -> {
+                                                it.data.forEach { activity ->
+                                                    if (activity.location.isNotEmpty()) {
+                                                        val values = activity.location.split("/")
+                                                        val latLng = LatLng(
+                                                            values.get(0).toDouble(),
+                                                            values.get(1).toDouble()
+                                                        )
+                                                        MarkerInfoWindow(
+                                                            state = MarkerState(
+                                                                position = latLng
+                                                            ),
+                                                            icon = loadIcon(
+                                                                LocalContext.current,
+                                                                activity.creator_profile_picture,
+                                                                R.drawable.ic_person
                                                             )
                                                         ) {
-                                                            Box(modifier = Modifier.background(color = SocialTheme.colors.uiBackground),) {
-                                                                MapActivityItem(
-                                                                    activity = activity,
-                                                                    username = activity.creator_username,
-                                                                    profilePictureUrl = activity.creator_profile_picture,
-                                                                    timeLeft = activity.time_left,
-                                                                    title = activity.title,
-                                                                    description = activity.description,
-                                                                    date = activity.date,
-                                                                    timePeriod = activity.start_time + "-" + activity.end_time,
-                                                                    custom_location = activity.custom_location,
-                                                                    liked = activity.participants_usernames.containsKey(
-                                                                        UserData.user!!.id
-                                                                    ),
-                                                                    onEvent = {}
-                                                                )
+                                                            MapActivityPreview(
+                                                                bottomSheetActivity = activity,
+                                                                onEvent = {}
+                                                            )
+                                                            /*  Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                                                                  androidx.compose.material3.Card(
+                                                                      shape = RoundedCornerShape(
+                                                                          16.dp
+                                                                      )
+                                                                  ) {
+                                                                      Box(modifier = Modifier.background(color = SocialTheme.colors.uiBackground),) {
+                                                                          MapActivityItem(
+                                                                              activity = activity,
+                                                                              username = activity.creator_username,
+                                                                              profilePictureUrl = activity.creator_profile_picture,
+                                                                              timeLeft = activity.time_left,
+                                                                              title = activity.title,
+                                                                              description = activity.description,
+                                                                              date = activity.date,
+                                                                              timePeriod = activity.start_time + "-" + activity.end_time,
+                                                                              custom_location = activity.custom_location,
+                                                                              liked = activity.participants_usernames.containsKey(
+                                                                                  UserData.user!!.id
+                                                                              ),
+                                                                              onEvent = {}
+                                                                          )
 
-                                                            }}
+                                                                      }}
 
 
-                                                        Spacer(modifier = Modifier.height(4.dp))
-                                                    }*/
+                                                                  Spacer(modifier = Modifier.height(4.dp))
+                                                              }*/
+
+                                                        }
+                                                    }
 
                                                 }
-                                            }
 
+                                            }
+                                            is Response.Loading -> {}
+                                            is Response.Failure -> {}
+                                        }
+                                    }
+                                    location_picked_flow.value.let {
+                                        if (it == null) {
+                                        } else {
+
+                                            MarkerInfoWindow(
+                                                state = MarkerState(
+                                                    position = it!!
+                                                ), icon = bitmap
+                                            ) {
+                                                Column() {
+                                                    Card(shape = RoundedCornerShape(6.dp)) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .background(color = SocialTheme.colors.uiBackground)
+                                                                .padding(6.dp)
+                                                        ) {
+                                                            Text(
+                                                                text = "Picked location",
+                                                                style = TextStyle(
+                                                                    fontFamily = Inter,
+                                                                    fontWeight = FontWeight.Normal,
+                                                                    fontSize = 14.sp
+                                                                ),
+                                                                color = SocialTheme.colors.textPrimary
+                                                            )
+                                                        }
+                                                    }
+                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                }
+
+                                            }
                                         }
 
-                                    }
-                                    is Response.Loading ->{}
-                                    is Response.Failure ->{}
-                                }
-                            }
-                            location_picked_flow.value.let {
-                                if (it == null) {
-                                } else {
 
-                                    MarkerInfoWindow(
-                                        state = MarkerState(
-                                            position = it!!
-                                        ), icon = bitmap
+                                    }
+                                }
+
+
+                                //PROFILE PICTURE
+                                Box(modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(end = 24.dp, top = 24.dp)){
+                                    Row() {
+                                        Spacer(Modifier.width(24.dp))
+                                        androidx.compose.material.Card( modifier= Modifier
+                                            .width(48.dp)
+                                            .height(48.dp),onClick={onEvent(MapEvent.GoToHome)},shape= RoundedCornerShape(100.dp), backgroundColor = Color.White,elevation=4.dp) {
+                                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                                                Icon(painter = painterResource(id = R.drawable.ic_menu), contentDescription =null , tint = Color.Black)
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.weight(1f))
+                                        androidx.compose.material.Card(modifier=
+                                        Modifier
+                                            .width(48.dp)
+                                            .height(48.dp),shape= RoundedCornerShape(100.dp),onClick={onEvent(MapEvent.GoToChats)}, backgroundColor = Color.White,elevation=4.dp) {
+                                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                                                Icon(painter = painterResource(id = R.drawable.ic_chat), contentDescription =null , tint = Color.Black)
+
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        androidx.compose.material.Card(shape= RoundedCornerShape(100.dp),onClick={onEvent(MapEvent.GoToProfile)},elevation=4.dp) {
+                                            AsyncImage(
+                                                model = ImageRequest.Builder(LocalContext.current)
+                                                    .data(UserData.user!!.pictureUrl)
+                                                    .crossfade(true)
+                                                    .build(),
+                                                placeholder = painterResource(R.drawable.ic_person),
+                                                contentDescription = "image sent",
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier
+                                                    .size(48.dp)
+                                                    .background(color = SocialTheme.colors.uiBackground)
+                                                    .clip(CircleShape)
+                                            )
+                                        }
+                                    }
+
+
+                                }
+
+
+
+                                location_picked_flow.value.let {
+                                    if (it != null) {
+                                        displayCreateButton = true
+                                    } else {
+                                        displayCreateButton = false
+                                    }
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .align(
+                                            Alignment.BottomEnd
+                                        )
+                                        .padding(bottom = 48.dp, end = 24.dp)
+                                ) {
+                                    AnimatedVisibility(
+                                        visible = displayCreateButton,
+                                        enter = scaleIn(),
+                                        exit = scaleOut()
                                     ) {
-                                        Column() {
-                                            Card(shape = RoundedCornerShape(6.dp)) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .background(color = SocialTheme.colors.uiBackground)
-                                                        .padding(6.dp)
-                                                ) {
-                                                    Text(
-                                                        text = "Picked location",
-                                                        style = TextStyle(
-                                                            fontFamily = Inter,
-                                                            fontWeight = FontWeight.Normal,
-                                                            fontSize = 14.sp
-                                                        ),
-                                                        color = SocialTheme.colors.textPrimary
-                                                    )
-                                                }
-                                            }
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                        }
 
+                                        CreateActivityButton(
+                                            modifier = Modifier.width(200.dp),
+                                            text = "Add location",
+                                            onClick = {
+                                                onEvent(
+                                                    MapEvent.GoToCreateActivity(location_picked_flow.value!!)
+                                                )
+                                            },
+                                            icon = R.drawable.ic_right
+                                        )
+
+                                        Spacer(modifier = Modifier.height(64.dp))
                                     }
                                 }
-
-
                             }
-                        }
-                        location_picked_flow.value.let {
-                            if (it != null){
-                                displayCreateButton=true
-                            }else{
-                                displayCreateButton=false
-                            }
-                        }
 
-                        Box(
-                            modifier = Modifier
-                                .align(
-                                    Alignment.BottomEnd
-                                )
-                                .padding(bottom = 48.dp, end = 24.dp)
-                        ) {
-                          AnimatedVisibility(visible =displayCreateButton, enter = scaleIn(),exit= scaleOut() ) {
-
-                                CreateActivityButton(modifier=Modifier.width(200.dp),text="Add location",onClick={onEvent(MapEvent.GoToCreateActivity(location_picked_flow.value!!))},icon= R.drawable.ic_right)
-
-                                Spacer(modifier = Modifier.height(64.dp))
-                            }
+                        } else {
+                            SocialDialog(
+                                onDismiss = { onEvent(MapEvent.GoToHome) },
+                                onConfirm = { onEvent(MapEvent.AskForPermission) },
+                                onCancel = { onEvent(MapEvent.GoToHome) },
+                                title = "Location access",
+                                info = "To access the map please share your location",
+                                icon = R.drawable.ic_location_24,
+                                actionButtonText = "Share",
+                                actionButtonTextColor = SocialTheme.colors.textInteractive
+                            )
                         }
                     }
 
-                } else {
-                    SocialDialog(
-                        onDismiss = { onEvent(MapEvent.GoToHome) },
-                        onConfirm = { onEvent(MapEvent.AskForPermission) },
-                        onCancel = { onEvent(MapEvent.GoToHome) },
-                        title = "Location access",
-                        info = "To access the map please share your location",
-                        icon = R.drawable.ic_location_24,
-                        actionButtonText = "Share",
-                        actionButtonTextColor = SocialTheme.colors.textInteractive
-                    )
                 }
-            }
 
-            if (!isMapLoaded) {
-                SocialTheme {
-                    AnimatedVisibility(
-                        modifier = Modifier
-                            .matchParentSize(),
-                        visible = !isMapLoaded,
-                        enter = EnterTransition.None,
-                        exit = fadeOut()
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .wrapContentSize()
-                        )
-                    }
-                }
             }
 
 
         }
-        BottomBar(
-            onTabSelected = { screen -> bottomNavEvent(screen) },
-            currentScreen = com.example.socialk.Map,
-            transparent = true
-        )
+
+
     }
+
 }
+
 @Composable
-fun MapActivityPreview(modifier: Modifier = Modifier, bottomSheetActivity: Activity,onEvent:(ActivityPreviewEvent)->Unit) {
-    Box(modifier=modifier) {
-        Column(Modifier.padding(horizontal=24.dp)) {
+fun MapActivityPreview(
+    modifier: Modifier = Modifier,
+    bottomSheetActivity: Activity,
+    onEvent: (ActivityPreviewEvent) -> Unit
+) {
+    Box(modifier = modifier) {
+        Column(Modifier.padding(horizontal = 24.dp)) {
 
-            androidx.compose.material3.Card(shape= RoundedCornerShape(12.dp),   colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                 Box(
-                     Modifier
-                         .background(color = Color.Black.copy(0.3f))
-                         .padding(12.dp)){
-                     Column() {
-                         ActivityItemCreatorBox(
-                             onClick = { onEvent(ActivityPreviewEvent.GoToProfile(bottomSheetActivity.creator_id)) },
-                             pictureUrl = bottomSheetActivity.creator_profile_picture,
-                             username = bottomSheetActivity.creator_username,
-                             timeLeft = bottomSheetActivity.time_left,
-                             onSettingsClick = { onEvent(ActivityPreviewEvent.OpenActivitySettings(bottomSheetActivity)) })
-                         Spacer(modifier = Modifier.height(12.dp))
-                         ActivityTextBox(modifier = Modifier, title =bottomSheetActivity.title , description =bottomSheetActivity.description )
-                     }
+            androidx.compose.material3.Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+            ) {
+                Box(
+                    Modifier
+                        .background(color = Color.Black.copy(0.3f))
+                        .padding(12.dp)
+                ) {
+                    Column() {
+                        ActivityItemCreatorBox(
+                            onClick = { onEvent(ActivityPreviewEvent.GoToProfile(bottomSheetActivity.creator_id)) },
+                            pictureUrl = bottomSheetActivity.creator_profile_picture,
+                            username = bottomSheetActivity.creator_username,
+                            timeLeft = bottomSheetActivity.time_left,
+                            onSettingsClick = {
+                                onEvent(
+                                    ActivityPreviewEvent.OpenActivitySettings(
+                                        bottomSheetActivity
+                                    )
+                                )
+                            })
+                        Spacer(modifier = Modifier.height(12.dp))
+                        ActivityTextBox(
+                            modifier = Modifier,
+                            title = bottomSheetActivity.title,
+                            description = bottomSheetActivity.description
+                        )
+                    }
 
-                 }
-             }
+                }
+            }
 
             Spacer(modifier = Modifier.height(4.dp))
-            DataBox(icon=R.drawable.ic_date_24,bottomSheetActivity.date,title="Date")
+            DataBox(icon = R.drawable.ic_date_24, bottomSheetActivity.date, title = "Date")
             Spacer(modifier = Modifier.height(4.dp))
-            DataBox(icon=R.drawable.ic_timer_24,bottomSheetActivity.start_time + " - " + bottomSheetActivity.end_time,title="Time")
+            DataBox(
+                icon = R.drawable.ic_timer_24,
+                bottomSheetActivity.start_time + " - " + bottomSheetActivity.end_time,
+                title = "Time"
+            )
             //ChatMessageBox()
             Spacer(modifier = Modifier.height(4.dp))
-            ParticipantsBox(bottomSheetActivity.participants_usernames,bottomSheetActivity.participants_profile_pictures)
+            ParticipantsBox(
+                bottomSheetActivity.participants_usernames,
+                bottomSheetActivity.participants_profile_pictures
+            )
 
         }
 
 
     }
 }
+
 @Composable
 fun MapActivityItem(
     activity: Activity,
@@ -504,17 +657,17 @@ fun MapActivityItem(
             //ACtivity top content
             Row(modifier = Modifier, verticalAlignment = Alignment.CenterVertically) {
 
-              /*  AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(profilePictureUrl)
-                        .crossfade(true)
-                        .build(),
-                    placeholder = painterResource(R.drawable.ic_person),
-                    contentDescription = "image sent",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier .size(36.dp)
-                        .clip(CircleShape)
-                )*/
+                /*  AsyncImage(
+                      model = ImageRequest.Builder(LocalContext.current)
+                          .data(profilePictureUrl)
+                          .crossfade(true)
+                          .build(),
+                      placeholder = painterResource(R.drawable.ic_person),
+                      contentDescription = "image sent",
+                      contentScale = ContentScale.Crop,
+                      modifier = Modifier .size(36.dp)
+                          .clip(CircleShape)
+                  )*/
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier) {
                     Text(
@@ -577,4 +730,202 @@ fun MapActivityItem(
 
         }
     }
+}
+enum class ExpandedType {
+    HALF, FULL, COLLAPSED
+}
+@Composable
+@OptIn(ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
+fun MapBottomDialog(modifier:Modifier,
+                            state: ModalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden),
+                            type: String, onEvent: (BottomDialogEvent) -> Unit, activeUsersViewModel: ActiveUsersViewModel?,
+                            activityViewModel: ActivityViewModel?,
+                            chatViewModel: ChatViewModel,
+                            viewModel: AuthViewModel?,
+                    content:@Composable ()->Unit
+) {
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp
+    var expandedType by remember {
+        mutableStateOf(ExpandedType.HALF)
+    }
+    val height by animateIntAsState(
+        when (expandedType) {
+            ExpandedType.HALF -> screenHeight / 2
+            ExpandedType.FULL -> screenHeight
+            ExpandedType.COLLAPSED -> 0
+        }
+    )
+    val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
+        bottomSheetState = BottomSheetState(BottomSheetValue.Collapsed)
+    )
+    val couroutineScope= rememberCoroutineScope()
+    val isDark = isSystemInDarkTheme()
+    SocialTheme() {
+        BottomSheetScaffold(sheetShape = RoundedCornerShape(32.dp), sheetElevation = 4.dp, scaffoldState = bottomSheetScaffoldState, sheetBackgroundColor = SocialTheme.colors.uiFloated,sheetContent = {
+            var isUpdated = false
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(height.dp)
+                    .pointerInput(Unit) {
+                        detectVerticalDragGestures(
+                            onVerticalDrag = { change, dragAmount ->
+                                change.consume()
+                                if (!isUpdated) {
+                                    expandedType = when {
+                                        dragAmount < 0 && expandedType == ExpandedType.COLLAPSED -> {
+                                            ExpandedType.HALF
+                                        }
+                                        dragAmount < 0 && expandedType == ExpandedType.HALF -> {
+                                            ExpandedType.FULL
+                                        }
+                                        dragAmount > 0 && expandedType == ExpandedType.FULL -> {
+                                            ExpandedType.HALF
+                                        }
+                                        dragAmount > 0 && expandedType == ExpandedType.HALF -> {
+                                            ExpandedType.COLLAPSED
+                                        }
+                                        else -> {
+                                            ExpandedType.FULL
+                                        }
+                                    }
+                                    isUpdated = true
+                                }
+                            },
+                            onDragEnd = {
+                                isUpdated = false
+                            }
+                        )
+                    }
+                    .background(Color.Red),
+            ){
+                /*HomeScreenContent(activeUsersViewModel = activeUsersViewModel,
+                    viewModel = viewModel,
+                    activityViewModel = activityViewModel,
+                    padding = PaddingValues(12.dp), homeViewModel = null,
+                    isDark = isDark,
+                    activityEvent = {/*
+                            when (it) {
+                                is ActivityEvent.OpenActivityChat -> {
+                                    onEvent(HomeEvent.GoToChat(it.activity))
+                                }
+                                is ActivityEvent.ActivityLiked -> {
+                                    Log.d("HomeScreen", "like")
+                                    onEvent(HomeEvent.ActivityLiked(it.activity))
+                                }
+                                is ActivityEvent.ActivityUnLiked -> {
+                                    Log.d("HomeScreen", "dislike")
+                                    onEvent(HomeEvent.ActivityUnLiked(it.activity))
+
+                                }
+                                is ActivityEvent.GoToMap -> {
+                                    onEvent(HomeEvent.GoToMap(latlng = it.latlng))
+
+                                }
+                                is ActivityEvent.GoToProfile -> {
+                                    onEvent(HomeEvent.GoToProfileWithID(user_id = it.user_id))
+
+                                }
+                                is ActivityEvent.OpenActivitySettings -> {
+                                    Log.d("HomeScreen", "open settings")
+                                    bottomSheetType = "settings"
+                                    bottomSheetActivity = it.activity
+                                    scope.launch {
+                                        bottomSheetState.show()
+                                    }
+                                }
+                                is ActivityEvent.OpenCamera -> {
+                                    onEvent(HomeEvent.OpenCamera(it.activity_id))
+                                }
+                                is ActivityEvent.DisplayPicture -> {
+                                    onEvent(HomeEvent.DisplayPicture(it.photo_url, it.activity_id))
+                                }
+
+                                else -> {}
+                            }*/
+
+                    },
+                    onEvent = { homeEvent ->
+
+                    }, onLongClick = { activity ->
+
+                    }, closeBottomSheet = { couroutineScope.launch {  state.hide()} })*/
+            }
+
+
+        }, sheetPeekHeight = height.dp) {it->
+            content()
+        }
+
+      /*  ModalBottomSheetLayout(sheetShape = RoundedCornerShape(32.dp),
+            sheetState = state, sheetBackgroundColor = SocialTheme.colors.uiFloated,
+            sheetContentColor = SocialTheme.colors.textPrimary, scrimColor = Color.Transparent,
+            sheetContent = {
+                HomeScreenContent(activeUsersViewModel = activeUsersViewModel,
+                    viewModel = viewModel,
+                    activityViewModel = activityViewModel,
+                    padding = PaddingValues(12.dp), homeViewModel = null,
+                    isDark = isDark,
+                    activityEvent = {/*
+                            when (it) {
+                                is ActivityEvent.OpenActivityChat -> {
+                                    onEvent(HomeEvent.GoToChat(it.activity))
+                                }
+                                is ActivityEvent.ActivityLiked -> {
+                                    Log.d("HomeScreen", "like")
+                                    onEvent(HomeEvent.ActivityLiked(it.activity))
+                                }
+                                is ActivityEvent.ActivityUnLiked -> {
+                                    Log.d("HomeScreen", "dislike")
+                                    onEvent(HomeEvent.ActivityUnLiked(it.activity))
+
+                                }
+                                is ActivityEvent.GoToMap -> {
+                                    onEvent(HomeEvent.GoToMap(latlng = it.latlng))
+
+                                }
+                                is ActivityEvent.GoToProfile -> {
+                                    onEvent(HomeEvent.GoToProfileWithID(user_id = it.user_id))
+
+                                }
+                                is ActivityEvent.OpenActivitySettings -> {
+                                    Log.d("HomeScreen", "open settings")
+                                    bottomSheetType = "settings"
+                                    bottomSheetActivity = it.activity
+                                    scope.launch {
+                                        bottomSheetState.show()
+                                    }
+                                }
+                                is ActivityEvent.OpenCamera -> {
+                                    onEvent(HomeEvent.OpenCamera(it.activity_id))
+                                }
+                                is ActivityEvent.DisplayPicture -> {
+                                    onEvent(HomeEvent.DisplayPicture(it.photo_url, it.activity_id))
+                                }
+
+                                else -> {}
+                            }*/
+
+                    },
+                    onEvent = { homeEvent ->
+
+                    }, onLongClick = { activity ->
+
+                    }, closeBottomSheet = { couroutineScope.launch {  state.hide()} })
+            }
+        ){
+        }*/
+
+    }
+
+   /* Card(modifier=modifier.height(300.dp),shape = RoundedCornerShape(24.dp)) {
+        Box(modifier = Modifier.height(300.dp).background(color=SocialTheme.colors.uiBackground))
+        {
+
+        }
+
+    }*/
+
+
 }

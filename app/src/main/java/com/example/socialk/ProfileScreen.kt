@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -133,12 +134,9 @@ fun LiveActivities(
         modifier = Modifier,
         contentAlignment = Alignment.Center,
     ) {
+        Column() {
 
-        Text(
-            text = "AcitivtiesAcitivtiesAcitivtiesAcitivtiesAcitivtiesAcitivtiesAcitivtiesAcitivties",
-            style = TextStyle(fontSize = 100.sp),
-            color = SocialTheme.colors.textPrimary
-        )
+        }
     }
 }
 
@@ -148,11 +146,14 @@ fun LiveActivities(
 fun LiveActivitiesCurrentUser(
     text: String, activityViewModel: ActivityViewModel
 ) {
+    Log.d("PROFILESCREEN","SCREEN")
     //TODO GET MORE ACTIVITES NEVER FIRES->>>>
     Box(
         modifier = Modifier,
     ) {
         activityViewModel.userActivitiesState.value.let {
+            Log.d("PROFILESCREEN",it.toString())
+
             when (it) {
                 is Response.Success -> {
                     Column() {
@@ -395,13 +396,18 @@ fun ProfileScreen(
             val tabRowItems = listOf(
                 TabRowItem(
                     title = "Live activities",
-                    screen = { LiveActivitiesCurrentUser(text = "Live activities", activityViewModel) },
-                    icon=R.drawable.ic_checklist
+                    screen = {
+                        LiveActivitiesCurrentUser(
+                            text = "Live activities",
+                            activityViewModel
+                        )
+                    },
+                    icon = R.drawable.ic_checklist
                 ),
                 TabRowItem(
                     title = "Memories",
                     screen = { Memories(text = "Memories") },
-                    icon=R.drawable.ic_camera
+                    icon = R.drawable.ic_camera
                 ),
 
                 )
@@ -415,7 +421,12 @@ fun ProfileScreen(
                     androidx.compose.material.LeadingIconTab(
                         selected = pagerState.currentPage == index,
                         onClick = { coroutineScope.launch { pagerState.animateScrollToPage(index) } },
-                        icon = { Icon(painter = painterResource(id = item.icon), contentDescription =null )},
+                        icon = {
+                            Icon(
+                                painter = painterResource(id = item.icon),
+                                contentDescription = null
+                            )
+                        },
                         text = {
                             Text(
                                 text = item.title,

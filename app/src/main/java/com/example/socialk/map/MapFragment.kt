@@ -19,7 +19,10 @@ import com.example.socialk.*
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
 import com.example.socialk.Map
+import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
+import com.example.socialk.di.ChatViewModel
+import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.SocialTheme
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
@@ -29,9 +32,12 @@ import java.util.jar.Manifest
 @AndroidEntryPoint
 class MapFragment:Fragment() {
     private val viewModel by viewModels<MapViewModel>()
+    private val authViewModel by viewModels<AuthViewModel>()
+    private val chatViewModel by viewModels<ChatViewModel>()
+    private val activityViewModel by activityViewModels<ActivityViewModel>()
+    private val activeUsersViewModel by viewModels<ActiveUsersViewModel>()
     private  var fusedLocationClient: FusedLocationProviderClient?=null
 
-    private val activityViewModel by activityViewModels<ActivityViewModel>()
     private  var PERMISSION_REQUEST_CODE= 100
 
 
@@ -180,6 +186,7 @@ class MapFragment:Fragment() {
                             is MapEvent.LogOut -> viewModel.handleLogOut()
                             is MapEvent.GoToSettings -> viewModel.handleGoToSettings()
                             is MapEvent.GoToHome -> viewModel.handleGoToHome()
+                            is MapEvent.GoToChats -> viewModel.handleGoToChats()
                             is MapEvent.GoToCreateActivity -> {
                                 Log.d("mapscreen","go to create"+event.latLng.toString())
 
@@ -201,7 +208,9 @@ class MapFragment:Fragment() {
                                 is Profile ->viewModel.handleGoToProfile()
                             }
                         }
-                    ,viewModel,locationCallback)
+                    ,viewModel,locationCallback,activeUsersViewModel=activeUsersViewModel,
+                        chatViewModel=chatViewModel,
+                        authViewModel=authViewModel )
                 }
             }
         }
