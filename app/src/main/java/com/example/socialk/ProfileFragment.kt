@@ -58,6 +58,7 @@ class ProfileFragment :Fragment(){
                                 is ProfileEvent.GoToHome -> viewModel.handleGoToHome()
                                 is ProfileEvent.GoToEditProfile -> viewModel.handleGoToEditProfile()
                                 is ProfileEvent.GoToSearch -> viewModel.handleGoToSearch()
+                                is ProfileEvent.GoBack ->activity?.onBackPressedDispatcher?.onBackPressed()
                             }
                         },
                         bottomNavEvent  ={screen->

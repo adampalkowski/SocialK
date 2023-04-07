@@ -19,7 +19,7 @@ class WelcomeViewModel() : ViewModel() {
         _navigateTo.value = Event(Screen.SignUp)
     }
     fun handleGoToHome( ) {
-        _navigateTo.value = Event(Screen.Home)
+        _navigateTo.value = Event(Screen.Map)
     }
     fun handleGoToPickUsername( ) {
         _navigateTo.value = Event(Screen.PickUsername)

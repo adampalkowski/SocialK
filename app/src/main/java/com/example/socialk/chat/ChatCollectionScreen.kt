@@ -26,6 +26,7 @@ import coil.request.ImageRequest
 import com.example.socialk.*
 import com.example.socialk.R
 import com.example.socialk.components.BottomBar
+import com.example.socialk.components.HomeScreenHeading
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.model.Chat
 import com.example.socialk.model.UserData
@@ -41,6 +42,7 @@ sealed class ChatCollectionEvent {
     object LogOut : ChatCollectionEvent()
     object GoToGroup : ChatCollectionEvent()
     object GoToSettings : ChatCollectionEvent()
+    object GoBack : ChatCollectionEvent()
     object GoToAddPeople : ChatCollectionEvent()
     object GoToSearch : ChatCollectionEvent()
     class GoToChat (chat: Chat): ChatCollectionEvent(){val chat=chat}
@@ -62,20 +64,7 @@ fun ChatCollectionScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 48.dp)
-                    .padding(top = 8.dp)
-                    .heightIn(48.dp), contentAlignment = Alignment.CenterStart
-            ) {
-                Text(
-                    text = "Chats",
-                    style = com.example.socialk.ui.theme.Typography.h3,
-                    color=SocialTheme.colors.textPrimary
-                )
-
-            }
+            HomeScreenHeading(onEvent={onEvent(ChatCollectionEvent.GoBack)},title="Chats")
             Box(
                 modifier = Modifier
                     .height(1.dp)
@@ -142,12 +131,11 @@ fun ChatCollectionScreen(
 
 
             }
-            Spacer(modifier = Modifier.height(64.dp))
 
 
         }
 
-        BottomBar(onTabSelected = { screen -> bottomNavEvent(screen) }, currentScreen = Chats)
+    /*    BottomBar(onTabSelected = { screen -> bottomNavEvent(screen) }, currentScreen = Chats)*/
         //todo hardoced color
         Box(
             modifier = Modifier

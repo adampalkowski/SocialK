@@ -113,7 +113,7 @@ class FriendsPickerFragment : Fragment() {
                                     highlited_message = ""
                                 )
                                 chatViewModel.addChatCollection(chat)
-                                viewModel.handleGoToHome()
+                                viewModel.handleGoToMap()
                             }
                             is FriendsPickerEvent.UpdateInvites -> {
                                 if(activityCreated!=null){
@@ -150,7 +150,7 @@ class FriendsPickerFragment : Fragment() {
                                     highlited_message = ""
                                 )
                                 chatViewModel.addChatCollection(chat)
-                                viewModel.handleGoToHome()
+                                viewModel.handleGoToMap()
 
                             }
                         }

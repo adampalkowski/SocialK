@@ -139,13 +139,17 @@ fun ActivityItem(modifier:Modifier=Modifier,
 ) {
     var liked = rememberSaveable { mutableStateOf(liked) }
     Box(
-        modifier = Modifier.pointerInput(Unit){detectTapGestures(onLongPress = {onLongClick()})}
+        modifier = Modifier
+            .pointerInput(Unit) { detectTapGestures(onLongPress = { onLongClick() }) }
             .padding(start = 12.dp)
             .padding(end = 12.dp)
-            .padding(vertical = 12.dp)
+            .padding(vertical = 4.dp)
 
     ) {
         Column() {
+            TimeDivider(activity.start_time)
+            Spacer(modifier = Modifier.height(8.dp))
+
             //ACtivity top content
             ActivityItemCreatorBox(onClick = {onEvent(ActivityEvent.GoToProfile(activity.creator_id))},pictureUrl=activity.creator_profile_picture,username=activity.creator_username,timeLeft=activity.time_left,onSettingsClick={ onEvent(ActivityEvent.OpenActivitySettings(activity))})
 
@@ -186,15 +190,27 @@ fun ActivityItem(modifier:Modifier=Modifier,
                 timePeriod = timePeriod
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Box(
+
+        /*    Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 32.dp)
                     .height(1.dp)
                     .background(color = SocialTheme.colors.uiFloated)
-            )
+            )*/
 
 
+        }
+    }
+}
+
+@Composable
+fun TimeDivider(startTime: String) {
+    Row(verticalAlignment = CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)) {
+        Card(shape = RoundedCornerShape(100.dp), modifier = Modifier.height(1.dp).weight(1f).background(color=SocialTheme.colors.uiFloated), backgroundColor = SocialTheme.colors.uiFloated, elevation = 0.dp) {
+        }
+        Text(text =startTime, color = SocialTheme.colors.iconPrimary, style = TextStyle(fontFamily = Inter, fontSize = 10.sp, fontWeight = FontWeight.Light))
+        Card(shape = RoundedCornerShape(100.dp), modifier = Modifier.height(1.dp).weight(1f).background(color=SocialTheme.colors.uiFloated), backgroundColor = SocialTheme.colors.uiFloated, elevation = 0.dp) {
         }
     }
 }
@@ -203,7 +219,7 @@ fun ActivityItem(modifier:Modifier=Modifier,
 fun ActivityTextBox(modifier: Modifier,title: String, description: String) {
     Column(
         modifier = modifier
-            .padding(end = 8.dp), verticalArrangement = Arrangement.Top
+            .padding(end = 8.dp), verticalArrangement = Arrangement.Top, horizontalAlignment = Alignment.Start
     ) {
         Text(
             text = title,
@@ -212,7 +228,7 @@ fun ActivityTextBox(modifier: Modifier,title: String, description: String) {
             color = SocialTheme.colors.textPrimary,
             textAlign = TextAlign.Left
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = description,
             style = com.example.socialk.ui.theme.Typography.h5,
@@ -233,7 +249,10 @@ fun ActivityItemCreatorBox(onClick:()->Unit,pictureUrl:String,username:String,ti
         GlideImage(
             model = pictureUrl,
             contentDescription = null,
-            modifier = Modifier.size(48.dp).clip(CircleShape).clickable(onClick = onClick),
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .clickable(onClick = onClick),
                     contentScale = ContentScale.Crop,
         )
 
@@ -483,7 +502,7 @@ fun controls(onEvent: (ActivityItemEvent) -> Unit, activity: Activity, liked: Bo
         }
 
         Spacer(modifier = Modifier.height(6.dp))
-        if (activity.pictures.containsKey(UserData.user!!.id)){
+       /* if (activity.pictures.containsKey(UserData.user!!.id)){
                 val photo_url=activity.pictures.get(UserData.user!!.id)
             Card(onClick = {onEvent(ActivityItemEvent.DisplayPicture(photo_url!!,activity.id))}) {
                 AsyncImage(
@@ -516,7 +535,7 @@ fun controls(onEvent: (ActivityItemEvent) -> Unit, activity: Activity, liked: Bo
             }
 
         }
-
+*/
     }
 
 }

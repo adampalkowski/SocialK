@@ -12,6 +12,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -22,23 +23,25 @@ import com.example.socialk.Map
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.ChatViewModel
+import com.example.socialk.home.HomeEvent
+import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.SocialTheme
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.jar.Manifest
 
 @AndroidEntryPoint
-class MapFragment:Fragment() {
+class MapFragment : Fragment() {
     private val viewModel by viewModels<MapViewModel>()
     private val authViewModel by viewModels<AuthViewModel>()
     private val chatViewModel by viewModels<ChatViewModel>()
     private val activityViewModel by activityViewModels<ActivityViewModel>()
     private val activeUsersViewModel by viewModels<ActiveUsersViewModel>()
-    private  var fusedLocationClient: FusedLocationProviderClient?=null
-
-    private  var PERMISSION_REQUEST_CODE= 100
+    private var fusedLocationClient: FusedLocationProviderClient? = null
+    private var PERMISSION_REQUEST_CODE = 100
 
 
     private var locationCallback: LocationCallback = object : LocationCallback() {
@@ -47,7 +50,7 @@ class MapFragment:Fragment() {
             if (locationList.isNotEmpty()) {
                 //The last location in the list is the newest
                 val location = locationList.last()
-                viewModel.setLocation(LatLng(location.latitude,location.longitude))
+                viewModel.setLocation(LatLng(location.latitude, location.longitude))
 
             }
         }
@@ -57,16 +60,21 @@ class MapFragment:Fragment() {
         super.onPause()
         stopLocationUpdates()
     }
+
     private fun stopLocationUpdates() {
         fusedLocationClient?.removeLocationUpdates(locationCallback)
     }
-    override fun onRequestPermissionsResult(requestCode: Int,
-                                            permissions: Array<String>, grantResults: IntArray) {
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>, grantResults: IntArray
+    ) {
         when (requestCode) {
             PERMISSION_REQUEST_CODE -> {
                 // If request is cancelled, the result arrays are empty.
                 if ((grantResults.isNotEmpty() &&
-                            grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                            grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                ) {
                     // Permission is granted. Continue the action or workflow
                     // in your app.
                 } else {
@@ -86,6 +94,19 @@ class MapFragment:Fragment() {
             }
         }
     }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+
+        WindowCompat.setDecorFitsSystemWindows(requireActivity().window, true)
+
+    }
+
+    override fun onStart() {
+        super.onStart()
+        WindowCompat.setDecorFitsSystemWindows(requireActivity().window, false)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -93,30 +114,47 @@ class MapFragment:Fragment() {
     ): View? {
         viewModel.navigateTo.observe(viewLifecycleOwner) { navigateToEvent ->
             navigateToEvent.getContentIfNotHandled()?.let { navigateTo ->
-                if(navigateTo==Screen.Create){
+                if (navigateTo == Screen.Create) {
                     viewModel.clicked_location.value.let {
                         val bundle = Bundle()
-                        bundle.putString("location",it.toString())
-                        Log.d("mapscreen","go to location"+it.toString())
-                        if (it!=null){
-                            if (it.toString().isNotEmpty()){
-                                navigate(navigateTo, Screen.Map,bundle)
-                            }else{
+                        bundle.putString("location", it.toString())
+                        Log.d("mapscreen", "go to location" + it.toString())
+                        if (it != null) {
+                            if (it.toString().isNotEmpty()) {
+                                navigate(navigateTo, Screen.Map, bundle)
+                            } else {
                                 navigate(navigateTo, Screen.Map)
                             }
 
-                        }else{
+                        } else {
                             navigate(navigateTo, Screen.Map)
 
                         }
 
                     }
+                } else if (navigateTo == Screen.Chat) {
+                    val bundle = Bundle()
+                    bundle.putSerializable("activity", viewModel.clicked_chat_activity.value)
+                    navigate(navigateTo, Screen.Map, bundle)
+                } else if (navigateTo == Screen.FriendsPicker) {
+                    val bundle = Bundle()
+                    bundle.putSerializable("activity", viewModel.clicked_chat_activity.value)
+                    navigate(navigateTo, Screen.Map, bundle)
+                } else if (navigateTo == Screen.UserProfile) {
+                    val bundle = Bundle()
+                    bundle.putSerializable("user_id", viewModel.clicked_profile.value)
+                    navigate(navigateTo, Screen.Map, bundle)
                 }else{
                     navigate(navigateTo, Screen.Map)
                 }
             }
         }
-        fusedLocationClient= LocationServices.getFusedLocationProviderClient(activity?.applicationContext!!)
+        activityViewModel?.getActivitiesForUser(authViewModel?.currentUser?.uid)
+        activeUsersViewModel?.getActiveUsersForUser(authViewModel?.currentUser?.uid)
+
+
+        fusedLocationClient =
+            LocationServices.getFusedLocationProviderClient(activity?.applicationContext!!)
         if (ActivityCompat.checkSelfPermission(
                 activity?.applicationContext!!,
                 android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -128,9 +166,11 @@ class MapFragment:Fragment() {
 
 
         }
-        fusedLocationClient!!.requestLocationUpdates(LocationRequest(),
+        fusedLocationClient!!.requestLocationUpdates(
+            LocationRequest(),
             locationCallback,
-            Looper.getMainLooper())
+            Looper.getMainLooper()
+        )
         val requestPermissionLauncher =
             registerForActivityResult(
                 ActivityResultContracts.RequestPermission()
@@ -155,7 +195,7 @@ class MapFragment:Fragment() {
             ) == PackageManager.PERMISSION_GRANTED -> {
                 viewModel.permissionGranted()
             }
-            shouldShowRequestPermissionRationale(   android.Manifest.permission.ACCESS_FINE_LOCATION) -> {
+            shouldShowRequestPermissionRationale(android.Manifest.permission.ACCESS_FINE_LOCATION) -> {
                 // In an educational UI, explain to the user why your app requires this
                 // permission for a specific feature to behave as expected, and what
                 // features are disabled if it's declined. In this UI, include a
@@ -167,50 +207,84 @@ class MapFragment:Fragment() {
                 // You can directly ask for the permission.
                 // The registered ActivityResultCallback gets the result of this request.
                 requestPermissionLauncher.launch(
-                    android.Manifest.permission.ACCESS_FINE_LOCATION)
+                    android.Manifest.permission.ACCESS_FINE_LOCATION
+                )
             }
         }
-        var latlngInitial:String?=arguments?.getString("latlng")
-        var latLng:LatLng?=null
-        if (latlngInitial!=null){
-            val values=latlngInitial?.split("/")
-             latLng= LatLng(values?.get(0)?.toDouble()!!,values?.get(1)?.toDouble()!!)
+        var latlngInitial: String? = arguments?.getString("latlng")
+        var latLng: LatLng? = null
+        if (latlngInitial != null) {
+            val values = latlngInitial?.split("/")
+            latLng = LatLng(values?.get(0)?.toDouble()!!, values?.get(1)?.toDouble()!!)
         }
-        Log.d("Mapfragment","got data"+latlngInitial)
+        Log.d("Mapfragment", "got data" + latlngInitial)
         return ComposeView(requireContext()).apply {
             setContent {
+                val systemUiController = rememberSystemUiController()
+
                 SocialTheme {
-                    MapScreen(latLng,activityViewModel,onEvent = { event ->
+                    MapScreen(systemUiController, latLng, activityViewModel, onEvent = { event ->
                         when (event) {
                             is MapEvent.GoToProfile -> viewModel.handleGoToProfile()
                             is MapEvent.LogOut -> viewModel.handleLogOut()
                             is MapEvent.GoToSettings -> viewModel.handleGoToSettings()
                             is MapEvent.GoToHome -> viewModel.handleGoToHome()
                             is MapEvent.GoToChats -> viewModel.handleGoToChats()
+                            is MapEvent.BackPressed -> {}
                             is MapEvent.GoToCreateActivity -> {
-                                Log.d("mapscreen","go to create"+event.latLng.toString())
-
                                 viewModel.handleGoToCreate(event.latLng)
                             }
                             is MapEvent.AskForPermission -> {
-                                Log.d("Mapfragment","ask")
                                 requestPermissionLauncher.launch(
-                                    android.Manifest.permission.ACCESS_FINE_LOCATION)
+                                    android.Manifest.permission.ACCESS_FINE_LOCATION
+                                )
                             }
+                            is MapEvent.GoToChat -> {
+                                Log.d("HOMESCREEN", "here")
+                                Log.d("HOMESCREEN", event.activity.toString())
+                                viewModel.handleGoToChat(event.activity)
+                            }
+                            is MapEvent.ActivityLiked -> {
+                                activityViewModel.likeActivity(
+                                    event.activity.id,
+                                    UserData.user!!
+                                )
+                            }
+                            is MapEvent.ActivityUnLiked -> {
+                                activityViewModel.unlikeActivity(
+                                    event.activity.id,
+                                    UserData.user!!
+                                )
+                            }
+                            is MapEvent.LeaveLiveActivity -> {
+                                Log.d("HOMESCREEN", "here")
+
+                                activeUsersViewModel.leaveLiveActivity(
+                                    event.activity_id,
+                                    event.user_id
+                                )
+                            }
+                            is MapEvent.DestroyLiveActivity -> {
+                                activeUsersViewModel.deleteActiveUser(event.id)
+                            }
+                            is MapEvent.GoToFriendsPicker -> {
+                                Log.d("HOmesCreen", "FRIENDSPICKER")
+                                viewModel.handleGoToFriendsPicker(event.activity)
+                            }
+                            else->{}
                         }
                     },
-                        bottomNavEvent  ={screen->
+                        bottomNavEvent = { screen ->
                             when (screen) {
                                 is Home -> viewModel.handleGoToHome()
                                 is Map -> viewModel.handleGoToMap()
                                 is Chats -> viewModel.handleGoToChats()
                                 is Create -> viewModel.handleGoToCreate(null)
-                                is Profile ->viewModel.handleGoToProfile()
+                                is Profile -> viewModel.handleGoToProfile()
                             }
-                        }
-                    ,viewModel,locationCallback,activeUsersViewModel=activeUsersViewModel,
-                        chatViewModel=chatViewModel,
-                        authViewModel=authViewModel )
+                        }, viewModel, locationCallback, activeUsersViewModel = activeUsersViewModel,
+                        chatViewModel = chatViewModel,
+                        authViewModel = authViewModel)
                 }
             }
         }

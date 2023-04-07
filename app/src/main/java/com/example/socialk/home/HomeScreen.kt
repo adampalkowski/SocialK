@@ -4,20 +4,15 @@ import android.net.Uri
 import android.util.Log
 import androidx.activity.OnBackPressedCallback
 import androidx.compose.animation.*
-import androidx.compose.animation.AnimatedContentScope.SlideDirection.Companion.End
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement.Absolute.Center
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -28,7 +23,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.*
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -36,8 +30,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.example.socialk.*
@@ -56,11 +48,11 @@ import com.example.socialk.ui.theme.SocialTheme
 import com.google.accompanist.systemuicontroller.SystemUiController
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.compose.*
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.Executor
 import com.example.socialk.home.MapBox as MapBox1
@@ -831,6 +823,9 @@ fun HomeScreenContent(
             actionButtonText = "Leave"
         )
     }
+    val currentTime = LocalTime.now()
+    val formatter = DateTimeFormatter.ofPattern("hh:mm")
+    val formattedTime = currentTime.format(formatter)
     Box(
         modifier = Modifier
 
@@ -841,10 +836,11 @@ fun HomeScreenContent(
                 Modifier
                     .fillMaxWidth()
                     .height(24.dp), contentAlignment = Alignment.Center){
-                androidx.compose.material.Card(modifier=Modifier.width(48.dp).height(4.dp), onClick = {closeBottomSheet()},shape= RoundedCornerShape(12.dp), backgroundColor = SocialTheme.colors.iconPrimary,elevation=0.dp) {
-
-                }
+                    androidx.compose.material.Card(modifier=Modifier.width(24.dp).height(4.dp), onClick = {closeBottomSheet()},shape= RoundedCornerShape(12.dp), backgroundColor = SocialTheme.colors.iconPrimary.copy(alpha=0.5f),elevation=0.dp) {
+                    }
             }
+
+
             LazyColumn {
 
                 //display of active users
@@ -879,16 +875,7 @@ fun HomeScreenContent(
                         else -> {}
                     }
                 }
-                //divider bettwen active users and activities
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 32.dp)
-                            .height(1.dp)
-                            .background(color = SocialTheme.colors.uiFloated)
-                    )
-                }
+
                 item {
                     AnimatedVisibility(
                         visible = uploading,

@@ -82,7 +82,7 @@ fun SocialTheme(
     val sysUiController = rememberSystemUiController()
     SideEffect {
         sysUiController.setSystemBarsColor(
-            color = if(darkTheme) Black else LightBlue
+            color = if(darkTheme) Black else White
         )
     }
     ProvideSocialColors(colors) {

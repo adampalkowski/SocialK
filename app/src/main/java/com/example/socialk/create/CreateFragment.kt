@@ -37,6 +37,9 @@ class CreateFragment : Fragment() {
     private val authViewModel by viewModels<AuthViewModel>()
     private val userViewModel by viewModels<UserViewModel>()
     private val chatViewModel by viewModels<ChatViewModel>()
+    override fun onStart() {
+        super.onStart()
+    }
     override fun onDestroyView() {
         super.onDestroyView()
         val sharedPref = requireContext().getSharedPreferences("create_data",Context.MODE_PRIVATE)

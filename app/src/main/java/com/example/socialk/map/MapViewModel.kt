@@ -1,6 +1,8 @@
 package com.example.socialk.map
 
 import android.location.Location
+import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -21,16 +23,45 @@ class MapViewModel : ViewModel(){
 
     private val _locations_picked = MutableStateFlow< LatLng?>(null)
     val locations_picked: StateFlow< LatLng?> = _locations_picked
-
+    private val _clicked_chat_activity = MutableLiveData<Activity>()
+    val clicked_chat_activity: LiveData<Activity> = _clicked_chat_activity
+    private val _clicked_location_activity = MutableLiveData<String>()
+    val clicked_location_activity: LiveData<String> = _clicked_location_activity
     private val _clicked_location = MutableLiveData<LatLng?>()
     val clicked_location: LiveData<LatLng?> = _clicked_location
+
+    private val _clicked_profile = MutableLiveData<String>()
+    val clicked_profile: LiveData<String> = _clicked_profile
+
+    private val _activity = MutableLiveData<Activity?>()
+    val activity: LiveData<Activity?> = _activity
+    private val _photo_uri = MutableStateFlow<Uri?>("".toUri())
+    val photo_uri: MutableStateFlow<Uri?> = _photo_uri
+
+    private val _activity_link = MutableLiveData<String?>()
+    val activity_link: LiveData<String?> = _activity_link
     fun permissionGranted(){
         _granted_permission.value=true
     }
-    fun setLocationPicked(location: LatLng){
+    fun setLocationPicked(location: LatLng?){
         _locations_picked.value=location
     }
-
+    fun handleGoToChat( activity:Activity) {
+        _clicked_chat_activity.value = activity
+        _navigateTo.value = Event(Screen.Chat)
+    }
+    fun handleGoToUserProfile(user_id:String){
+        _clicked_profile.value=user_id
+        _navigateTo.value = Event(Screen.UserProfile)
+    }
+    fun handleGoToMapActivity(latLng: String ) {
+        _clicked_location_activity.value=latLng
+        _navigateTo.value = Event(Screen.Map)
+    }
+    fun handleGoToFriendsPicker(activity: Activity) {
+        _clicked_chat_activity.value = activity
+        _navigateTo.value = Event(Screen.FriendsPicker)
+    }
     fun setLocation(location: LatLng){
         _location.value=location
     }

@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.socialk.components.ActivityItem
 import com.example.socialk.components.BottomBar
+import com.example.socialk.components.HomeScreenHeading
+import com.example.socialk.components.ScreenHeading
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.home.ActivityEvent
 import com.example.socialk.home.HomeEvent
@@ -53,6 +55,7 @@ sealed class ProfileEvent {
     object GoToProfile : ProfileEvent()
     object LogOut : ProfileEvent()
     object GoToSettings : ProfileEvent()
+    object GoBack : ProfileEvent()
     object GoToEditProfile : ProfileEvent()
     object GoToHome : ProfileEvent()
     object GoToSearch : ProfileEvent()
@@ -275,7 +278,6 @@ fun ProfileScreenHeading(onClickBack: () -> Unit, title: String, onClickSettings
     ) {
         IconButton(
             onClick = onClickBack,
-            modifier = Modifier.align(Alignment.CenterStart)
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_back),
@@ -322,7 +324,7 @@ fun ProfileScreenHeading(onClickBack: () -> Unit, title: String, onClickSettings
     }
 }
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalPagerApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     activityViewModel: ActivityViewModel,
@@ -330,23 +332,31 @@ fun ProfileScreen(
     onEvent: (ProfileEvent) -> Unit,
     bottomNavEvent: (Destinations) -> Unit
 ) {
+    val pagerState = rememberPagerState()
+    val coroutineScope = rememberCoroutineScope()
     Surface(
         modifier = Modifier
             .fillMaxSize(), color = SocialTheme.colors.uiBackground
     ) {
-        val pagerState = rememberPagerState()
-        val coroutineScope = rememberCoroutineScope()
+        Box(  modifier = Modifier
+            .fillMaxSize()){
+
+
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp)
                 .verticalScroll(rememberScrollState())
         ) {
+            HomeScreenHeading(onEvent={onEvent(ProfileEvent.GoBack)},title="Profile")
 
-            ProfileScreenHeading(
-                onClickBack = { onEvent(ProfileEvent.GoToHome) },
-                onClickSettings = { onEvent(ProfileEvent.GoToSettings) }, title = "Profile"
+            Box(
+                modifier = Modifier
+                    .height(1.dp)
+                    .background(color = SocialTheme.colors.uiFloated)
+                    .fillMaxWidth()
             )
+
             Spacer(modifier = Modifier.height(12.dp))
             Log.d("UserProfileFragment", user.pictureUrl.toString())
             //TODO:HARDCODED URL
@@ -445,6 +455,39 @@ fun ProfileScreen(
                 tabRowItems[pagerState.currentPage].screen()
             }
         }
-        BottomBar(onTabSelected = { screen -> bottomNavEvent(screen) }, currentScreen = Profile)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp), contentAlignment = Alignment.TopEnd
+        ) {
+            //settings button
+            Card(
+                modifier = Modifier
+                    .size(56.dp)
+                    .align(Alignment.CenterEnd)
+                    .background(color = SocialTheme.colors.uiBackground),
+                border = BorderStroke(1.dp, color = SocialTheme.colors.uiFloated),
+                shape = RoundedCornerShape(16.dp), onClick = {onEvent(ProfileEvent.GoToSettings)}
+
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color = SocialTheme.colors.uiBackground),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_settings),
+                        tint = SocialTheme.colors.iconPrimary,
+                        contentDescription = null
+                    )
+                }
+            }
+        }
+        }
+
+        /* BottomBar(onTabSelected = { screen -> bottomNavEvent(screen) }, currentScreen = Profile)*/
     }
 }
+
+

@@ -149,7 +149,7 @@ class HomeFragment : Fragment() {
         super.onDestroyView()
         Log.d(TAG,"on destroy view")
 
-        WindowCompat.setDecorFitsSystemWindows(requireActivity().window, true)
+       /* WindowCompat.setDecorFitsSystemWindows(requireActivity().window, true)*/
 
     }
     private suspend fun Context.getCameraProvider(): ProcessCameraProvider =

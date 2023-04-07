@@ -3,12 +3,16 @@ package com.example.socialk.map
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import android.util.DisplayMetrics
 import android.util.Log
-import android.widget.Space
-import androidx.activity.compose.BackHandler
+import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -23,9 +27,9 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -37,6 +41,8 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.bumptech.glide.Glide
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.request.target.CustomTarget
 import com.example.socialk.Destinations
 import com.example.socialk.R
@@ -46,13 +52,13 @@ import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.home.*
-import com.example.socialk.home.ActivityPreview
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
 import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
+import com.google.accompanist.systemuicontroller.SystemUiController
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -69,53 +75,40 @@ sealed class MapEvent {
     object GoToHome : MapEvent()
     object GoToSettings : MapEvent()
     object AskForPermission : MapEvent()
+    object BackPressed : MapEvent()
     class GoToCreateActivity(val latLng: LatLng) : MapEvent()
 
-
-}
-
-fun loadIcon(
-    context: Context,
-    url: String?,
-    placeHolder: Int,
-): BitmapDescriptor? {
-    try {
-        var bitmap: Bitmap? = null
-        Glide.with(context)
-            .asBitmap()
-            .load(url).circleCrop()
-            .error(placeHolder)
-            // to show a default icon in case of any errors
-            .into(object : CustomTarget<Bitmap>() {
-                override fun onResourceReady(
-                    resource: Bitmap,
-                    transition: com.bumptech.glide.request.transition.Transition<in Bitmap>?
-                ) {
-
-                    bitmap = resource
-
-                }
-
-                override fun onLoadCleared(placeholder: Drawable?) {
-
-                }
-            })
-        return BitmapDescriptorFactory.fromBitmap(
-            bitmap!!.copy(
-                bitmap!!.config,
-                bitmap!!.isMutable
-            )
-        )
-    } catch (e: Exception) {
-        e.printStackTrace()
-        return null
+    class DestroyLiveActivity(val id: String) : MapEvent()
+    class LeaveLiveActivity(val activity_id: String, val user_id: String) : MapEvent()
+    class DisplayPicture(val photo_url: String, val activity_id: String) : MapEvent()
+    class GoToFriendsPicker(val activity :Activity) : MapEvent()
+    object RemovePhotoFromGallery : MapEvent()
+    class GoToMap(latlng: String) : MapEvent() {
+        val latlng = latlng
     }
 
+    class GoToChat(activity: Activity) : MapEvent() {
+        val activity = activity
+    }
+
+    class ActivityLiked(activity: Activity) : MapEvent() {
+        val activity = activity
+    }
+
+    class ActivityUnLiked(activity: Activity) : MapEvent() {
+        val activity = activity
+    }
+
+    class GoToProfileWithID(user_id: String) : MapEvent() {
+        val user_id = user_id
+    }
 }
+
+
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
-fun MapScreen(
+fun MapScreen(systemUiController: SystemUiController,
     latLngInitial: LatLng?,
     activityViewModel: ActivityViewModel,
     onEvent: (MapEvent) -> Unit,
@@ -125,7 +118,34 @@ fun MapScreen(
     activeUsersViewModel: ActiveUsersViewModel?,
     chatViewModel: ChatViewModel,
     authViewModel: AuthViewModel?
-) {
+) {   //set status bar TRANSPARENT
+    SideEffect {
+        systemUiController.setStatusBarColor(color = androidx.compose.ui.graphics.Color.Transparent)
+        systemUiController.setNavigationBarColor(color = androidx.compose.ui.graphics.Color.Transparent)
+    }
+    val backPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    val scaffoldState = rememberScaffoldState()
+    val couroutineScope = rememberCoroutineScope()
+    val onBackPressedCallback = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            couroutineScope.launch {
+                scaffoldState.drawerState.close()
+
+            }
+        }
+    }
+
+    DisposableEffect(backPressedDispatcher) {
+        backPressedDispatcher?.addCallback(onBackPressedCallback)
+
+        onDispose {
+            onBackPressedCallback.remove()
+        }
+    }
+
+
+
+    val context = LocalContext.current
     var currentLocation: LatLng? by remember { mutableStateOf(null) }
     var location_picked_flow = viewModel.locations_picked.collectAsState()
     var isMapLoaded by remember { mutableStateOf(false) }
@@ -171,26 +191,58 @@ fun MapScreen(
     var properties by remember {
         mutableStateOf(MapProperties(mapType = MapType.NORMAL))
     }
-    Surface(
-        modifier = Modifier
-            .fillMaxSize(), color = SocialTheme.colors.uiBackground
-    ) {
+
+
+
+    Surface(Modifier.background(color=SocialTheme.colors.uiBackground), color = SocialTheme.colors.uiBackground) {
+    Scaffold(
+        scaffoldState = scaffoldState, drawerBackgroundColor = SocialTheme.colors.uiBackground, drawerScrimColor = Color.Black.copy(alpha=0.3f),
+        drawerContent = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp, top = 24.dp)
+                        ,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(126.dp)
+                            .clip(CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+
+                }
+
+        },
+        drawerGesturesEnabled = false,
+    ){paddingValues->
 
         Box(
             modifier = Modifier
+                .padding(paddingValues)
                 .fillMaxSize()
-                , contentAlignment = Alignment.TopEnd
         ) {
-            MapBottomDialog(modifier=Modifier,
+            MapBottomDialog(
+                modifier = Modifier,
                 state = bottomSheetState,
                 type = bottomSheetType,
-                onEvent = { event ->},
-                activeUsersViewModel =activeUsersViewModel,
-                activityViewModel =activityViewModel,
-                chatViewModel =chatViewModel,
-                viewModel =authViewModel,
-              ){
-                Box(Modifier.fillMaxSize().background(color=SocialTheme.colors.uiBackground)){
+                onEvent = onEvent,
+                activeUsersViewModel = activeUsersViewModel,
+                activityViewModel = activityViewModel,
+                chatViewModel = chatViewModel,
+                viewModel = authViewModel,
+            ){isExpanded->
+
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(color = SocialTheme.colors.uiBackground)){
                     if (!isMapLoaded) {
                         SocialTheme {
                             AnimatedVisibility(
@@ -259,6 +311,8 @@ fun MapScreen(
                                         viewModel.setLocationPicked(latlng)
                                         //add marker to the map by adding it to the list of markers that should be displayed'
 
+                                    }, onMapClick = {
+                                        viewModel.setLocationPicked(null)
                                     },
                                     uiSettings = uiSettings
                                 ) {
@@ -457,28 +511,45 @@ fun MapScreen(
                                     }
                                 }
 
-
                                 //PROFILE PICTURE
                                 Box(modifier = Modifier
                                     .align(Alignment.TopEnd)
-                                    .padding(end = 24.dp, top = 24.dp)){
+                                    .padding(end = 24.dp, top = 48.dp)){
                                     Row() {
                                         Spacer(Modifier.width(24.dp))
                                         androidx.compose.material.Card( modifier= Modifier
                                             .width(48.dp)
-                                            .height(48.dp),onClick={onEvent(MapEvent.GoToHome)},shape= RoundedCornerShape(100.dp), backgroundColor = Color.White,elevation=4.dp) {
-                                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
-                                                Icon(painter = painterResource(id = R.drawable.ic_menu), contentDescription =null , tint = Color.Black)
+                                            .height(48.dp),onClick={ couroutineScope.launch {
+                                            scaffoldState.drawerState.open()
+                                        }
+                                          },shape= RoundedCornerShape(12.dp), backgroundColor = Color.White.copy(alpha=0.95f),elevation=4.dp) {
+                                            Box(modifier = Modifier.fillMaxSize().background(color=Color.Transparent), contentAlignment = Alignment.Center){
+                                                Icon(modifier=Modifier.background(Color.Transparent),painter = painterResource(id = R.drawable.ic_checklist), contentDescription =null , tint = Color.Black)
                                             }
                                         }
                                         Spacer(modifier = Modifier.weight(1f))
                                         androidx.compose.material.Card(modifier=
                                         Modifier
                                             .width(48.dp)
-                                            .height(48.dp),shape= RoundedCornerShape(100.dp),onClick={onEvent(MapEvent.GoToChats)}, backgroundColor = Color.White,elevation=4.dp) {
+                                            .height(48.dp),shape= RoundedCornerShape(12.dp),onClick={
+                                            if(currentLocation!=null){
+                                                pointToCurrentLocation(cameraPositionState,currentLocation!!)
+                                            }else{
+                                                Toast.makeText(context,"Current location unavailable",Toast.LENGTH_SHORT).show()
+                                            }
+                                        }, backgroundColor = Color.White,elevation=4.dp) {
                                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
-                                                Icon(painter = painterResource(id = R.drawable.ic_chat), contentDescription =null , tint = Color.Black)
+                                                Icon(painter = painterResource(id = R.drawable.ic_current_location), contentDescription =null , tint = Color.Black)
 
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        androidx.compose.material.Card(modifier=
+                                        Modifier
+                                            .width(48.dp)
+                                            .height(48.dp),shape= RoundedCornerShape(12.dp),onClick={onEvent(MapEvent.GoToChats)}, backgroundColor = Color.White,elevation=4.dp) {
+                                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                                                Icon(painter = painterResource(id = R.drawable.instagram_chat_icon_isolated_on_transparent_background_png), contentDescription =null , tint = Color.Black)
                                             }
                                         }
                                         Spacer(modifier = Modifier.width(12.dp))
@@ -511,14 +582,17 @@ fun MapScreen(
                                         displayCreateButton = false
                                     }
                                 }
-
+                                if(isExpanded){
+                                    displayCreateButton=false
+                                }
                                 Box(
                                     modifier = Modifier
                                         .align(
                                             Alignment.BottomEnd
                                         )
-                                        .padding(bottom = 48.dp, end = 24.dp)
+                                        .padding(bottom = 160.dp, end = 0.dp)
                                 ) {
+
                                     AnimatedVisibility(
                                         visible = displayCreateButton,
                                         enter = scaleIn(),
@@ -536,7 +610,7 @@ fun MapScreen(
                                             icon = R.drawable.ic_right
                                         )
 
-                                        Spacer(modifier = Modifier.height(64.dp))
+                                        Spacer(modifier = Modifier.height(12.dp))
                                     }
                                 }
                             }
@@ -559,14 +633,29 @@ fun MapScreen(
 
             }
 
-
         }
 
-
+        }
     }
+
+
+
+
+
+
+
+
+
+
 
 }
 
+fun pointToCurrentLocation(cameraPositionState: CameraPositionState, currentLocation: LatLng) {
+    cameraPositionState.position =
+        CameraPosition.fromLatLngZoom(currentLocation, 13f)
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun MapActivityPreview(
     modifier: Modifier = Modifier,
@@ -586,24 +675,66 @@ fun MapActivityPreview(
                         .padding(12.dp)
                 ) {
                     Column() {
-                        ActivityItemCreatorBox(
-                            onClick = { onEvent(ActivityPreviewEvent.GoToProfile(bottomSheetActivity.creator_id)) },
-                            pictureUrl = bottomSheetActivity.creator_profile_picture,
-                            username = bottomSheetActivity.creator_username,
-                            timeLeft = bottomSheetActivity.time_left,
-                            onSettingsClick = {
-                                onEvent(
-                                    ActivityPreviewEvent.OpenActivitySettings(
-                                        bottomSheetActivity
-                                    )
+                        Row(
+                            modifier = Modifier.pointerInput(Unit) { },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            GlideImage(
+                                model = bottomSheetActivity.creator_profile_picture,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                        ,
+                                contentScale = ContentScale.Crop,
+                            )
+
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier) {
+                                Text(
+                                    text = bottomSheetActivity.creator_username ,
+                                    style = com.example.socialk.ui.theme.Typography.h5,
+                                    fontWeight = FontWeight.Light,
+                                    color = Color.White
                                 )
-                            })
+                                Text(
+                                    text ="Starts in "+bottomSheetActivity.time_left,
+                                    style = com.example.socialk.ui.theme.Typography.subtitle1,
+                                    textAlign = TextAlign.Center,
+                                    color = Color.White
+                                )
+                            }
+                            Spacer(modifier = Modifier.weight(1f))
+                            IconButton(onClick = { }) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_more),
+                                    contentDescription = null,
+                                    tint = SocialTheme.colors.iconPrimary
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                        }
                         Spacer(modifier = Modifier.height(12.dp))
-                        ActivityTextBox(
-                            modifier = Modifier,
-                            title = bottomSheetActivity.title,
-                            description = bottomSheetActivity.description
-                        )
+                        Column(
+                            modifier = modifier
+                                .padding(end = 8.dp), verticalArrangement = Arrangement.Top, horizontalAlignment = Alignment.Start
+                        ) {
+                            Text(
+                                text = bottomSheetActivity.title,
+                                style = com.example.socialk.ui.theme.Typography.h3,
+                                fontWeight = FontWeight.Normal,
+                                color = Color.White,
+                                textAlign = TextAlign.Left
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = bottomSheetActivity.description,
+                                style = com.example.socialk.ui.theme.Typography.h5,
+                                fontWeight = FontWeight.Light,
+                                color =  Color.White,
+                                textAlign = TextAlign.Left
+                            )
+                        }
                     }
 
                 }
@@ -734,15 +865,16 @@ fun MapActivityItem(
 enum class ExpandedType {
     HALF, FULL, COLLAPSED
 }
+
 @Composable
 @OptIn(ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
 fun MapBottomDialog(modifier:Modifier,
                             state: ModalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden),
-                            type: String, onEvent: (BottomDialogEvent) -> Unit, activeUsersViewModel: ActiveUsersViewModel?,
+                            type: String, onEvent: (MapEvent) -> Unit, activeUsersViewModel: ActiveUsersViewModel?,
                             activityViewModel: ActivityViewModel?,
                             chatViewModel: ChatViewModel,
                             viewModel: AuthViewModel?,
-                    content:@Composable ()->Unit
+                    content:@Composable (asdas:Boolean)->Unit
 ) {
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp
@@ -756,107 +888,45 @@ fun MapBottomDialog(modifier:Modifier,
             ExpandedType.COLLAPSED -> 0
         }
     )
+
+    val couroutineScope= rememberCoroutineScope()
+    val isDark = isSystemInDarkTheme()
     val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = BottomSheetState(BottomSheetValue.Collapsed)
     )
-    val couroutineScope= rememberCoroutineScope()
-    val isDark = isSystemInDarkTheme()
-    SocialTheme() {
-        BottomSheetScaffold(sheetShape = RoundedCornerShape(32.dp), sheetElevation = 4.dp, scaffoldState = bottomSheetScaffoldState, sheetBackgroundColor = SocialTheme.colors.uiFloated,sheetContent = {
-            var isUpdated = false
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(height.dp)
-                    .pointerInput(Unit) {
-                        detectVerticalDragGestures(
-                            onVerticalDrag = { change, dragAmount ->
-                                change.consume()
-                                if (!isUpdated) {
-                                    expandedType = when {
-                                        dragAmount < 0 && expandedType == ExpandedType.COLLAPSED -> {
-                                            ExpandedType.HALF
-                                        }
-                                        dragAmount < 0 && expandedType == ExpandedType.HALF -> {
-                                            ExpandedType.FULL
-                                        }
-                                        dragAmount > 0 && expandedType == ExpandedType.FULL -> {
-                                            ExpandedType.HALF
-                                        }
-                                        dragAmount > 0 && expandedType == ExpandedType.HALF -> {
-                                            ExpandedType.COLLAPSED
-                                        }
-                                        else -> {
-                                            ExpandedType.FULL
-                                        }
-                                    }
-                                    isUpdated = true
-                                }
-                            },
-                            onDragEnd = {
-                                isUpdated = false
-                            }
-                        )
-                    }
-                    .background(Color.Red),
-            ){
-                /*HomeScreenContent(activeUsersViewModel = activeUsersViewModel,
-                    viewModel = viewModel,
-                    activityViewModel = activityViewModel,
-                    padding = PaddingValues(12.dp), homeViewModel = null,
-                    isDark = isDark,
-                    activityEvent = {/*
-                            when (it) {
-                                is ActivityEvent.OpenActivityChat -> {
-                                    onEvent(HomeEvent.GoToChat(it.activity))
-                                }
-                                is ActivityEvent.ActivityLiked -> {
-                                    Log.d("HomeScreen", "like")
-                                    onEvent(HomeEvent.ActivityLiked(it.activity))
-                                }
-                                is ActivityEvent.ActivityUnLiked -> {
-                                    Log.d("HomeScreen", "dislike")
-                                    onEvent(HomeEvent.ActivityUnLiked(it.activity))
 
-                                }
-                                is ActivityEvent.GoToMap -> {
-                                    onEvent(HomeEvent.GoToMap(latlng = it.latlng))
-
-                                }
-                                is ActivityEvent.GoToProfile -> {
-                                    onEvent(HomeEvent.GoToProfileWithID(user_id = it.user_id))
-
-                                }
-                                is ActivityEvent.OpenActivitySettings -> {
-                                    Log.d("HomeScreen", "open settings")
-                                    bottomSheetType = "settings"
-                                    bottomSheetActivity = it.activity
-                                    scope.launch {
-                                        bottomSheetState.show()
-                                    }
-                                }
-                                is ActivityEvent.OpenCamera -> {
-                                    onEvent(HomeEvent.OpenCamera(it.activity_id))
-                                }
-                                is ActivityEvent.DisplayPicture -> {
-                                    onEvent(HomeEvent.DisplayPicture(it.photo_url, it.activity_id))
-                                }
-
-                                else -> {}
-                            }*/
-
-                    },
-                    onEvent = { homeEvent ->
-
-                    }, onLongClick = { activity ->
-
-                    }, closeBottomSheet = { couroutineScope.launch {  state.hide()} })*/
-            }
+    BottomSheetScaffold(
+        scaffoldState = bottomSheetScaffoldState,
+        sheetElevation = 8.dp,
+        sheetShape = RoundedCornerShape(
+            bottomStart = 0.dp,
+            bottomEnd = 0.dp,
+            topStart = 24.dp,
+            topEnd = 24.dp
+        ),
+        sheetContent = {
+            sheetContent(activityEvent={},
+                height,
+                expandedType,
+                activeUsersViewModel,
+                viewModel,
+                activityViewModel,
+                isDark,
+                onEvent = onEvent)
+        },
+        // This is the height in collapsed state
+        sheetPeekHeight = 140.dp
+    ) {
+        content(bottomSheetScaffoldState.bottomSheetState.isExpanded)
+    }
 
 
-        }, sheetPeekHeight = height.dp) {it->
+
+   /*     BottomSheetScaffold(sheetShape = RoundedCornerShape(32.dp), sheetElevation = 4.dp, scaffoldState = bottomSheetScaffoldState, sheetPeekHeight = height.dp, sheetBackgroundColor = SocialTheme.colors.uiFloated,sheetContent = {
+            sheetContent(height,)
+        }) {it->
             content()
-        }
+        }*/
 
       /*  ModalBottomSheetLayout(sheetShape = RoundedCornerShape(32.dp),
             sheetState = state, sheetBackgroundColor = SocialTheme.colors.uiFloated,
@@ -917,7 +987,6 @@ fun MapBottomDialog(modifier:Modifier,
         ){
         }*/
 
-    }
 
    /* Card(modifier=modifier.height(300.dp),shape = RoundedCornerShape(24.dp)) {
         Box(modifier = Modifier.height(300.dp).background(color=SocialTheme.colors.uiBackground))
@@ -927,5 +996,138 @@ fun MapBottomDialog(modifier:Modifier,
 
     }*/
 
+
+}
+    @Composable
+    fun sheetContent(   activityEvent: (ActivityEvent) -> Unit,height:Int,expandedType:ExpandedType,activeUsersViewModel: ActiveUsersViewModel?,viewModel: AuthViewModel?,activityViewModel: ActivityViewModel?,isDark:Boolean,
+                        onEvent: (MapEvent) -> Unit) {
+        var isUpdated = false
+        val displayMetrics: DisplayMetrics = LocalContext.current.getResources().getDisplayMetrics()
+        val dpHeight: Float = displayMetrics.heightPixels / displayMetrics.density
+        val bottomSheetMaxHeight=dpHeight*(3/4)
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 150.dp, max = 700.dp)
+            .pointerInput(Unit) {
+                detectVerticalDragGestures(
+                    onVerticalDrag = { change, dragAmount ->
+                        /*  change.consume()
+                        if (!isUpdated) {
+                            expandedType = when {
+                                dragAmount < 0 && expandedType == ExpandedType.COLLAPSED -> {
+                                    ExpandedType.HALF
+                                }
+                                dragAmount < 0 && expandedType == ExpandedType.HALF -> {
+                                    ExpandedType.FULL
+                                }
+                                dragAmount > 0 && expandedType == ExpandedType.FULL -> {
+                                    ExpandedType.HALF
+                                }
+                                dragAmount > 0 && expandedType == ExpandedType.HALF -> {
+                                    ExpandedType.COLLAPSED
+                                }
+                                else -> {
+                                    ExpandedType.FULL
+                                }
+                            }
+                            isUpdated = true
+                        }*/
+                    },
+                    onDragEnd = {
+                        isUpdated = false
+                    }
+                )
+            }
+            .background(Color.Red),
+    ){
+        HomeScreenContent(activeUsersViewModel = activeUsersViewModel,
+            viewModel = viewModel,
+            activityViewModel = activityViewModel,
+            padding = PaddingValues(12.dp), homeViewModel = null,
+            isDark = isDark,
+            activityEvent = {
+                    when (it) {
+                        is ActivityEvent.OpenActivityChat -> {
+                            Log.d("HomeScreen", "chat")
+                            onEvent(MapEvent.GoToChat(it.activity))
+                        }
+                        is ActivityEvent.ActivityLiked -> {
+                            Log.d("HomeScreen", "like")
+                            onEvent(MapEvent.ActivityLiked(it.activity))
+                        }
+                        is ActivityEvent.ActivityUnLiked -> {
+                            Log.d("HomeScreen", "dislike")
+                            onEvent(MapEvent.ActivityUnLiked(it.activity))
+
+                        }
+                        is ActivityEvent.GoToMap -> {
+                            onEvent(MapEvent.GoToMap(latlng = it.latlng))
+
+                        }
+                        is ActivityEvent.GoToProfile -> {
+                            onEvent(MapEvent.GoToProfileWithID(user_id = it.user_id))
+
+                        }
+                        is ActivityEvent.OpenActivitySettings -> {
+                           /* Log.d("HomeScreen", "open settings")
+                            bottomSheetType = "settings"
+                            bottomSheetActivity = it.activity
+                            scope.launch {
+                                bottomSheetState.show()
+                            }*/
+                        }
+                        is ActivityEvent.DisplayPicture -> {
+                            onEvent(MapEvent.DisplayPicture(it.photo_url, it.activity_id))
+                        }
+
+                        else -> {}
+                    }
+
+            },
+            onEvent = { homeEvent ->
+
+            }, onLongClick = { activity ->
+
+            }, closeBottomSheet = { /*couroutineScope.launch {  state.hide()}*/ })
+    }
+
+}
+fun loadIcon(
+    context: Context,
+    url: String?,
+    placeHolder: Int,
+): BitmapDescriptor? {
+    try {
+        var bitmap: Bitmap? = null
+        Glide.with(context)
+            .asBitmap()
+            .load(url).circleCrop()
+            .error(placeHolder)
+            // to show a default icon in case of any errors
+            .into(object : CustomTarget<Bitmap>() {
+                override fun onResourceReady(
+                    resource: Bitmap,
+                    transition: com.bumptech.glide.request.transition.Transition<in Bitmap>?
+                ) {
+
+                    bitmap = resource
+
+                }
+
+                override fun onLoadCleared(placeholder: Drawable?) {
+
+                }
+            })
+        return BitmapDescriptorFactory.fromBitmap(
+            bitmap!!.copy(
+                bitmap!!.config,
+                bitmap!!.isMutable
+            )
+        )
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return null
+    }
 
 }

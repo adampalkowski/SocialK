@@ -49,6 +49,7 @@ class ChatCollectionFragment:Fragment() {
                                 is ChatCollectionEvent.GoToSearch -> viewModel.handleGoToSearch()
                                 is ChatCollectionEvent.GoToGroup -> viewModel.handleGoToCreateGroup()
                                 is ChatCollectionEvent.GoToChat -> viewModel.handleGoToChat(event.chat)
+                                is ChatCollectionEvent.GoBack -> activity?.onBackPressedDispatcher?.onBackPressed()
                                 else->{}
                             }
                         },
