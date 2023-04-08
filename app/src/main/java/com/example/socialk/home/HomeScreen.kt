@@ -730,7 +730,7 @@ fun HomeScreenContent(
 ) {
     /*val refreshScope = rememberCoroutineScope()
     var refreshing by remember { mutableStateOf(false) }*/
-    var activitiesExist = remember { mutableStateOf(false) }
+
    /* fun refresh() = refreshScope.launch {
         refreshing = true
         activityViewModel?.getActivitiesForUser(viewModel?.currentUser!!.uid)
@@ -826,193 +826,23 @@ fun HomeScreenContent(
     val currentTime = LocalTime.now()
     val formatter = DateTimeFormatter.ofPattern("hh:mm")
     val formattedTime = currentTime.format(formatter)
+    var selectedOption by remember { mutableStateOf(0) } // 0 represents "Friends", 1 represents "Public"
+
     Box(
         modifier = Modifier
 
             .background(color = SocialTheme.colors.uiBackground) /*   .pullRefresh(state)*/
     ) {
         Column(){
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(24.dp), contentAlignment = Alignment.Center){
-                    androidx.compose.material.Card(modifier=Modifier.width(24.dp).height(4.dp), onClick = {closeBottomSheet()},shape= RoundedCornerShape(12.dp), backgroundColor = SocialTheme.colors.iconPrimary.copy(alpha=0.5f),elevation=0.dp) {
-                    }
+            FriendsPublicPicker(selectedOption, onOptionSelected = {value->selectedOption=value})
+            AnimatedVisibility(visible = if(selectedOption==0) true else false, enter = slideInHorizontally(), exit = slideOutHorizontally()) {
+                FriendsActivities(activityViewModel,activeUsersViewModel,liveId={ liveActivityDialog =it}, liveSize = {liveActivityParticipantsValue =it},activityEvent=activityEvent)
+
             }
+            AnimatedVisibility(visible = if(selectedOption==0) false else true, enter = slideInHorizontally(), exit = slideOutHorizontally()) {
+                PublicActivities(activityViewModel,activityEvent=activityEvent)
 
-
-            LazyColumn {
-
-                //display of active users
-                activeUsersViewModel?.activeUsersListState?.value.let {
-                    when (it) {
-                        is Response.Success -> {
-                            item {
-                                LazyRow {
-                                    items(it.data) { liveActivity ->
-                                        Spacer(modifier = Modifier.width(24.dp))
-                                        ActiveUserItem(
-                                            onClick = {
-                                                Log.d("HOMESCREEN", liveActivity.toString())
-                                                if (liveActivity.participants_profile_pictures.keys.contains(
-                                                        UserData.user!!.id
-                                                    )
-                                                ) {
-                                                    Log.d("HOMESCREEN", liveActivity.id)
-                                                    liveActivityDialog = liveActivity.creator_id
-                                                    liveActivityParticipantsValue =
-                                                        liveActivity.participants_profile_pictures.size
-                                                }
-                                            },
-                                            profileUrls = liveActivity.participants_profile_pictures,
-                                            usernames = liveActivity.participants_usernames
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                    }
-                                }
-                            }
-                        }
-                        else -> {}
-                    }
-                }
-
-                item {
-                    AnimatedVisibility(
-                        visible = uploading,
-                        enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
-                        exit = scaleOut()
-                    ) {
-
-                        UploadBar(
-                            icon_anim = true,
-                            text = "Uploading image",
-                            icon = R.drawable.ic_add_photo
-                        )
-                    }
-                }
-                item {
-                    AnimatedVisibility(
-                        visible = uploadingError,
-                        enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
-                        exit = scaleOut()
-                    ) {
-
-
-                        ErrorBar(
-                            icon_anim = true,
-                            text = "Error while uploading the image",
-                            icon = R.drawable.ic_error
-                        )
-                    }
-                }
-                item {
-                    AnimatedVisibility(
-                        visible = deletingImage,
-                        enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
-                        exit = scaleOut()
-                    ) {
-
-                        ErrorBar(icon_anim = true, text = "Removing image", icon = R.drawable.ic_remove)
-                    }
-                }
-
-                activityViewModel?.activitiesListState?.value.let {
-                    when (it) {
-                        is Response.Success -> {
-                            /* refreshing = false*/
-                            //display activities
-
-                            items(it.data) { item ->
-                                /*if (updateActivity) {
-                                    if (item.id == homeViewModel.camera_activity_id.value) {
-                                        item.pictures[UserData.user!!.id] = photo_url
-                                    }
-                                    updateActivity = false
-                                }
-                                if (updateDeleteActivity) {
-                                    if (item.id == homeViewModel.camera_activity_id.value) {
-                                        item.pictures.remove(UserData.user!!.id)
-                                    }
-                                    updateDeleteActivity = false
-                                }*/
-                                ActivityItem(
-                                    activity = item,
-                                    onEvent = activityEvent,
-                                    username = item.creator_username,
-                                    profilePictureUrl = item.creator_profile_picture,
-                                    timeLeft = item.time_left,
-                                    title = item.title,
-                                    description = item.description,
-                                    date = item.date,
-                                    liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
-                                    //todo add the time end
-                                    timePeriod = item.start_time + " - " + item.end_time,
-                                    custom_location = item.custom_location,
-                                    location = item.location, lockPhotoButton = uploading,
-                                    onLongClick = { onLongClick(item) }
-                                )
-
-                            }
-                            activitiesExist.value = true
-                        }
-                        else -> {}
-                    }
-                }
-                activityViewModel?.moreActivitiesListState?.value.let {
-                    when (it) {
-                        is Response.Success -> {
-                            /*refreshing = false*/
-                            //display activities
-                            Log.d("homescreen", it.data.toString())
-                            items(it.data) { item ->
-                                /*  if (updateActivity) {
-                                      if (item.id == homeViewModel.camera_activity_id.value) {
-                                          item.pictures[UserData.user!!.id] = photo_url
-                                      }
-                                      updateActivity = false
-
-                                  }
-                                  if (updateDeleteActivity) {
-                                      if (item.id == homeViewModel.camera_activity_id.value) {
-                                          item.pictures.remove(UserData.user!!.id)
-                                      }
-                                      updateDeleteActivity = false
-                                  }*/
-                                ActivityItem(
-                                    activity = item,
-                                    onEvent = activityEvent,
-                                    username = item.creator_username,
-                                    profilePictureUrl = item.creator_profile_picture,
-                                    timeLeft = item.time_left,
-                                    title = item.title,
-                                    description = item.description,
-                                    date = item.date,
-                                    liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
-                                    //todo add the time end
-                                    timePeriod = item.start_time + " - " + item.end_time,
-                                    custom_location = item.custom_location,
-                                    location = item.location,
-                                    lockPhotoButton = uploading
-                                )
-
-                            }
-                        }
-                        else -> {}
-                    }
-                }
-                item {
-                    LaunchedEffect(true) {
-                        if (activitiesExist.value) {
-                            activityViewModel?.getMoreActivitiesForUser(UserData.user!!.id)
-                        }
-                    }
-                }
-                //space for bottom bar
-                item {
-                    Spacer(modifier = Modifier.height(56.dp))
-                }
             }
-
             /* PullRefreshIndicator(
                  /*refreshing,
                  state,*/
@@ -1038,6 +868,314 @@ fun HomeScreenContent(
         }
 
 
+}
+
+@Composable
+fun PublicActivities(activityViewModel: ActivityViewModel?, activityEvent: (ActivityEvent) -> Unit) {
+    var activitiesExist = remember { mutableStateOf(false) }
+    LazyColumn {
+
+        activityViewModel?.closestActivitiesListState?.value.let {
+            when (it) {
+                is Response.Success -> {
+                    /* refreshing = false*/
+                    //display activities
+
+                    items(it.data) { item ->
+                        /*if (updateActivity) {
+                            if (item.id == homeViewModel.camera_activity_id.value) {
+                                item.pictures[UserData.user!!.id] = photo_url
+                            }
+                            updateActivity = false
+                        }
+                        if (updateDeleteActivity) {
+                            if (item.id == homeViewModel.camera_activity_id.value) {
+                                item.pictures.remove(UserData.user!!.id)
+                            }
+                            updateDeleteActivity = false
+                        }*/
+                        ActivityItem(
+                            activity = item,
+                            onEvent = activityEvent,
+                            username = item.creator_username,
+                            profilePictureUrl = item.creator_profile_picture,
+                            timeLeft = item.time_left,
+                            title = item.title,
+                            description = item.description,
+                            date = item.date,
+                            liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
+                            //todo add the time end
+                            timePeriod = item.start_time + " - " + item.end_time,
+                            custom_location = item.custom_location,
+                            location = item.location,
+                            onLongClick = { /*onLongClick(item)*/ }
+                        )
+
+                    }
+                    activitiesExist.value = true
+                }
+                else -> {}
+            }
+        }
+     /* activityViewModel?.moreActivitiesListState?.value.let {
+            when (it) {
+                is Response.Success -> {
+                    /*refreshing = false*/
+                    //display activities
+                    Log.d("homescreen", it.data.toString())
+                    items(it.data) { item ->
+                        /*  if (updateActivity) {
+                              if (item.id == homeViewModel.camera_activity_id.value) {
+                                  item.pictures[UserData.user!!.id] = photo_url
+                              }
+                              updateActivity = false
+
+                          }
+                          if (updateDeleteActivity) {
+                              if (item.id == homeViewModel.camera_activity_id.value) {
+                                  item.pictures.remove(UserData.user!!.id)
+                              }
+                              updateDeleteActivity = false
+                          }*/
+                        ActivityItem(
+                            activity = item,
+                            onEvent = activityEvent,
+                            username = item.creator_username,
+                            profilePictureUrl = item.creator_profile_picture,
+                            timeLeft = item.time_left,
+                            title = item.title,
+                            description = item.description,
+                            date = item.date,
+                            liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
+                            //todo add the time end
+                            timePeriod = item.start_time + " - " + item.end_time,
+                            custom_location = item.custom_location,
+                            location = item.location,
+                        )
+
+                    }
+                }
+                else -> {}
+            }
+        }
+        item {
+            LaunchedEffect(true) {
+                if (activitiesExist.value) {
+                    activityViewModel?.getMoreActivitiesForUser(UserData.user!!.id)
+                }
+            }
+        }*/
+        //space for bottom bar
+        item {
+            Spacer(modifier = Modifier.height(56.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun FriendsActivities(activityViewModel: ActivityViewModel?, activeUsersViewModel: ActiveUsersViewModel?,liveId:(String)->Unit,liveSize:(Int)->Unit,  activityEvent: (ActivityEvent) -> Unit, ) {
+    var activitiesExist = remember { mutableStateOf(false) }
+    LazyColumn {
+        //display of active users
+        activeUsersViewModel?.activeUsersListState?.value.let {
+            when (it) {
+                is Response.Success -> {
+                    item {
+                        LazyRow {
+                            items(it.data) { liveActivity ->
+                                Spacer(modifier = Modifier.width(24.dp))
+                                ActiveUserItem(
+                                    onClick = {
+                                        Log.d("HOMESCREEN", liveActivity.toString())
+                                        if (liveActivity.participants_profile_pictures.keys.contains(
+                                                UserData.user!!.id
+                                            )
+                                        ) {
+                                            liveId( liveActivity.creator_id)
+                                            liveSize(  liveActivity.participants_profile_pictures.size)
+
+
+                                        }
+                                    },
+                                    profileUrls = liveActivity.participants_profile_pictures,
+                                    usernames = liveActivity.participants_usernames
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                            }
+                        }
+                    }
+                }
+                else -> {}
+            }
+        }
+
+     /*   item {
+            AnimatedVisibility(
+                visible = uploading,
+                enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
+                exit = scaleOut()
+            ) {
+
+                UploadBar(
+                    icon_anim = true,
+                    text = "Uploading image",
+                    icon = R.drawable.ic_add_photo
+                )
+            }
+        }
+        item {
+            AnimatedVisibility(
+                visible = uploadingError,
+                enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
+                exit = scaleOut()
+            ) {
+
+
+                ErrorBar(
+                    icon_anim = true,
+                    text = "Error while uploading the image",
+                    icon = R.drawable.ic_error
+                )
+            }
+        }
+        item {
+            AnimatedVisibility(
+                visible = deletingImage,
+                enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
+                exit = scaleOut()
+            ) {
+
+                ErrorBar(icon_anim = true, text = "Removing image", icon = R.drawable.ic_remove)
+            }
+        }*/
+
+        activityViewModel?.activitiesListState?.value.let {
+            when (it) {
+                is Response.Success -> {
+                    /* refreshing = false*/
+                    //display activities
+
+                    items(it.data) { item ->
+                        /*if (updateActivity) {
+                            if (item.id == homeViewModel.camera_activity_id.value) {
+                                item.pictures[UserData.user!!.id] = photo_url
+                            }
+                            updateActivity = false
+                        }
+                        if (updateDeleteActivity) {
+                            if (item.id == homeViewModel.camera_activity_id.value) {
+                                item.pictures.remove(UserData.user!!.id)
+                            }
+                            updateDeleteActivity = false
+                        }*/
+                        ActivityItem(
+                            activity = item,
+                            onEvent = activityEvent,
+                            username = item.creator_username,
+                            profilePictureUrl = item.creator_profile_picture,
+                            timeLeft = item.time_left,
+                            title = item.title,
+                            description = item.description,
+                            date = item.date,
+                            liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
+                            //todo add the time end
+                            timePeriod = item.start_time + " - " + item.end_time,
+                            custom_location = item.custom_location,
+                            location = item.location,
+                            onLongClick = { /*onLongClick(item)*/ }
+                        )
+
+                    }
+                    activitiesExist.value = true
+                }
+                else -> {}
+            }
+        }
+        activityViewModel?.moreActivitiesListState?.value.let {
+            when (it) {
+                is Response.Success -> {
+                    /*refreshing = false*/
+                    //display activities
+                    Log.d("homescreen", it.data.toString())
+                    items(it.data) { item ->
+                        /*  if (updateActivity) {
+                              if (item.id == homeViewModel.camera_activity_id.value) {
+                                  item.pictures[UserData.user!!.id] = photo_url
+                              }
+                              updateActivity = false
+
+                          }
+                          if (updateDeleteActivity) {
+                              if (item.id == homeViewModel.camera_activity_id.value) {
+                                  item.pictures.remove(UserData.user!!.id)
+                              }
+                              updateDeleteActivity = false
+                          }*/
+                        ActivityItem(
+                            activity = item,
+                            onEvent = activityEvent,
+                            username = item.creator_username,
+                            profilePictureUrl = item.creator_profile_picture,
+                            timeLeft = item.time_left,
+                            title = item.title,
+                            description = item.description,
+                            date = item.date,
+                            liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
+                            //todo add the time end
+                            timePeriod = item.start_time + " - " + item.end_time,
+                            custom_location = item.custom_location,
+                            location = item.location,
+                        )
+
+                    }
+                }
+                else -> {}
+            }
+        }
+        item {
+            LaunchedEffect(true) {
+                if (activitiesExist.value) {
+                    activityViewModel?.getMoreActivitiesForUser(UserData.user!!.id)
+                }
+            }
+        }
+        //space for bottom bar
+        item {
+            Spacer(modifier = Modifier.height(56.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun FriendsPublicPicker(selectedOption: Int, onOptionSelected: (Int) -> Unit) {
+
+    Box(Modifier.fillMaxWidth()) {
+
+        Row (Modifier.align(Alignment.Center)){
+            Column(Modifier.clickable { onOptionSelected(0)}) {
+                Text(text = "Friends")
+                AnimatedVisibility(visible =if (selectedOption==0) true else false,enter= slideInHorizontally(tween(500), initialOffsetX = {+it/2}),exit= slideOutHorizontally(tween(500), targetOffsetX = {+it/2}) ) {
+                    androidx.compose.material3.Card(shape= RoundedCornerShape(100.dp),modifier=Modifier.width(48.dp).height(4.dp)){
+                        Box(Modifier.background(color=Color.Black))
+                    }
+                }
+
+            }
+            Spacer(Modifier.width(24.dp))
+            Column(Modifier.clickable {  onOptionSelected(1) }) {
+                Text(text = "Public")
+                AnimatedVisibility(visible =if (selectedOption==1) true else false,enter= slideInHorizontally(tween(500)),exit= slideOutHorizontally(tween(500)) ) {
+                    androidx.compose.material3.Card(shape= RoundedCornerShape(100.dp),modifier=Modifier.width(48.dp).height(4.dp)){                        Box(Modifier.background(color=Color.Black))
+                    }
+                }
+            }
+        }
+
+
+
+    }
 }
 
 

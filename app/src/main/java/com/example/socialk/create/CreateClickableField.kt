@@ -1,16 +1,17 @@
 package com.example.socialk.create
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.Card
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
@@ -27,6 +28,8 @@ import androidx.compose.ui.unit.sp
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 import com.example.socialk.R
+import com.example.socialk.components.PrivacyOption
+import com.example.socialk.components.PrivacyPicker
 import com.example.socialk.editField
 import com.example.socialk.signinsignup.TextFieldError
 import com.example.socialk.signinsignup.TextFieldState
@@ -94,6 +97,67 @@ fun CreateClickableTextField(
         Divider()
     }
 }
+@Composable
+fun PrivacyField(
+    modifier: Modifier,
+    onClick: (Int) -> Unit,
+    title: String,
+    iconSize:Int=28,
+    text: String = "value",
+    description: String,
+    icon: Int,
+    inActiveTextColor:Color=SocialTheme.colors.textInteractive.copy(alpha = 0.5f),
+    descriptionTextSize: Int=12,
+    titleTextSize:Int=16,
+    interactiveTextSize:Int=16,
+    iconTint: Color =SocialTheme.colors.textPrimary.copy(0.75f),
+    titleColor: Color=SocialTheme.colors.textPrimary,
+    descriptionColor: Color=SocialTheme.colors.textPrimary.copy(alpha=0.5f),
+    interactiveTextColor: Color=Color(0xFF034FB4),
+    selectedPrivacy: PrivacyOption,
+    onPrivacySelected: (PrivacyOption) -> Unit
+) {
+    Column(modifier = modifier) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Icon(
+                modifier = Modifier.size(iconSize.dp),
+                painter = painterResource(id = icon),
+                contentDescription = null,
+                tint = iconTint
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(horizontalAlignment = Alignment.Start) {
+                Text(
+                    text = title,
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = titleTextSize.sp,
+                    color = titleColor
+                )
+                Text(
+                    text = description,
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.Light,
+                    fontSize = descriptionTextSize.sp,
+                    color = descriptionColor
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+        }
+
+        PrivacyPicker(selectedPrivacy = selectedPrivacy,onPrivacySelected =     onPrivacySelected)
+        Spacer(modifier = Modifier.height(16.dp))
+        Divider()
+    }
+}
 
 @Composable
 fun EditTextField(
@@ -147,7 +211,9 @@ fun EditTextField(
             maxLetters = maxLetters,
             onImeAction = { },
             editTextState = textState,
-            modifier = Modifier.padding(horizontal = 24.dp).focusRequester(descriptionFocusRequester),
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .focusRequester(descriptionFocusRequester),
             onSaveValueCall = onSaveValueCall
         )
         Spacer(modifier = Modifier.height(12.dp))
@@ -280,7 +346,9 @@ fun CustomLocationField(
             maxLetters = maxLetters,
             onImeAction = { },
             editTextState = textState,
-            modifier = Modifier.padding(horizontal = 24.dp).focusRequester(descriptionFocusRequester),
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .focusRequester(descriptionFocusRequester),
             onSaveValueCall = onSaveValueCall
         )
         textState.getError()?.let { error ->

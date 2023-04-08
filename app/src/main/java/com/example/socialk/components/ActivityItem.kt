@@ -134,7 +134,7 @@ fun ActivityItem(modifier:Modifier=Modifier,
     custom_location: String,
     location: String,
     liked: Boolean,
-    onEvent: (ActivityEvent) -> Unit,lockPhotoButton:Boolean=false,
+    onEvent: (ActivityEvent) -> Unit,
                  onLongClick:()->Unit= {}
 ) {
     var liked = rememberSaveable { mutableStateOf(liked) }
@@ -176,7 +176,7 @@ fun ActivityItem(modifier:Modifier=Modifier,
                         }
                         else->{}
                     }
-                }, activity, liked.value,lockPhotoButton)
+                }, activity, liked.value)
             }
 
             //DETAILS
@@ -463,7 +463,7 @@ fun ActivityDetailsBar(min:Int,max:Int,
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun controls(onEvent: (ActivityItemEvent) -> Unit, activity: Activity, liked: Boolean,lockPhotoButton: Boolean) {
+fun controls(onEvent: (ActivityItemEvent) -> Unit, activity: Activity, liked: Boolean) {
     Column(
         modifier = Modifier
     ) {

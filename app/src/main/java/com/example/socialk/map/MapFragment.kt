@@ -150,8 +150,8 @@ class MapFragment : Fragment() {
             }
         }
         activityViewModel?.getActivitiesForUser(authViewModel?.currentUser?.uid)
-        activeUsersViewModel?.getActiveUsersForUser(authViewModel?.currentUser?.uid)
 
+        activeUsersViewModel?.getActiveUsersForUser(authViewModel?.currentUser?.uid)
 
         fusedLocationClient =
             LocationServices.getFusedLocationProviderClient(activity?.applicationContext!!)

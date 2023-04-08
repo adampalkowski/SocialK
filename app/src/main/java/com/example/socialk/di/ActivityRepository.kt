@@ -12,6 +12,7 @@ interface ActivityRepository {
 
     suspend fun getActivity(id:String) : Flow<Response<Activity>>
     suspend fun getUserActivities(id: String): Flow<Response<List<Activity>>>
+    suspend fun getClosestActivities(lat: Double,lng:Double): Flow<Response<List<Activity>>>
     suspend fun getMoreUserActivities(id: String): Flow<Response<List<Activity>>>
     suspend fun addImageFromGalleryToStorage(id: String,uri: Uri): Flow<Response<String>>
     suspend fun deleteImageFromHighResStorage(id: String): Flow<Response<String>>

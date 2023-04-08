@@ -5,6 +5,10 @@ import android.util.Log
 import com.example.socialk.ActiveUser
 import com.example.socialk.await1
 import com.example.socialk.model.*
+import com.firebase.geofire.GeoFireUtils
+import com.firebase.geofire.GeoLocation
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.*
 import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.firestore.model.Document
@@ -36,7 +40,64 @@ class ActivityRepositoryImpl @Inject constructor(
     private var lastVisibleData: DocumentSnapshot? = null
     private var lastVisibleUserData: DocumentSnapshot? = null
     private var lastVisibleDataForUserProfile: DocumentSnapshot? = null
+    override suspend fun getClosestActivities(lat: Double,lng:Double): Flow<Response<List<Activity>>> =callbackFlow {
+        val center = GeoLocation(lat,lng)
+        val radiusInM = 5.0 * 1000.0
+        Log.d("getClosestActivities","task")
 
+        val bounds = GeoFireUtils.getGeoHashQueryBounds(center, radiusInM)
+        val tasks: MutableList<Task<QuerySnapshot>> = ArrayList()
+        for (b in bounds) {
+            val q =  activitiesRef.whereEqualTo("public",true)
+                .orderBy("geoHash")
+                .startAt(b.startHash)
+                .endAt(b.endHash)
+                .limit(5)
+            tasks.add(q.get())
+        }
+        // Collect all the query results together into a single list
+        Tasks.whenAllComplete(tasks)
+            .addOnCompleteListener {
+                val matchingDocs: MutableList<DocumentSnapshot> = ArrayList()
+                for (task in tasks) {
+                    val snap = task.result
+                    for (doc in snap!!.documents) {
+                        val lat = doc.getDouble("lat")!!
+                        val lng = doc.getDouble("lng")!!
+
+                        // We have to filter out a few false positives due to GeoHash
+                        // accuracy, but most will match
+                        val docLocation = GeoLocation(lat, lng)
+                        val distanceInM = GeoFireUtils.getDistanceBetween(docLocation, center)
+                        if (distanceInM <= radiusInM) {
+                            matchingDocs.add(doc)
+                        }
+                    }
+                }
+                Log.d("getClosestActivities",matchingDocs.toString())
+
+                if (matchingDocs != null && matchingDocs.isNotEmpty()) {
+                    val newActivities = ArrayList<Activity>()
+                    for (document in matchingDocs) {
+                        val activity = document.toObject<Activity>()
+                        Log.d("ActivityRepositoryImpl",activity.toString())
+
+                        if (activity!=null){
+                            newActivities.add(activity)
+                        }
+                    }
+                    lastVisibleData= matchingDocs[matchingDocs.size - 1]
+                    trySend(Response.Success(newActivities))
+
+                }
+            }.addOnFailureListener(){
+                trySend(Response.Failure(e= SocialException(message = "Nearby activity download failure",e=Exception())))
+
+            }
+
+        awaitClose {
+        }
+    }
     override suspend fun getActivity(id:String): Flow<Response<Activity>> = callbackFlow {
         activitiesRef.document(id).get().addOnSuccessListener {  documentSnapshot ->
             val response = if (documentSnapshot != null) {
@@ -362,7 +423,9 @@ class ActivityRepositoryImpl @Inject constructor(
         awaitClose {
         }
     }
+
     override suspend fun getActivitiesForUser(id: String): Flow<Response<List<Activity>>> =callbackFlow {
+        Log.d("getActivitiesForUser","getActivitiesForUser 2")
         val snapshotListener = activitiesRef.whereArrayContains("invited_users",id)
             .orderBy("creation_time", Query.Direction.DESCENDING).limit(5).get().addOnCompleteListener { task->
             var activitiesList:List<Activity> = mutableListOf()
@@ -372,7 +435,7 @@ class ActivityRepositoryImpl @Inject constructor(
                     val newActivities = ArrayList<Activity>()
                     for (document in documents) {
                         val activity = document.toObject<Activity>()
-                        Log.d("ActivityRepositoryImpl",activity.toString())
+                        Log.d("getActivitiesForUser 2",activity.toString())
 
                         if (activity!=null){
                             newActivities.add(activity)

@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import com.example.socialk.*
 import com.example.socialk.R
 import com.example.socialk.components.CustomSocialDialog
+import com.example.socialk.components.PrivacyOption
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.UserViewModel
 import com.example.socialk.map.loadIcon
@@ -108,8 +109,9 @@ sealed class CreateEvent {
         val disablePictures: Boolean,
         val disableNotification: Boolean,
         val privateChat: Boolean,
-        val disableChat:Boolean,
-        ) : CreateEvent()
+        val disableChat: Boolean,
+        val selectedPrivacy: String,
+    ) : CreateEvent()
 }
 
 @OptIn(
@@ -244,7 +246,7 @@ fun CreateScreen(
     }
 
     var isMapLoaded by remember { mutableStateOf(false) }
-
+    var selectedPrivacy by remember { mutableStateOf(PrivacyOption.FRIENDS_ONLY) }
     val cameraPositionState: CameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 11f)
     }
@@ -393,6 +395,15 @@ fun CreateScreen(
                 icon = R.drawable.ic_hourglass
             )
 
+
+            PrivacyField(
+                modifier = Modifier,
+                title = "Privacy",
+                description = "Select who you intend to show the activity",
+                onClick = {},
+                icon = R.drawable.ic_privacy,
+                selectedPrivacy = selectedPrivacy,
+                onPrivacySelected =  { privacyOption -> selectedPrivacy = privacyOption })
             EditTextField(hint = "Additional information",
                 hideKeyboard = hideKeyboard,
                 onFocusClear = { hideKeyboard = false },
@@ -508,7 +519,7 @@ fun CreateScreen(
                         text = "Privacy",
                         modifier = Modifier,
                         title = "Activity settings",
-                        icon = R.drawable.ic_privacy,
+                        icon = R.drawable.ic_tune,
                         onClick = {},
                         description = "",
                         disableDescription = true
@@ -516,18 +527,21 @@ fun CreateScreen(
                         ActivitySettingsBox(
                             "Activity sharing",
                             "Allow invited users to invite others to the activity.",
-                            onSwitch = {  enableActivitySharing=it})
+                            onSwitch = { enableActivitySharing = it })
                         ActivitySettingsBox(
                             "Pictures",
                             "Disable attach pictures to the activity.",
-                            onSwitch = { disablePictures=it })
+                            onSwitch = { disablePictures = it })
                         ActivitySettingsBox(
                             "Notification",
                             "Don't notify invited users.",
-                            onSwitch = { disableNotification=it})
+                            onSwitch = { disableNotification = it })
 
-                        ActivitySettingsChatBox(                            "Chat",
-                            "Make chat visible only for activity participants.", secondDescription = "Disable chat ", onSwitch = {privateChat=it}, secondOnSwitch = {disableChat=it})
+                        ActivitySettingsChatBox("Chat",
+                            "Make chat visible only for activity participants.",
+                            secondDescription = "Disable chat ",
+                            onSwitch = { privateChat = it },
+                            secondOnSwitch = { disableChat = it })
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -624,12 +638,13 @@ fun CreateScreen(
                                 min = minTextState.text,
                                 max = maxTextState.text,
                                 custom_location = customLocationTextState.text,
-                                enableActivitySharing =enableActivitySharing,
-                                disablePictures =disablePictures,
-                                disableNotification =disableNotification,
-                                privateChat =privateChat, disableChat = disableChat
+                                enableActivitySharing = enableActivitySharing,
+                                disablePictures = disablePictures,
+                                disableNotification = disableNotification,
+                                privateChat = privateChat, disableChat = disableChat, selectedPrivacy=selectedPrivacy.label
 
-                                ))
+                            )
+                        )
                     }
 
 
@@ -780,34 +795,41 @@ fun CreateScreen(
     }
 
 }
+
 @Composable
-fun ActivitySettingsChatBox(title: String, description: String, secondDescription: String, onSwitch: (Boolean) -> Unit,secondOnSwitch: (Boolean) -> Unit) {
+fun ActivitySettingsChatBox(
+    title: String,
+    description: String,
+    secondDescription: String,
+    onSwitch: (Boolean) -> Unit,
+    secondOnSwitch: (Boolean) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp), verticalAlignment = Alignment.CenterVertically
     ) {
         Column() {
-                Text(
-                    text = title,
-                    fontFamily = Inter,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp,
-                    color = SocialTheme.colors.textPrimary
-                )
-
-        Row() {
-
-        Text(
-                text = description,
+            Text(
+                text = title,
                 fontFamily = Inter,
-                fontWeight = FontWeight.Light,
-                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
                 color = SocialTheme.colors.textPrimary
             )
-            Spacer(modifier = Modifier.weight(1f))
-            Switch2(onCheckedChange = { it -> onSwitch(it) })
-        }
+
+            Row() {
+
+                Text(
+                    text = description,
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.Light,
+                    fontSize = 12.sp,
+                    color = SocialTheme.colors.textPrimary
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Switch2(onCheckedChange = { it -> onSwitch(it) })
+            }
             Row() {
 
                 Text(
@@ -825,6 +847,7 @@ fun ActivitySettingsChatBox(title: String, description: String, secondDescriptio
     }
 
 }
+
 @Composable
 fun ActivitySettingsBox(title: String, description: String, onSwitch: (Boolean) -> Unit) {
     Row(
@@ -1130,16 +1153,6 @@ fun Switch2(
 
     Spacer(modifier = Modifier.height(18.dp))
 
-}
-
-@Preview
-@Composable
-fun preview() {
-    SocialTheme {
-        Box(modifier = Modifier.background(color = SocialTheme.colors.uiBackground)) {
-            Switch2(onCheckedChange = {})
-        }
-    }
 }
 
 

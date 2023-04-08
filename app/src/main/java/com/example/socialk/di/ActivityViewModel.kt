@@ -2,31 +2,25 @@ package com.example.socialk.di
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.socialk.ActiveUser
-import com.example.socialk.home.HomeEvent
-import com.example.socialk.model.*
+import com.example.socialk.model.Activity
+import com.example.socialk.model.Response
+import com.example.socialk.model.SocialException
+import com.example.socialk.model.User
 import com.marosseleng.compose.material3.datetimepickers.time.domain.noSeconds
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import kotlin.collections.ArrayList
 
 sealed class ActivityEvent {
     object DeleteActivity : ActivityEvent()
@@ -43,6 +37,9 @@ class ActivityViewModel @Inject constructor(
 
     private val _isImageDeletedFromStorage = MutableStateFlow<Response<String>?>(null)
     val isImageDeletedFromStorage: StateFlow<Response<String>?> = _isImageDeletedFromStorage
+
+    private val _closestActivitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
+    val closestActivitiesListState: State<Response<List<Activity>>> = _closestActivitiesListState
 
     private val _activitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val activitiesListState: State<Response<List<Activity>>> = _activitiesListState
@@ -83,7 +80,42 @@ class ActivityViewModel @Inject constructor(
     init {
         // getActivities()
     }
+    fun getClosestActivities(lat:Double,lng:Double){
+        viewModelScope.launch {
+            val list_without_removed_activites: ArrayList<Activity> = ArrayList()
+            repo.getClosestActivities(lat,lng).collect { response ->
+                when (response) {
+                    is Response.Success -> {
+                        response.data.forEach {
+                            Log.d("getClosestActivities",it.toString())
+                            list_without_removed_activites.add(it)
+                            val time_left: String = calculateTimeLeft(
+                                it.date,
+                                it.start_time,
+                                deleteActivity = { event ->
+                                    Log.d("getClosestActivities", "delete activity")
+                                    deleteActivity(it.id)
+                                    list_without_removed_activites.remove(it)
+                                })
+                            it.time_left = time_left
 
+                            Log.d("getClosestActivities","list"+list_without_removed_activites.toString())
+                            _closestActivitiesListState.value =
+                                Response.Success(list_without_removed_activites as List<Activity>)
+                        }
+                    }
+                    is Response.Failure -> {
+                        _closestActivitiesListState.value = response
+                    }
+                    is Response.Loading -> {
+                        _closestActivitiesListState.value = response
+                    }
+                }
+
+
+            }
+        }
+    }
     fun getActivity(id: String) {
         viewModelScope.launch {
             repo.getActivity(id).collect { response ->
@@ -152,6 +184,7 @@ class ActivityViewModel @Inject constructor(
 
     }
     fun getActivitiesForUser(id: String?) {
+        Log.d("getActivitiesForUser", " getActivitiesForUser")
         if (id == null) {
             _activitiesListState.value = Response.Failure(
                 SocialException(
@@ -171,13 +204,13 @@ class ActivityViewModel @Inject constructor(
                                     it.date,
                                     it.start_time,
                                     deleteActivity = { event ->
-                                        Log.d("activityViewModel", "delete activity")
+                                        Log.d("getActivitiesForUser", "delete activity")
                                         deleteActivity(it.id)
                                         list_without_removed_activites.remove(it)
                                     })
                                 it.time_left = time_left
 
-                                Log.d("ActivityRepositoryImpl","list"+list_without_removed_activites.toString())
+                                Log.d("getActivitiesForUser","list"+list_without_removed_activites.toString())
                                 _activitiesListState.value =
                                     Response.Success(list_without_removed_activites as List<Activity>)
                             }

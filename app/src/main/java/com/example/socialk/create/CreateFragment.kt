@@ -24,6 +24,9 @@ import com.example.socialk.model.User
 import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.SocialTheme
+import com.firebase.geofire.GeoFireUtils
+import com.firebase.geofire.GeoLocation
+import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.AndroidEntryPoint
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -140,38 +143,109 @@ class CreateFragment : Fragment() {
 
                                 participants_profile_pictures[authViewModel.currentUser!!.uid]=UserData.user!!.pictureUrl!!
                                 participants_usernames[authViewModel.currentUser!!.uid]=UserData.user!!.username!!
-
-                                val activity=Activity(
-                                    id = id,
-                                    creator_id = if (authViewModel.currentUser == null) {
-                                        ""
-                                    } else {
-                                        authViewModel.currentUser!!.uid.toString()
-                                    },
-                                    title = event.title,
-                                    date = event.date,
-                                    start_time = event.start_time,
-                                    time_length = event.time_length,
-                                    creator_name =UserData.user!!.name!! ,
-                                    creator_profile_picture = UserData.user!!.pictureUrl!! ,
-                                    creator_username = UserData.user!!.username!! ,
-                                    description= event.description,
-                                    time_left = "",
-                                    custom_location = event.custom_location,
-                                    end_time = "",latLng="",minUserCount=if(event.min.equals("")){0}else{event.min.toInt()},maxUserCount=if(event.max.equals("")){0}else{event.max.toInt()},
-                                    disableChat = event.disableChat,  likes = 0,
-                                    invited_users = arrayListOf(),
-                                    participants_profile_pictures =participants_profile_pictures ,
-                                    participants_usernames =participants_usernames,
-                                    creation_time = current,
-                                    location=event.location,
-                                    pictures=HashMap(),
-                                    enableActivitySharing=event.enableActivitySharing,disablePictures=event.disablePictures,disableNotification=event.disableNotification,privateChat=event.privateChat
-
+                                //get LAT LNG FROM STRING
+                                val values =
+                                    event.location.split("/")
+                                val lat= values.get(0).toDouble()
+                                val lng= values.get(1).toDouble()
+                                //Create geohash
+                                val hash = GeoFireUtils.getGeoHashForLocation(GeoLocation(lat, lng))
+                                val geohash: MutableMap<String, Any> = mutableMapOf(
+                                    "geohash" to hash,
+                                    "lat" to lat,
+                                    "lng" to lng
                                 )
 
-                                viewModel.handleGoToFriendsPicker(activity)
-                                clearSharedPrefs()
+                                //handle privacy settings IF PRIVATE
+                                if (event.selectedPrivacy.equals("Private")){
+
+                                    val activity=Activity(
+                                        id = id,
+                                        title = event.title,
+                                        date = event.date,
+                                        start_time = event.start_time,
+                                        time_length = event.time_length,
+                                        creator_id = if (authViewModel.currentUser == null) {
+                                            ""
+                                        } else {
+                                            authViewModel.currentUser!!.uid.toString()
+                                        },
+                                        description= event.description,
+                                        creator_username = UserData.user!!.username!! ,
+                                        creator_name =UserData.user!!.name!! ,
+                                        creator_profile_picture = UserData.user!!.pictureUrl!! ,
+                                        time_left = "",
+                                        end_time = "",
+                                        geoHash=hash,
+                                        lat=lat,
+                                        lng=lng,
+                                        custom_location = event.custom_location,
+                                        minUserCount=if(event.min.equals("")){0}else{event.min.toInt()},
+                                        maxUserCount=if(event.max.equals("")){0}else{event.max.toInt()},
+                                        disableChat = event.disableChat,
+                                        likes = 0,
+                                        invited_users = arrayListOf(UserData.user!!.id),
+                                        participants_profile_pictures =participants_profile_pictures ,
+                                        participants_usernames =participants_usernames,
+                                        creation_time = current,
+                                        location=event.location,
+                                        pictures=HashMap(),
+                                        enableActivitySharing=event.enableActivitySharing,
+                                        disablePictures=event.disablePictures,
+                                        disableNotification=event.disableNotification,
+                                        privateChat=event.privateChat,
+                                        public =if(event.selectedPrivacy.equals("Public")) true else false
+
+                                    )
+                                    activityViewModel.addActivity(activity)
+                                    clearSharedPrefs()
+                                    viewModel.handleGoToMap()
+                                }else{
+
+                                    //PRIVACY EITHER PUBLIC OR FRIENDS
+                                    val activity=Activity(
+                                        id = id,
+                                        title = event.title,
+                                        date = event.date,
+                                        start_time = event.start_time,
+                                        time_length = event.time_length,
+                                        creator_id = if (authViewModel.currentUser == null) {
+                                            ""
+                                        } else {
+                                            authViewModel.currentUser!!.uid.toString()
+                                        },
+                                        description= event.description,
+                                        creator_username = UserData.user!!.username!! ,
+                                        creator_name =UserData.user!!.name!! ,
+                                        creator_profile_picture = UserData.user!!.pictureUrl!! ,
+                                        time_left = "",
+                                        end_time = "",
+                                        geoHash=hash,
+                                        lat=lat,
+                                        lng=lng,
+                                        custom_location = event.custom_location,
+                                        minUserCount=if(event.min.equals("")){0}else{event.min.toInt()},
+                                        maxUserCount=if(event.max.equals("")){0}else{event.max.toInt()},
+                                        disableChat = event.disableChat,
+                                        likes = 0,
+                                        invited_users = arrayListOf(),
+                                        participants_profile_pictures =participants_profile_pictures ,
+                                        participants_usernames =participants_usernames,
+                                        creation_time = current,
+                                        location=event.location,
+                                        pictures=HashMap(),
+                                        enableActivitySharing=event.enableActivitySharing,
+                                        disablePictures=event.disablePictures,
+                                        disableNotification=event.disableNotification,
+                                        privateChat=event.privateChat,
+                                        public =if(event.selectedPrivacy.equals("Public")) true else false
+
+                                    )
+
+                                    viewModel.handleGoToFriendsPicker(activity)
+                                    clearSharedPrefs()
+                                }
+
 
 
                             }
