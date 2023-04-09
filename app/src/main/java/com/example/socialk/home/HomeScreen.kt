@@ -85,9 +85,10 @@ sealed class ActivityEvent() {
 
     class OpenCamera(val activity_id: String) : ActivityEvent()
 }
-sealed class ActivityPreviewEvent{
-    class GoToProfile(val id:String) :ActivityPreviewEvent()
-    class OpenActivitySettings(val activity: Activity) :ActivityPreviewEvent()
+
+sealed class ActivityPreviewEvent {
+    class GoToProfile(val id: String) : ActivityPreviewEvent()
+    class OpenActivitySettings(val activity: Activity) : ActivityPreviewEvent()
 }
 
 sealed class HomeEvent {
@@ -100,7 +101,7 @@ sealed class HomeEvent {
     object GoToMemories : HomeEvent()
     object BackPressed : HomeEvent()
     object GoToSettings : HomeEvent()
-    class GoToFriendsPicker(val activity :Activity) : HomeEvent()
+    class GoToFriendsPicker(val activity: Activity) : HomeEvent()
     object RemovePhotoFromGallery : HomeEvent()
     class GoToMap(latlng: String) : HomeEvent() {
         val latlng = latlng
@@ -378,9 +379,13 @@ fun HomeScreen(
             homeViewModel?.removeActivity()
             Log.d("homescreen", "falseeee")
         })
-    AnimatedVisibility(visible=displayActivity, enter = scaleIn(animationSpec = tween(500)), exit =scaleOut( tween(500)) ){
+    AnimatedVisibility(
+        visible = displayActivity,
+        enter = scaleIn(animationSpec = tween(500)),
+        exit = scaleOut(tween(500))
+    ) {
         Dialog(onDismissRequest = { displayActivity = false }) {
-            ActivityPreview(modifier=Modifier,bottomSheetActivity, onEvent = {event->})
+            ActivityPreview(modifier = Modifier, bottomSheetActivity, onEvent = { event -> })
         }
     }
 
@@ -391,7 +396,7 @@ fun HomeScreen(
         onEvent = { event ->
             when (event) {
                 is BottomDialogEvent.GoToFriendsPicker -> {
-                        onEvent(HomeEvent.GoToFriendsPicker(event.activity))
+                    onEvent(HomeEvent.GoToFriendsPicker(event.activity))
                 }
                 is BottomDialogEvent.removeUserFromActivity -> {
                     activityViewModel?.removeUserFromActivityInvites(
@@ -417,51 +422,67 @@ fun HomeScreen(
 }
 
 @Composable
-fun ActivityPreview(modifier: Modifier = Modifier, bottomSheetActivity: Activity,onEvent:(ActivityPreviewEvent)->Unit) {
-    Box(modifier=modifier) {
+fun ActivityPreview(
+    modifier: Modifier = Modifier,
+    bottomSheetActivity: Activity,
+    onEvent: (ActivityPreviewEvent) -> Unit
+) {
+    Box(modifier = modifier) {
         Column() {
-            if(bottomSheetActivity.location.isNotEmpty()){
-            MapBox1(location=bottomSheetActivity.location)
-            Spacer(modifier = Modifier.height(16.dp))
-           }else{
-                DataBox(icon = R.drawable.ic_location_24,bottomSheetActivity.custom_location,title="Location")
+            if (bottomSheetActivity.location.isNotEmpty()) {
+                MapBox1(location = bottomSheetActivity.location)
+                Spacer(modifier = Modifier.height(16.dp))
+            } else {
+                DataBox(
+                    icon = R.drawable.ic_location_24,
+                    bottomSheetActivity.custom_location,
+                    title = "Location"
+                )
                 Spacer(modifier = Modifier.height(4.dp))
-           }
+            }
 
-           /* androidx.compose.material3.Card(shape= RoundedCornerShape(12.dp)) {
-                Box(
-                    Modifier
-                        .background(color = SocialTheme.colors.uiBackground)
-                        .padding(8.dp)){
-                    Column() {
-                        ActivityItemCreatorBox(
-                            onClick = { onEvent(ActivityPreviewEvent.GoToProfile(bottomSheetActivity.creator_id)) },
-                            pictureUrl = bottomSheetActivity.creator_profile_picture,
-                            username = bottomSheetActivity.creator_username,
-                            timeLeft = bottomSheetActivity.time_left,
-                            onSettingsClick = { onEvent(ActivityPreviewEvent.OpenActivitySettings(bottomSheetActivity)) })
-                        Spacer(modifier = Modifier.height(12.dp))
-                        ActivityTextBox(modifier = Modifier, title =bottomSheetActivity.title , description =bottomSheetActivity.description )
-                    }
+            /* androidx.compose.material3.Card(shape= RoundedCornerShape(12.dp)) {
+                 Box(
+                     Modifier
+                         .background(color = SocialTheme.colors.uiBackground)
+                         .padding(8.dp)){
+                     Column() {
+                         ActivityItemCreatorBox(
+                             onClick = { onEvent(ActivityPreviewEvent.GoToProfile(bottomSheetActivity.creator_id)) },
+                             pictureUrl = bottomSheetActivity.creator_profile_picture,
+                             username = bottomSheetActivity.creator_username,
+                             timeLeft = bottomSheetActivity.time_left,
+                             onSettingsClick = { onEvent(ActivityPreviewEvent.OpenActivitySettings(bottomSheetActivity)) })
+                         Spacer(modifier = Modifier.height(12.dp))
+                         ActivityTextBox(modifier = Modifier, title =bottomSheetActivity.title , description =bottomSheetActivity.description )
+                     }
 
-                }
-            }*/
+                 }
+             }*/
 
             Spacer(modifier = Modifier.height(4.dp))
-            DataBox(icon=R.drawable.ic_date_24,bottomSheetActivity.date,title="Date")
+            DataBox(icon = R.drawable.ic_date_24, bottomSheetActivity.date, title = "Date")
             Spacer(modifier = Modifier.height(4.dp))
-            DataBox(icon=R.drawable.ic_timer_24,bottomSheetActivity.start_time + " - " + bottomSheetActivity.end_time,title="Time")
+            DataBox(
+                icon = R.drawable.ic_timer_24,
+                bottomSheetActivity.start_time + " - " + bottomSheetActivity.end_time,
+                title = "Time"
+            )
             //ChatMessageBox()
             Spacer(modifier = Modifier.height(4.dp))
-            ParticipantsBox(bottomSheetActivity.participants_usernames,bottomSheetActivity.participants_profile_pictures)
+            ParticipantsBox(
+                bottomSheetActivity.participants_usernames,
+                bottomSheetActivity.participants_profile_pictures
+            )
 
         }
 
 
     }
 }
+
 @Composable
-fun DataBox(icon:Int,text:String,title:String) {
+fun DataBox(icon: Int, text: String, title: String) {
 
     androidx.compose.material3.Card(
         shape = RoundedCornerShape(8.dp),
@@ -476,7 +497,8 @@ fun DataBox(icon:Int,text:String,title:String) {
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),horizontalArrangement = Arrangement.Start,
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.Start,
             ) {
                 androidx.compose.material3.Icon(
                     painter = painterResource(id = icon),
@@ -485,7 +507,7 @@ fun DataBox(icon:Int,text:String,title:String) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "$title:",color=Color.White,
+                    text = "$title:", color = Color.White,
                     style = TextStyle(
                         fontFamily = Inter,
                         fontWeight = FontWeight.SemiBold,
@@ -494,7 +516,7 @@ fun DataBox(icon:Int,text:String,title:String) {
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = text,color=Color.White,
+                    text = text, color = Color.White,
                     style = TextStyle(
                         fontFamily = Inter,
                         fontWeight = FontWeight.SemiBold,
@@ -506,35 +528,44 @@ fun DataBox(icon:Int,text:String,title:String) {
         }
     }
 }
-@Composable
-fun ParticipantsBox(participantsUsernames: HashMap<String, String>, participantsProfilePictures: HashMap<String, String>) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-               ) {
-                    Column() {
-                        DataBox(icon =R.drawable.ic_person_done , text = "" ,title="Participants")
-                        Spacer(modifier = Modifier.height(2.dp))
-                    Row(Modifier.horizontalScroll(rememberScrollState())){
-                        participantsProfilePictures.forEach{
-                            ParticipantBoxItem(it.value,participantsUsernames[it.key]!!)
-                            Spacer(modifier = Modifier.width(8.dp))
-                        }
-                    }
-                    }
 
+@Composable
+fun ParticipantsBox(
+    participantsUsernames: HashMap<String, String>,
+    participantsProfilePictures: HashMap<String, String>
+) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+    ) {
+        Column() {
+            DataBox(icon = R.drawable.ic_person_done, text = "", title = "Participants")
+            Spacer(modifier = Modifier.height(2.dp))
+            Row(Modifier.horizontalScroll(rememberScrollState())) {
+                participantsProfilePictures.forEach {
+                    ParticipantBoxItem(it.value, participantsUsernames[it.key]!!)
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+            }
         }
+
+    }
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun ParticipantBoxItem(picture_url: String, username: String) {
-    androidx.compose.material3.Card(shape=RoundedCornerShape(8.dp),modifier=Modifier.background(color=Color.Transparent),     colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+    androidx.compose.material3.Card(
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.background(color = Color.Transparent),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
         Box(
             Modifier
                 .background(color = Color.Black.copy(0.3f))
-                .padding(8.dp)){
-            Column(horizontalAlignment = Alignment.CenterHorizontally){
+                .padding(8.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 GlideImage(
                     model = picture_url,
                     contentDescription = null,
@@ -544,17 +575,16 @@ fun ParticipantBoxItem(picture_url: String, username: String) {
                     contentScale = ContentScale.Crop,
                 )
 
-                Text(text = username,color=Color.White)
+                Text(text = username, color = Color.White)
             }
         }
     }
 
 
-
 }
 
 @Composable
-fun MapBox(location:String){
+fun MapBox(location: String) {
     val cameraPositionState: CameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 11f)
     }
@@ -572,8 +602,6 @@ fun MapBox(location:String){
     val longitude = latLngVA[1].toDouble()
     val latLng = LatLng(latitude, longitude)
     cameraPositionState.position = CameraPosition.fromLatLngZoom(latLng, 13f)
-
-
 
 
     var isMapLoaded by remember { mutableStateOf(false) }
@@ -624,15 +652,21 @@ fun MapBox(location:String){
     }
 
 }
+
 @Composable
 fun TimeBox(time: String) {
     androidx.compose.material3.Card(shape = RoundedCornerShape(100.dp)) {
         Box(
             Modifier
                 .background(color = SocialTheme.colors.uiBackground)
-                .fillMaxWidth()) {
+                .fillMaxWidth()
+        ) {
             Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                androidx.compose.material3.Icon(painter = painterResource(id = R.drawable.ic_timer_24), contentDescription =null, tint = SocialTheme.colors.iconPrimary )
+                androidx.compose.material3.Icon(
+                    painter = painterResource(id = R.drawable.ic_timer_24),
+                    contentDescription = null,
+                    tint = SocialTheme.colors.iconPrimary
+                )
                 Spacer(modifier = Modifier.width(24.dp))
                 Text(
                     text = time,
@@ -654,9 +688,14 @@ fun DateBox(date: String) {
         Box(
             Modifier
                 .background(color = SocialTheme.colors.uiBackground)
-                .fillMaxWidth()) {
+                .fillMaxWidth()
+        ) {
             Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                androidx.compose.material3.Icon(painter = painterResource(id = R.drawable.ic_date_24), contentDescription =null, tint = SocialTheme.colors.iconPrimary )
+                androidx.compose.material3.Icon(
+                    painter = painterResource(id = R.drawable.ic_date_24),
+                    contentDescription = null,
+                    tint = SocialTheme.colors.iconPrimary
+                )
                 Spacer(modifier = Modifier.width(24.dp))
                 Text(
                     text = date,
@@ -667,18 +706,25 @@ fun DateBox(date: String) {
                     )
                 )
             }
-        }}
+        }
+    }
 
 }
+
 @Composable
 fun LocationBox(customLocation: String) {
     androidx.compose.material3.Card(shape = RoundedCornerShape(100.dp)) {
         Box(
             Modifier
                 .background(color = SocialTheme.colors.uiBackground)
-                .fillMaxWidth()) {
+                .fillMaxWidth()
+        ) {
             Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                androidx.compose.material3.Icon(painter = painterResource(id = R.drawable.ic_location_24), contentDescription =null, tint = SocialTheme.colors.iconPrimary )
+                androidx.compose.material3.Icon(
+                    painter = painterResource(id = R.drawable.ic_location_24),
+                    contentDescription = null,
+                    tint = SocialTheme.colors.iconPrimary
+                )
                 Spacer(modifier = Modifier.width(24.dp))
                 Text(
                     text = customLocation,
@@ -689,7 +735,8 @@ fun LocationBox(customLocation: String) {
                     )
                 )
             }
-        }}
+        }
+    }
 
 }
 
@@ -725,16 +772,15 @@ fun HomeScreenContent(
     isDark: Boolean,
     onEvent: (HomeEvent) -> Unit,
     homeViewModel: HomeViewModel?,
-    onLongClick: (Activity) -> Unit
-    ,closeBottomSheet: () -> Unit={}
+    onLongClick: (Activity) -> Unit, closeBottomSheet: () -> Unit = {}
 ) {
     /*val refreshScope = rememberCoroutineScope()
     var refreshing by remember { mutableStateOf(false) }*/
 
-   /* fun refresh() = refreshScope.launch {
-        refreshing = true
-        activityViewModel?.getActivitiesForUser(viewModel?.currentUser!!.uid)
-    }*/
+    /* fun refresh() = refreshScope.launch {
+         refreshing = true
+         activityViewModel?.getActivitiesForUser(viewModel?.currentUser!!.uid)
+     }*/
     val flowImageAddition = activityViewModel?.addImageToActivityState?.collectAsState()
     val flowImageDelete = activityViewModel?.isImageRemoveFromActivityState?.collectAsState()
 
@@ -791,7 +837,7 @@ fun HomeScreenContent(
             else -> {}
         }
     }
-   /* val state = rememberPullRefreshState(refreshing, ::refresh)*/
+    /* val state = rememberPullRefreshState(refreshing, ::refresh)*/
     if (liveActivityDialog != null) {
         Log.d("HOMESCREEN", liveActivityDialog!!)
         Log.d("HOMESCREEN", liveActivityParticipantsValue.toString()!!)
@@ -833,14 +879,33 @@ fun HomeScreenContent(
 
             .background(color = SocialTheme.colors.uiBackground) /*   .pullRefresh(state)*/
     ) {
-        Column(){
-            FriendsPublicPicker(selectedOption, onOptionSelected = {value->selectedOption=value})
-            AnimatedVisibility(visible = if(selectedOption==0) true else false, enter = slideInHorizontally(), exit = slideOutHorizontally()) {
-                FriendsActivities(activityViewModel,activeUsersViewModel,liveId={ liveActivityDialog =it}, liveSize = {liveActivityParticipantsValue =it},activityEvent=activityEvent)
+        Column() {
+            FriendsPublicPicker(
+                selectedOption,
+                onOptionSelected = { value -> selectedOption = value })
+            AnimatedVisibility(
+                visible = if (selectedOption == 0) true else false,
+                enter = fadeIn(tween(500)),
+                exit = fadeOut(tween(500))
+            ) {
+
+                    FriendsActivities(
+                        activityViewModel,
+                        activeUsersViewModel,
+                        liveId = { liveActivityDialog = it },
+                        liveSize = { liveActivityParticipantsValue = it },
+                        activityEvent = activityEvent
+                    )
+
 
             }
-            AnimatedVisibility(visible = if(selectedOption==0) false else true, enter = slideInHorizontally(), exit = slideOutHorizontally()) {
-                PublicActivities(activityViewModel,activityEvent=activityEvent)
+            AnimatedVisibility(
+                visible = if (selectedOption == 1) true else false,
+                enter = fadeIn(tween(500)),
+                exit = fadeOut(tween(500))
+            ) {
+
+                PublicActivities(activityViewModel, activityEvent = activityEvent)
 
             }
             /* PullRefreshIndicator(
@@ -865,13 +930,16 @@ fun HomeScreenContent(
                 picked_screen = "Activities"
             )
         }*/
-        }
+    }
 
 
 }
 
 @Composable
-fun PublicActivities(activityViewModel: ActivityViewModel?, activityEvent: (ActivityEvent) -> Unit) {
+fun PublicActivities(
+    activityViewModel: ActivityViewModel?,
+    activityEvent: (ActivityEvent) -> Unit
+) {
     var activitiesExist = remember { mutableStateOf(false) }
     LazyColumn {
 
@@ -917,54 +985,54 @@ fun PublicActivities(activityViewModel: ActivityViewModel?, activityEvent: (Acti
                 else -> {}
             }
         }
-     /* activityViewModel?.moreActivitiesListState?.value.let {
-            when (it) {
-                is Response.Success -> {
-                    /*refreshing = false*/
-                    //display activities
-                    Log.d("homescreen", it.data.toString())
-                    items(it.data) { item ->
-                        /*  if (updateActivity) {
-                              if (item.id == homeViewModel.camera_activity_id.value) {
-                                  item.pictures[UserData.user!!.id] = photo_url
-                              }
-                              updateActivity = false
+        /* activityViewModel?.moreActivitiesListState?.value.let {
+               when (it) {
+                   is Response.Success -> {
+                       /*refreshing = false*/
+                       //display activities
+                       Log.d("homescreen", it.data.toString())
+                       items(it.data) { item ->
+                           /*  if (updateActivity) {
+                                 if (item.id == homeViewModel.camera_activity_id.value) {
+                                     item.pictures[UserData.user!!.id] = photo_url
+                                 }
+                                 updateActivity = false
 
-                          }
-                          if (updateDeleteActivity) {
-                              if (item.id == homeViewModel.camera_activity_id.value) {
-                                  item.pictures.remove(UserData.user!!.id)
-                              }
-                              updateDeleteActivity = false
-                          }*/
-                        ActivityItem(
-                            activity = item,
-                            onEvent = activityEvent,
-                            username = item.creator_username,
-                            profilePictureUrl = item.creator_profile_picture,
-                            timeLeft = item.time_left,
-                            title = item.title,
-                            description = item.description,
-                            date = item.date,
-                            liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
-                            //todo add the time end
-                            timePeriod = item.start_time + " - " + item.end_time,
-                            custom_location = item.custom_location,
-                            location = item.location,
-                        )
+                             }
+                             if (updateDeleteActivity) {
+                                 if (item.id == homeViewModel.camera_activity_id.value) {
+                                     item.pictures.remove(UserData.user!!.id)
+                                 }
+                                 updateDeleteActivity = false
+                             }*/
+                           ActivityItem(
+                               activity = item,
+                               onEvent = activityEvent,
+                               username = item.creator_username,
+                               profilePictureUrl = item.creator_profile_picture,
+                               timeLeft = item.time_left,
+                               title = item.title,
+                               description = item.description,
+                               date = item.date,
+                               liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
+                               //todo add the time end
+                               timePeriod = item.start_time + " - " + item.end_time,
+                               custom_location = item.custom_location,
+                               location = item.location,
+                           )
 
-                    }
-                }
-                else -> {}
-            }
-        }
-        item {
-            LaunchedEffect(true) {
-                if (activitiesExist.value) {
-                    activityViewModel?.getMoreActivitiesForUser(UserData.user!!.id)
-                }
-            }
-        }*/
+                       }
+                   }
+                   else -> {}
+               }
+           }
+           item {
+               LaunchedEffect(true) {
+                   if (activitiesExist.value) {
+                       activityViewModel?.getMoreActivitiesForUser(UserData.user!!.id)
+                   }
+               }
+           }*/
         //space for bottom bar
         item {
             Spacer(modifier = Modifier.height(56.dp))
@@ -974,7 +1042,13 @@ fun PublicActivities(activityViewModel: ActivityViewModel?, activityEvent: (Acti
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun FriendsActivities(activityViewModel: ActivityViewModel?, activeUsersViewModel: ActiveUsersViewModel?,liveId:(String)->Unit,liveSize:(Int)->Unit,  activityEvent: (ActivityEvent) -> Unit, ) {
+fun FriendsActivities(
+    activityViewModel: ActivityViewModel?,
+    activeUsersViewModel: ActiveUsersViewModel?,
+    liveId: (String) -> Unit,
+    liveSize: (Int) -> Unit,
+    activityEvent: (ActivityEvent) -> Unit,
+) {
     var activitiesExist = remember { mutableStateOf(false) }
     LazyColumn {
         //display of active users
@@ -992,8 +1066,8 @@ fun FriendsActivities(activityViewModel: ActivityViewModel?, activeUsersViewMode
                                                 UserData.user!!.id
                                             )
                                         ) {
-                                            liveId( liveActivity.creator_id)
-                                            liveSize(  liveActivity.participants_profile_pictures.size)
+                                            liveId(liveActivity.creator_id)
+                                            liveSize(liveActivity.participants_profile_pictures.size)
 
 
                                         }
@@ -1010,45 +1084,45 @@ fun FriendsActivities(activityViewModel: ActivityViewModel?, activeUsersViewMode
             }
         }
 
-     /*   item {
-            AnimatedVisibility(
-                visible = uploading,
-                enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
-                exit = scaleOut()
-            ) {
+        /*   item {
+               AnimatedVisibility(
+                   visible = uploading,
+                   enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
+                   exit = scaleOut()
+               ) {
 
-                UploadBar(
-                    icon_anim = true,
-                    text = "Uploading image",
-                    icon = R.drawable.ic_add_photo
-                )
-            }
-        }
-        item {
-            AnimatedVisibility(
-                visible = uploadingError,
-                enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
-                exit = scaleOut()
-            ) {
+                   UploadBar(
+                       icon_anim = true,
+                       text = "Uploading image",
+                       icon = R.drawable.ic_add_photo
+                   )
+               }
+           }
+           item {
+               AnimatedVisibility(
+                   visible = uploadingError,
+                   enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
+                   exit = scaleOut()
+               ) {
 
 
-                ErrorBar(
-                    icon_anim = true,
-                    text = "Error while uploading the image",
-                    icon = R.drawable.ic_error
-                )
-            }
-        }
-        item {
-            AnimatedVisibility(
-                visible = deletingImage,
-                enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
-                exit = scaleOut()
-            ) {
+                   ErrorBar(
+                       icon_anim = true,
+                       text = "Error while uploading the image",
+                       icon = R.drawable.ic_error
+                   )
+               }
+           }
+           item {
+               AnimatedVisibility(
+                   visible = deletingImage,
+                   enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
+                   exit = scaleOut()
+               ) {
 
-                ErrorBar(icon_anim = true, text = "Removing image", icon = R.drawable.ic_remove)
-            }
-        }*/
+                   ErrorBar(icon_anim = true, text = "Removing image", icon = R.drawable.ic_remove)
+               }
+           }*/
 
         activityViewModel?.activitiesListState?.value.let {
             when (it) {
@@ -1153,26 +1227,43 @@ fun FriendsPublicPicker(selectedOption: Int, onOptionSelected: (Int) -> Unit) {
 
     Box(Modifier.fillMaxWidth()) {
 
-        Row (Modifier.align(Alignment.Center)){
-            Column(Modifier.clickable { onOptionSelected(0)}) {
-                Text(text = "Friends")
-                AnimatedVisibility(visible =if (selectedOption==0) true else false,enter= slideInHorizontally(tween(500), initialOffsetX = {+it/2}),exit= slideOutHorizontally(tween(500), targetOffsetX = {+it/2}) ) {
-                    androidx.compose.material3.Card(shape= RoundedCornerShape(100.dp),modifier=Modifier.width(48.dp).height(4.dp)){
-                        Box(Modifier.background(color=Color.Black))
+        Row(Modifier.align(Alignment.Center).padding(vertical = 8.dp)) {
+            Column(Modifier.clickable { onOptionSelected(0) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = "Friends",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 12.sp),color=SocialTheme.colors.textPrimary)
+                AnimatedVisibility(
+                    visible = if (selectedOption == 0) true else false,
+                    enter = fadeIn(tween(300)),
+                    exit = fadeOut(tween(300))
+                ) {
+                    androidx.compose.material3.Card(
+                        shape = RoundedCornerShape(100.dp),
+                        modifier = Modifier
+                            .width(48.dp)
+                            .height(4.dp)
+                    ) {
+                        Box(Modifier.background(color = SocialTheme.colors.iconPrimary))
                     }
                 }
 
             }
             Spacer(Modifier.width(24.dp))
-            Column(Modifier.clickable {  onOptionSelected(1) }) {
-                Text(text = "Public")
-                AnimatedVisibility(visible =if (selectedOption==1) true else false,enter= slideInHorizontally(tween(500)),exit= slideOutHorizontally(tween(500)) ) {
-                    androidx.compose.material3.Card(shape= RoundedCornerShape(100.dp),modifier=Modifier.width(48.dp).height(4.dp)){                        Box(Modifier.background(color=Color.Black))
+            Column(Modifier.clickable { onOptionSelected(1) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = "Public",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 12.sp),color=SocialTheme.colors.textPrimary)
+                AnimatedVisibility(
+                    visible = if (selectedOption == 1) true else false,
+                    enter = fadeIn(tween(300)),
+                    exit = fadeOut(tween(300))
+                ) {
+                    androidx.compose.material3.Card(
+                        shape = RoundedCornerShape(100.dp),
+                        modifier = Modifier.width(48.dp)
+                            .height(4.dp)
+                    ) {
+                        Box(Modifier.background(color =SocialTheme.colors.iconPrimary))
                     }
                 }
             }
         }
-
 
 
     }

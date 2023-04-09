@@ -51,6 +51,7 @@ class MapFragment : Fragment() {
                 //The last location in the list is the newest
                 val location = locationList.last()
                 viewModel.setLocation(LatLng(location.latitude, location.longitude))
+                activityViewModel.setLocation(LatLng(location.latitude, location.longitude))
 
             }
         }
@@ -144,7 +145,8 @@ class MapFragment : Fragment() {
                     val bundle = Bundle()
                     bundle.putSerializable("user_id", viewModel.clicked_profile.value)
                     navigate(navigateTo, Screen.Map, bundle)
-                }else{
+                }
+                else{
                     navigate(navigateTo, Screen.Map)
                 }
             }
@@ -217,7 +219,6 @@ class MapFragment : Fragment() {
             val values = latlngInitial?.split("/")
             latLng = LatLng(values?.get(0)?.toDouble()!!, values?.get(1)?.toDouble()!!)
         }
-        Log.d("Mapfragment", "got data" + latlngInitial)
         return ComposeView(requireContext()).apply {
             setContent {
                 val systemUiController = rememberSystemUiController()
@@ -230,6 +231,15 @@ class MapFragment : Fragment() {
                             is MapEvent.GoToSettings -> viewModel.handleGoToSettings()
                             is MapEvent.GoToHome -> viewModel.handleGoToHome()
                             is MapEvent.GoToChats -> viewModel.handleGoToChats()
+
+                            is MapEvent.GoToCreated -> viewModel.handleGoToCreated()
+                            is MapEvent.GoToBookmarked -> viewModel.handleGoToBookmarked()
+                            is MapEvent.GoToCalendar-> viewModel.handleGoToCalendar()
+                            is MapEvent.GoToTrending -> viewModel.handleGoToTrending()
+                            is MapEvent.GoToHelp -> viewModel.handleGoToHelp()
+                            is MapEvent.GoToInfo -> viewModel.handleGoToInfo()
+
+
                             is MapEvent.BackPressed -> {}
                             is MapEvent.GoToCreateActivity -> {
                                 viewModel.handleGoToCreate(event.latLng)

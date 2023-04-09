@@ -44,6 +44,7 @@ import com.example.socialk.Destinations
 import com.example.socialk.R
 import com.example.socialk.components.*
 import com.example.socialk.create.CreateActivityButton
+import com.example.socialk.create.CreateEvent
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.ChatViewModel
@@ -71,6 +72,12 @@ sealed class MapEvent {
     object GoToSettings : MapEvent()
     object AskForPermission : MapEvent()
     object BackPressed : MapEvent()
+    object GoToTrending : MapEvent()
+    object GoToInfo : MapEvent()
+    object GoToHelp : MapEvent()
+    object GoToCalendar : MapEvent()
+    object GoToCreated : MapEvent()
+    object GoToBookmarked : MapEvent()
     class GoToCreateActivity(val latLng: LatLng) : MapEvent()
 
     class DestroyLiveActivity(val id: String) : MapEvent()
@@ -123,7 +130,7 @@ fun MapScreen(
     chatViewModel: ChatViewModel,
     authViewModel: AuthViewModel?
 ) {
-    if(viewModel.location.value!=null){
+    if(viewModel.location.value!=null ){
         Log.d("getClosestActivities","call")
         activityViewModel.getClosestActivities(viewModel.location.value!!.latitude,viewModel.location.value!!.longitude)
     }
@@ -229,40 +236,48 @@ fun MapScreen(
                         onClick = {})
 
                     com.example.socialk.chat.ChatComponents.Divider()
+                    //trending
+                    DrawerField(
+                        title = "Trending",
+                        icon = R.drawable.ic_trending,
+                        onClick = {onEvent(MapEvent.GoToTrending)})
                     // calendar
-                    DrawerField(title = "Calendar", icon = R.drawable.ic_calendar, onClick = {}) {
+                    DrawerField(title = "Calendar", icon = R.drawable.ic_calendar, onClick = {onEvent(MapEvent.GoToCalendar)}) {
                         activityViewModel.activitiesListState.value.let { it ->
                             when (it) {
                                 is Response.Success -> {
-                                    val first_activity = it.data.get(0)
-                                    Row() {
-                                        Spacer(Modifier.width(64.dp))
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.ic_down_right),
-                                            tint = SocialTheme.colors.iconPrimary,
-                                            contentDescription = null
-                                        )
-                                        Column() {
-                                            Text(
-                                                text = first_activity.time_left,
-                                                style = TextStyle(
-                                                    fontFamily = Inter,
-                                                    fontWeight = FontWeight.Light,
-                                                    fontSize = 10.sp,color=SocialTheme.colors.textPrimary
-                                                )
+                                    if(it.data.size>0){
+                                        val first_activity = it.data.get(0)
+                                        Row() {
+                                            Spacer(Modifier.width(64.dp))
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.ic_down_right),
+                                                tint = SocialTheme.colors.iconPrimary,
+                                                contentDescription = null
                                             )
-                                            val text = if (first_activity.title.length>25){first_activity.title.take(25) +"..."}else{first_activity.title}
-                                            Text(
-                                                text = text
-                                                ,      style = TextStyle(
-                                                    fontFamily = Inter,
-                                                    fontWeight = FontWeight.Normal,
-                                                    fontSize = 12.sp,color=SocialTheme.colors.textPrimary
-                                                ) )
+                                            Column() {
+                                                Text(
+                                                    text = first_activity.time_left,
+                                                    style = TextStyle(
+                                                        fontFamily = Inter,
+                                                        fontWeight = FontWeight.Light,
+                                                        fontSize = 10.sp,color=SocialTheme.colors.textPrimary
+                                                    )
+                                                )
+                                                val text = if (first_activity.title.length>25){first_activity.title.take(25) +"..."}else{first_activity.title}
+                                                Text(
+                                                    text = text
+                                                    ,      style = TextStyle(
+                                                        fontFamily = Inter,
+                                                        fontWeight = FontWeight.Normal,
+                                                        fontSize = 12.sp,color=SocialTheme.colors.textPrimary
+                                                    ) )
+                                            }
+
+
                                         }
-
-
                                     }
+
                                 }
                                 is Response.Failure -> {}
                                 is Response.Loading -> {}
@@ -274,19 +289,19 @@ fun MapScreen(
                     DrawerField(
                         title = "Created",
                         icon = R.drawable.ic_event_available,
-                        onClick = {})
+                        onClick = {onEvent(MapEvent.GoToCreated)})
 
                     //bookmarked activities
-                    DrawerField(title = "Bookmarks", icon = R.drawable.ic_bookmark, onClick = {})
+                    DrawerField(title = "Bookmarks", icon = R.drawable.ic_bookmark, onClick = {onEvent(MapEvent.GoToBookmarked)})
 
                     //setttings
-                    DrawerField(title = "Settings", icon = R.drawable.ic_settings, onClick = {})
+                    DrawerField(title = "Settings", icon = R.drawable.ic_settings, onClick = {onEvent(MapEvent.GoToSettings)})
 
                     //help
-                    DrawerField(title = "Help", icon = R.drawable.ic_help, onClick = {})
+                    DrawerField(title = "Help", icon = R.drawable.ic_help, onClick = {onEvent(MapEvent.GoToHelp)})
 
                     //info
-                    DrawerField(title = "Info", icon = R.drawable.ic_info, onClick = {})
+                    DrawerField(title = "Info", icon = R.drawable.ic_info, onClick = {onEvent(MapEvent.GoToInfo)})
 
                 }
 
@@ -778,7 +793,24 @@ fun MapScreen(
         }
     }
 
-
+    activityViewModel?.isActivityAddedState?.value.let {
+        when (it) {
+            is Response.Loading -> Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+            is Response.Success -> {
+                Toast.makeText(LocalContext.current,"Activity created",Toast.LENGTH_SHORT).show()
+                activityViewModel.activityAdded()
+            }
+            is Response.Failure -> Box(modifier = Modifier.fillMaxSize()) {
+                androidx.compose.material3.Text(text = "FAILURE", fontSize = 50.sp)
+            }
+            else -> {}
+        }
+    }
 }
 
 fun pointToCurrentLocation(cameraPositionState: CameraPositionState, currentLocation: LatLng) {

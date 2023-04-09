@@ -32,7 +32,8 @@ data class Activity(
     val disablePictures: Boolean,
     val disableNotification: Boolean,
     val privateChat: Boolean,
-    val public:Boolean
+    val public:Boolean,
+    var participants_ids: ArrayList<String>
 
     ) : java.io.Serializable {
     constructor() : this(
@@ -66,6 +67,7 @@ data class Activity(
         disablePictures = false,
         disableNotification = false,
         privateChat = false,
-        public=false
+        public=false,
+         participants_ids =ArrayList(),
     )
 }

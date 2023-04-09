@@ -116,4 +116,35 @@
         android:name="com.example.socialk.UserProfile.UserProfileFragment"
         android:label="UserProfile">
     </fragment>
+
+    <fragment
+        android:id="@+id/created_activities_fragment"
+        android:name="com.example.socialk.DrawerFragments.CreatedActivitiesFragment"
+        android:label="created">
+    </fragment>
+    <fragment
+        android:id="@+id/trending_fragment"
+        android:name="com.example.socialk.DrawerFragments.TrendingFragment"
+        android:label="trending">
+    </fragment>
+    <fragment
+        android:id="@+id/bookmarked_fragment"
+        android:name="com.example.socialk.DrawerFragments.BookmarkedFragment"
+        android:label="bookmarked">
+    </fragment>
+    <fragment
+        android:id="@+id/help_fragment"
+        android:name="com.example.socialk.DrawerFragments.HelpFragment"
+        android:label="help">
+    </fragment>
+    <fragment
+        android:id="@+id/info_fragment"
+        android:name="com.example.socialk.DrawerFragments.InfoFragment"
+        android:label="info">
+    </fragment>
+    <fragment
+        android:id="@+id/calendar_fragment"
+        android:name="com.example.socialk.DrawerFragments.CalendarFragment"
+        android:label="calendar">
+    </fragment>
 </navigation>

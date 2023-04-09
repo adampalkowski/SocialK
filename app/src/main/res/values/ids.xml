@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <item name="welcome_fragment" type="id" />
+    <item name="created_activities_fragment" type="id" />
+    <item name="trending_fragment" type="id" />
+    <item name="bookmarked_fragment" type="id" />
+    <item name="help_fragment" type="id" />
+    <item name="info_fragment" type="id" />
+    <item name="calendar_fragment" type="id" />
     <item name="sign_in_fragment" type="id" />
     <item name="sign_up_fragment" type="id" />
     <item name="survey_fragment" type="id" />

@@ -1,7 +1,9 @@
 package com.example.socialk.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -32,8 +34,9 @@ fun DrawerField(
     content:@Composable () -> Unit ={}
 ) {
 
+
     Box(modifier = modifier
-        .fillMaxWidth()
+        .fillMaxWidth().clickable(onClick = onClick)
         .padding(vertical = 16.dp)) {
         Column() {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Start) {

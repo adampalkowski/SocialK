@@ -528,10 +528,10 @@ fun CreateScreen(
                             "Activity sharing",
                             "Allow invited users to invite others to the activity.",
                             onSwitch = { enableActivitySharing = it })
-                        ActivitySettingsBox(
+                      /*  ActivitySettingsBox(
                             "Pictures",
                             "Disable attach pictures to the activity.",
-                            onSwitch = { disablePictures = it })
+                            onSwitch = { disablePictures = it })*/
                         ActivitySettingsBox(
                             "Notification",
                             "Don't notify invited users.",
@@ -662,24 +662,7 @@ fun CreateScreen(
               )
           }*/
     }
-    activityViewModel?.isActivityAddedState?.value.let {
-        when (it) {
-            is Response.Loading -> Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Center
-            ) {
-                CircularProgressIndicator()
-            }
-            is Response.Success -> {
-                onEvent(CreateEvent.GoToHome)
-                onEvent(CreateEvent.ClearState)
-            }
-            is Response.Failure -> Box(modifier = Modifier.fillMaxSize()) {
-                Text(text = "FAILURE", fontSize = 50.sp)
-            }
-            else -> {}
-        }
-    }
+
     if (openDialog.value) {
         CustomSocialDialog(
             onDismiss = { openDialog.value = false },

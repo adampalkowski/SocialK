@@ -54,6 +54,7 @@ sealed class SettingsEvent {
     object LogOut : SettingsEvent()
     object GoToSettings : SettingsEvent()
     object GoToHome : SettingsEvent()
+    object GoBack : SettingsEvent()
 
 }
 
@@ -70,7 +71,7 @@ fun SettingsScreen(viewModel: AuthViewModel?, onEvent: (SettingsEvent) -> Unit) 
     ) {
 
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            ScreenHeading(title = "Settings",onClick={onEvent(SettingsEvent.GoToProfile)})
+            ScreenHeading(title = "Settings",onClick={onEvent(SettingsEvent.GoBack)})
             Spacer(modifier = Modifier.height(12.dp))
             settingsDivider(text = "Account")
             settingsItem(

@@ -40,6 +40,69 @@ class ActivityRepositoryImpl @Inject constructor(
     private var lastVisibleData: DocumentSnapshot? = null
     private var lastVisibleUserData: DocumentSnapshot? = null
     private var lastVisibleDataForUserProfile: DocumentSnapshot? = null
+
+    override suspend fun getTrendingActivities(lat: Double,lng:Double): Flow<Response<List<Activity>>> =callbackFlow {
+        trySend(Response.Loading)
+        Log.d("trendingscreen","call")
+
+        val center = GeoLocation(lat,lng)
+        val radiusInM = 50.0 * 1000.0
+
+        val bounds = GeoFireUtils.getGeoHashQueryBounds(center, radiusInM)
+        val tasks: MutableList<Task<QuerySnapshot>> = ArrayList()
+        for (b in bounds) {
+            val q =  activitiesRef.whereEqualTo("public",true)
+                .orderBy("geoHash")
+                .startAt(b.startHash)
+                .endAt(b.endHash)
+
+                .limit(5)
+            tasks.add(q.get())
+        }
+        // Collect all the query results together into a single list
+        Tasks.whenAllComplete(tasks)
+            .addOnCompleteListener {
+                val matchingDocs: MutableList<DocumentSnapshot> = ArrayList()
+                for (task in tasks) {
+                    val snap = task.result
+                    for (doc in snap!!.documents) {
+                        val lat = doc.getDouble("lat")!!
+                        val lng = doc.getDouble("lng")!!
+
+                        // We have to filter out a few false positives due to GeoHash
+                        // accuracy, but most will match
+                        val docLocation = GeoLocation(lat, lng)
+                        val distanceInM = GeoFireUtils.getDistanceBetween(docLocation, center)
+                        if (distanceInM <= radiusInM) {
+                            matchingDocs.add(doc)
+                        }
+                    }
+                }
+                Log.d("trendingscreen",matchingDocs.toString())
+
+                if (matchingDocs != null && matchingDocs.isNotEmpty()) {
+                    val newActivities = ArrayList<Activity>()
+                    for (document in matchingDocs) {
+                        val activity = document.toObject<Activity>()
+                        Log.d("trendingscreen",activity.toString())
+
+                        if (activity!=null){
+                            newActivities.add(activity)
+                        }
+                    }
+                    //lastVisibleData= matchingDocs[matchingDocs.size - 1]
+                    trySend(Response.Success(newActivities))
+
+                }
+            }.addOnFailureListener(){
+                trySend(Response.Failure(e= SocialException(message = "Nearby activity download failure",e=Exception())))
+
+            }
+
+        awaitClose {
+        }
+    }
+
     override suspend fun getClosestActivities(lat: Double,lng:Double): Flow<Response<List<Activity>>> =callbackFlow {
         val center = GeoLocation(lat,lng)
         val radiusInM = 5.0 * 1000.0
@@ -86,7 +149,7 @@ class ActivityRepositoryImpl @Inject constructor(
                             newActivities.add(activity)
                         }
                     }
-                    lastVisibleData= matchingDocs[matchingDocs.size - 1]
+                    //lastVisibleData= matchingDocs[matchingDocs.size - 1]
                     trySend(Response.Success(newActivities))
 
                 }
@@ -125,7 +188,8 @@ class ActivityRepositoryImpl @Inject constructor(
     override suspend fun likeActivity(id: String, user: User): Flow<Response<Void?>> =flow{
         try{
             emit(Response.Loading)
-            val update = activitiesRef.document(id).update("participants_profile_pictures"+"."+user.id,user.pictureUrl,"participants_usernames"+"."+user.id,user.username).await()
+            val update = activitiesRef.document(id).update("participants_profile_pictures"+"."+user.id,user.pictureUrl,"participants_usernames"+"."+user.id,user.username,
+            "participants_ids",FieldValue.arrayUnion(id)).await()
             emit(Response.Success(update))
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("likeActivity exception",Exception())))
@@ -144,7 +208,8 @@ class ActivityRepositoryImpl @Inject constructor(
     override suspend fun unlikeActivity(id: String, user: User): Flow<Response<Void?>> =flow{
         try{
             emit(Response.Loading)
-            val update = activitiesRef.document(id).update("participants_profile_pictures"+"."+user.id,FieldValue.delete(),"participants_usernames"+"."+user.id,FieldValue.delete()).await()
+            val update = activitiesRef.document(id).update("participants_profile_pictures"+"."+user.id,FieldValue.delete(),"participants_usernames"+"."+user.id,FieldValue.delete(),
+            "participants_ids",FieldValue.arrayRemove(id)).await()
             emit(Response.Success(update))
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("unlikeActivity exception",Exception())))
@@ -261,6 +326,39 @@ class ActivityRepositoryImpl @Inject constructor(
                 } else {
                     // There are no more messages to load
                     trySend(Response.Failure(e=SocialException(message="failed to get more activities",e=Exception())))
+                }
+
+            }
+        awaitClose {
+
+        }
+
+    }
+    override suspend fun getJoinedActivities(id: String): Flow<Response<List<Activity>>> =callbackFlow {
+        Log.d("GETJOINEDACTIVITIES","CALL")
+        val snapshotListener = activitiesRef.whereArrayContains("participants_ids",id)
+            .orderBy("creation_time", Query.Direction.DESCENDING).limit(5).get().addOnCompleteListener { task->
+                var activitiesList:List<Activity> = mutableListOf()
+                if (task.isSuccessful) {
+                    val documents = task.result?.documents
+                    if (documents != null && documents.isNotEmpty()) {
+                        val newActivities = ArrayList<Activity>()
+                        for (document in documents) {
+                            val activity = document.toObject<Activity>()
+                            Log.d("GETJOINEDACTIVITIES",activity.toString())
+
+
+                            if (activity!=null){
+                                newActivities.add(activity)
+                            }
+                        }
+                        lastVisibleUserData= documents[documents.size - 1]
+                        trySend(Response.Success(newActivities))
+
+                    }
+                } else {
+                    // There are no more messages to load
+                    trySend(Response.Failure(e=SocialException(message="failed to get activities",e=Exception())))
                 }
 
             }

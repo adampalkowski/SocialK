@@ -11,7 +11,7 @@ import com.example.socialk.model.User
 import java.security.InvalidParameterException
 enum class Screen { Welcome, SignUp, SignIn,
     Home,Profile,Settings,Map,ChatCollection,Chat,UserProfile,
-    Memories,Create,Live,Event,EditProfile,Search,PickUsername,FriendsPicker,CreateGroup}
+    Memories,Create,Live,Event,EditProfile,Search,PickUsername,FriendsPicker,CreateGroup,CreatedActivities,Bookmarked,Trending,Help,Info,Calendar}
 
 fun Fragment.navigate(to: Screen, from: Screen,bundle: Bundle= Bundle.EMPTY) {
 
@@ -20,6 +20,24 @@ fun Fragment.navigate(to: Screen, from: Screen,bundle: Bundle= Bundle.EMPTY) {
     when (to) {
         Screen.Welcome -> {
             findNavController().navigate(R.id.welcome_fragment)
+        }
+        Screen.CreatedActivities -> {
+            findNavController().navigate(R.id.created_activities_fragment)
+        }
+        Screen.Trending -> {
+            findNavController().navigate(R.id.trending_fragment)
+        }
+        Screen.Bookmarked -> {
+            findNavController().navigate(R.id.bookmarked_fragment)
+        }
+        Screen.Help -> {
+            findNavController().navigate(R.id.help_fragment)
+        }
+        Screen.Info -> {
+            findNavController().navigate(R.id.info_fragment)
+        }
+        Screen.Calendar -> {
+            findNavController().navigate(R.id.calendar_fragment)
         }
         Screen.CreateGroup -> {
             findNavController().navigate(R.id.create_group_fragment)

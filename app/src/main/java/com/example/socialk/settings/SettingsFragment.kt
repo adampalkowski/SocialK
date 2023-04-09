@@ -37,6 +37,7 @@ class SettingsFragment :Fragment(){
                                 is SettingsEvent.GoToProfile -> viewModel.handleGoToProfile()
                                 is SettingsEvent.LogOut -> viewModel.handleLogOut()
                                 is SettingsEvent.GoToSettings -> viewModel.handleGoToSettings()
+                                is SettingsEvent.GoBack-> activity?.onBackPressedDispatcher?.onBackPressed()
                                 is SettingsEvent.GoToHome -> viewModel.handleGoToHome()
                             }
                         }

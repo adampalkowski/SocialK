@@ -10,6 +10,7 @@ import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
 import com.example.socialk.model.SocialException
 import com.example.socialk.model.User
+import com.google.android.gms.maps.model.LatLng
 import com.marosseleng.compose.material3.datetimepickers.time.domain.noSeconds
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,12 +32,17 @@ class ActivityViewModel @Inject constructor(
     private val repo: ActivityRepository
 ) : ViewModel() {
     var openDialogState = mutableStateOf(false)
+    private val _location = MutableStateFlow<LatLng?>(null)
+    val location: StateFlow<LatLng?> = _location
 
     private val _isImageAddedToStorageState = MutableStateFlow<Response<String>?>(null)
     val isImageAddedToStorageFlow: StateFlow<Response<String>?> = _isImageAddedToStorageState
 
     private val _isImageDeletedFromStorage = MutableStateFlow<Response<String>?>(null)
     val isImageDeletedFromStorage: StateFlow<Response<String>?> = _isImageDeletedFromStorage
+
+    private val _trendingActivitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
+    val trendingActivitiesListState: State<Response<List<Activity>>> = _trendingActivitiesListState
 
     private val _closestActivitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val closestActivitiesListState: State<Response<List<Activity>>> = _closestActivitiesListState
@@ -49,6 +55,8 @@ class ActivityViewModel @Inject constructor(
 
     private val _userActivitiesState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val userActivitiesState: State<Response<List<Activity>>> = _userActivitiesState
+    private val _joinedActivitiesState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
+    val joinedActivitiesState: State<Response<List<Activity>>> = _joinedActivitiesState
 
     private val _userMoreActivitiesState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val userMoreActivitiesState: State<Response<List<Activity>>> = _userMoreActivitiesState
@@ -80,6 +88,9 @@ class ActivityViewModel @Inject constructor(
     init {
         // getActivities()
     }
+    fun setLocation(location: LatLng){
+        _location.value=location
+    }
     fun getClosestActivities(lat:Double,lng:Double){
         viewModelScope.launch {
             val list_without_removed_activites: ArrayList<Activity> = ArrayList()
@@ -109,6 +120,42 @@ class ActivityViewModel @Inject constructor(
                     }
                     is Response.Loading -> {
                         _closestActivitiesListState.value = response
+                    }
+                }
+
+
+            }
+        }
+    }
+    fun getTrendingActivities(lat:Double,lng:Double){
+        viewModelScope.launch {
+            val list_without_removed_activites: ArrayList<Activity> = ArrayList()
+            repo.getTrendingActivities(lat,lng).collect { response ->
+                when (response) {
+                    is Response.Success -> {
+                        response.data.forEach {
+                            Log.d("trendingscREEN",it.toString())
+                            list_without_removed_activites.add(it)
+                            val time_left: String = calculateTimeLeft(
+                                it.date,
+                                it.start_time,
+                                deleteActivity = { event ->
+                                    Log.d("trendingscREEN", "delete activity")
+                                    deleteActivity(it.id)
+                                    list_without_removed_activites.remove(it)
+                                })
+                            it.time_left = time_left
+
+                            Log.d("trendingscREEN","list"+list_without_removed_activites.toString())
+                            _trendingActivitiesListState.value =
+                                Response.Success(list_without_removed_activites as List<Activity>)
+                        }
+                    }
+                    is Response.Failure -> {
+                        _trendingActivitiesListState.value = response
+                    }
+                    is Response.Loading -> {
+                        _trendingActivitiesListState.value = response
                     }
                 }
 
@@ -316,6 +363,13 @@ class ActivityViewModel @Inject constructor(
         viewModelScope.launch {
             repo.getUserActivities(id).collect { response ->
                 _userActivitiesState.value = response
+            }
+        }
+    }
+    fun getJoinedActivities(id: String) {
+        viewModelScope.launch {
+            repo.getJoinedActivities(id).collect { response ->
+                _joinedActivitiesState.value = response
             }
         }
     }

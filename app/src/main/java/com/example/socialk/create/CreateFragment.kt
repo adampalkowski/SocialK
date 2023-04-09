@@ -194,7 +194,8 @@ class CreateFragment : Fragment() {
                                         disablePictures=event.disablePictures,
                                         disableNotification=event.disableNotification,
                                         privateChat=event.privateChat,
-                                        public =if(event.selectedPrivacy.equals("Public")) true else false
+                                        public =if(event.selectedPrivacy.equals("Public")) true else false,
+                                        participants_ids = arrayListOf(UserData.user!!.id)
 
                                     )
                                     activityViewModel.addActivity(activity)
@@ -238,7 +239,8 @@ class CreateFragment : Fragment() {
                                         disablePictures=event.disablePictures,
                                         disableNotification=event.disableNotification,
                                         privateChat=event.privateChat,
-                                        public =if(event.selectedPrivacy.equals("Public")) true else false
+                                        public =if(event.selectedPrivacy.equals("Public")) true else false,
+                                        participants_ids = arrayListOf(UserData.user!!.id)
 
                                     )
 

@@ -81,12 +81,29 @@ class MapViewModel : ViewModel(){
     fun handleGoToMap( ) {
         _navigateTo.value = Event(Screen.Map)
     }
+    fun handleGoToCalendar() {
+        _navigateTo.value = Event(Screen.Calendar)
+    }
+    fun handleGoToCreated( ) {
+        _navigateTo.value = Event(Screen.CreatedActivities)
+    }
+    fun handleGoToTrending( ) {
+        _navigateTo.value = Event(Screen.Trending)
+    }
+    fun handleGoToBookmarked( ) {
+        _navigateTo.value = Event(Screen.Bookmarked)
+    }
+    fun handleGoToHelp( ) {
+        _navigateTo.value = Event(Screen.Help)
+    }
+    fun handleGoToInfo( ) {
+        _navigateTo.value = Event(Screen.Info)
+    }
     fun handleGoToChats( ) {
         _navigateTo.value = Event(Screen.ChatCollection)
     }
     fun handleGoToCreate(latLng: LatLng? ) {
         _clicked_location.value =latLng
         _navigateTo.value = Event(Screen.Create)
-
     }
 }
