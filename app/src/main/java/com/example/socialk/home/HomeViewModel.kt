@@ -43,6 +43,9 @@ class HomeViewModel : ViewModel() {
 
     private val _activity_link = MutableLiveData<String?>()
     val activity_link: LiveData<String?> = _activity_link
+
+    private val _user_link = MutableLiveData<String?>()
+    val user_link: LiveData<String?> = _user_link
     fun setShowDialog(b: Boolean) {
         _showDialog.value=b
     }
@@ -51,6 +54,12 @@ class HomeViewModel : ViewModel() {
     }
     fun resetLink() {
         _activity_link.value=null
+    }
+    fun resetUserLink() {
+        _user_link.value=null
+    }
+    fun setUserLink(link:String){
+        _user_link.value=link
     }
     fun setActivity(data: Activity) {
         _activity.value=data
@@ -82,15 +91,12 @@ class HomeViewModel : ViewModel() {
         _clicked_chat_activity.value = activity
         _navigateTo.value = Event(Screen.Chat)
     }
-    fun handleGoToMap( ) {
+    fun handleGoToMap() {
         _navigateTo.value = Event(Screen.Map)
     }
     fun handleGoToMapActivity(latLng: String ) {
         _clicked_location_activity.value=latLng
         _navigateTo.value = Event(Screen.Map)
-    }
-    fun handleGoToChats( ) {
-        _navigateTo.value = Event(Screen.ChatCollection)
     }
     fun handleGoToMemories( ) {
         _navigateTo.value = Event(Screen.Memories)

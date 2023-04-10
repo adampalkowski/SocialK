@@ -31,11 +31,7 @@ class TrendingFragment : Fragment(){
             }
         }
 
-        //get the trading activities based on the number of participants they have
-        // within 50 km radius
-        if (activityViewModel.location.value!=null) {
-            activityViewModel.getTrendingActivities(activityViewModel.location.value!!.latitude,activityViewModel.location.value!!.longitude)
-        }
+
 
         return ComposeView(requireContext()).apply {
             setContent {

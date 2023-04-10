@@ -195,6 +195,7 @@ class HomeFragment : Fragment() {
         }
         activityViewModel?.getActivitiesForUser(authViewModel?.currentUser?.uid)
         activeUsersViewModel?.getActiveUsersForUser(authViewModel?.currentUser?.uid)
+
         viewModel.activity_link.value.let {
             if (it != null) {
                 Log.d("HomeFragment", it.toString())
@@ -299,7 +300,6 @@ class HomeFragment : Fragment() {
                                     when (screen) {
                                         is Home -> viewModel.handleGoToHome()
                                         is com.example.socialk.Map -> viewModel.handleGoToMap()
-                                        is Chats -> viewModel.handleGoToChats()
                                         is Profile -> viewModel.handleGoToProfile()
                                         is Create -> viewModel.handleGoToCreate()
                                     }

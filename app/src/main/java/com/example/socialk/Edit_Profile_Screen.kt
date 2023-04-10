@@ -83,7 +83,7 @@ fun EditProfileScreen(
 
     Log.d("Edit_profile_screen",user.pictureUrl.toString())
     Column(modifier = Modifier.fillMaxSize()) {
-        ScreenHeading(onClick = { onEvent(EditProfileEvent.GoToProfile) }, title = "Edit profile")
+        ScreenHeading(onClick = { onEvent(EditProfileEvent.GoToHome) }, title = "Edit profile")
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())

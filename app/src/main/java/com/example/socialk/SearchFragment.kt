@@ -45,7 +45,7 @@ class SearchFragment: Fragment() {
                 }
             }
         }
-
+        userViewModel.getFriends(UserData.user!!.id)
 
         userViewModel.getInvites(UserData.user!!.id)
         return ComposeView(requireContext()).apply {
@@ -54,9 +54,8 @@ class SearchFragment: Fragment() {
                     SearchScreen(userViewModel,
                         onEvent = { event ->
                             when (event) {
-                                is SearchEvent.GoToProfile -> viewModel.handleGoToChats()
                                 is SearchEvent.GoToProfile -> viewModel.handleGoToProfile()
-                                is SearchEvent.GoBack ->    activity?.onBackPressedDispatcher?.onBackPressed()
+                                is SearchEvent.GoBack -> activity?.onBackPressedDispatcher?.onBackPressed()
                                 is SearchEvent.OnInviteAccepted -> {
                                     val uuid: UUID = UUID.randomUUID()
                                     val id:String = uuid.toString()
@@ -80,7 +79,6 @@ class SearchFragment: Fragment() {
 
                                 }
                                 is SearchEvent.GoToUserProfile ->{
-
                                     // event.user stores the value of searched user , pass it to the nav component so that user profile can be displayed
                                     viewModel.handleGoToUserProfile(event.user)
                                 }

@@ -985,51 +985,52 @@ fun PublicActivities(
                 else -> {}
             }
         }
-        /* activityViewModel?.moreActivitiesListState?.value.let {
-               when (it) {
-                   is Response.Success -> {
-                       /*refreshing = false*/
-                       //display activities
-                       Log.d("homescreen", it.data.toString())
-                       items(it.data) { item ->
-                           /*  if (updateActivity) {
-                                 if (item.id == homeViewModel.camera_activity_id.value) {
-                                     item.pictures[UserData.user!!.id] = photo_url
-                                 }
-                                 updateActivity = false
+        activityViewModel?.moreclosestActivitiesListState?.value.let {
+            when (it) {
+                is Response.Success -> {
+                    /* refreshing = false*/
+                    //display activities
 
-                             }
-                             if (updateDeleteActivity) {
-                                 if (item.id == homeViewModel.camera_activity_id.value) {
-                                     item.pictures.remove(UserData.user!!.id)
-                                 }
-                                 updateDeleteActivity = false
-                             }*/
-                           ActivityItem(
-                               activity = item,
-                               onEvent = activityEvent,
-                               username = item.creator_username,
-                               profilePictureUrl = item.creator_profile_picture,
-                               timeLeft = item.time_left,
-                               title = item.title,
-                               description = item.description,
-                               date = item.date,
-                               liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
-                               //todo add the time end
-                               timePeriod = item.start_time + " - " + item.end_time,
-                               custom_location = item.custom_location,
-                               location = item.location,
-                           )
+                    items(it.data) { item ->
+                        /*if (updateActivity) {
+                            if (item.id == homeViewModel.camera_activity_id.value) {
+                                item.pictures[UserData.user!!.id] = photo_url
+                            }
+                            updateActivity = false
+                        }
+                        if (updateDeleteActivity) {
+                            if (item.id == homeViewModel.camera_activity_id.value) {
+                                item.pictures.remove(UserData.user!!.id)
+                            }
+                            updateDeleteActivity = false
+                        }*/
+                        ActivityItem(
+                            activity = item,
+                            onEvent = activityEvent,
+                            username = item.creator_username,
+                            profilePictureUrl = item.creator_profile_picture,
+                            timeLeft = item.time_left,
+                            title = item.title,
+                            description = item.description,
+                            date = item.date,
+                            liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
+                            //todo add the time end
+                            timePeriod = item.start_time + " - " + item.end_time,
+                            custom_location = item.custom_location,
+                            location = item.location,
+                            onLongClick = { /*onLongClick(item)*/ }
+                        )
 
-                       }
-                   }
-                   else -> {}
-               }
-           }
-           item {
+                    }
+                    activitiesExist.value = true
+                }
+                else -> {}
+            }
+        }
+           /*item {
                LaunchedEffect(true) {
                    if (activitiesExist.value) {
-                       activityViewModel?.getMoreActivitiesForUser(UserData.user!!.id)
+                       activityViewModel?.getMoreClosestActivities(UserData.user!!.id)
                    }
                }
            }*/

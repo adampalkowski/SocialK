@@ -60,9 +60,7 @@ class EditProfileFragment :Fragment() {
                                 is EditProfileEvent.PickImage -> {
                                     // Launch the photo picker and allow the user to choose images and videos.
                                     pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
-
                                 }
-
                                 is EditProfileEvent.GoToEditProfile -> viewModel.handleGoToEditProfile()
                                 is EditProfileEvent.ConfirmChanges ->{ userViewModel.profileChanges(UserData.user!!.id,event.firstAndLastName,event.description)
                                 viewModel.handleGoToProfile()}

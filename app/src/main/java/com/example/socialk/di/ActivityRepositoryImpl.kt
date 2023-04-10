@@ -40,74 +40,14 @@ class ActivityRepositoryImpl @Inject constructor(
     private var lastVisibleData: DocumentSnapshot? = null
     private var lastVisibleUserData: DocumentSnapshot? = null
     private var lastVisibleDataForUserProfile: DocumentSnapshot? = null
+    private var lastVisibleClosestData: DocumentSnapshot? = null
 
-    override suspend fun getTrendingActivities(lat: Double,lng:Double): Flow<Response<List<Activity>>> =callbackFlow {
-        trySend(Response.Loading)
-        Log.d("trendingscreen","call")
-
-        val center = GeoLocation(lat,lng)
-        val radiusInM = 50.0 * 1000.0
-
-        val bounds = GeoFireUtils.getGeoHashQueryBounds(center, radiusInM)
-        val tasks: MutableList<Task<QuerySnapshot>> = ArrayList()
-        for (b in bounds) {
-            val q =  activitiesRef.whereEqualTo("public",true)
-                .orderBy("geoHash")
-                .startAt(b.startHash)
-                .endAt(b.endHash)
-
-                .limit(5)
-            tasks.add(q.get())
-        }
-        // Collect all the query results together into a single list
-        Tasks.whenAllComplete(tasks)
-            .addOnCompleteListener {
-                val matchingDocs: MutableList<DocumentSnapshot> = ArrayList()
-                for (task in tasks) {
-                    val snap = task.result
-                    for (doc in snap!!.documents) {
-                        val lat = doc.getDouble("lat")!!
-                        val lng = doc.getDouble("lng")!!
-
-                        // We have to filter out a few false positives due to GeoHash
-                        // accuracy, but most will match
-                        val docLocation = GeoLocation(lat, lng)
-                        val distanceInM = GeoFireUtils.getDistanceBetween(docLocation, center)
-                        if (distanceInM <= radiusInM) {
-                            matchingDocs.add(doc)
-                        }
-                    }
-                }
-                Log.d("trendingscreen",matchingDocs.toString())
-
-                if (matchingDocs != null && matchingDocs.isNotEmpty()) {
-                    val newActivities = ArrayList<Activity>()
-                    for (document in matchingDocs) {
-                        val activity = document.toObject<Activity>()
-                        Log.d("trendingscreen",activity.toString())
-
-                        if (activity!=null){
-                            newActivities.add(activity)
-                        }
-                    }
-                    //lastVisibleData= matchingDocs[matchingDocs.size - 1]
-                    trySend(Response.Success(newActivities))
-
-                }
-            }.addOnFailureListener(){
-                trySend(Response.Failure(e= SocialException(message = "Nearby activity download failure",e=Exception())))
-
-            }
-
-        awaitClose {
-        }
-    }
 
     override suspend fun getClosestActivities(lat: Double,lng:Double): Flow<Response<List<Activity>>> =callbackFlow {
+        lastVisibleClosestData=null
         val center = GeoLocation(lat,lng)
         val radiusInM = 5.0 * 1000.0
-        Log.d("getClosestActivities","task")
-
+        Log.d("getMoreClosestActivites","settings null")
         val bounds = GeoFireUtils.getGeoHashQueryBounds(center, radiusInM)
         val tasks: MutableList<Task<QuerySnapshot>> = ArrayList()
         for (b in bounds) {
@@ -115,15 +55,19 @@ class ActivityRepositoryImpl @Inject constructor(
                 .orderBy("geoHash")
                 .startAt(b.startHash)
                 .endAt(b.endHash)
-                .limit(5)
+                .limit(2)
             tasks.add(q.get())
         }
+
         // Collect all the query results together into a single list
         Tasks.whenAllComplete(tasks)
             .addOnCompleteListener {
                 val matchingDocs: MutableList<DocumentSnapshot> = ArrayList()
                 for (task in tasks) {
                     val snap = task.result
+
+
+
                     for (doc in snap!!.documents) {
                         val lat = doc.getDouble("lat")!!
                         val lng = doc.getDouble("lng")!!
@@ -137,7 +81,6 @@ class ActivityRepositoryImpl @Inject constructor(
                         }
                     }
                 }
-                Log.d("getClosestActivities",matchingDocs.toString())
 
                 if (matchingDocs != null && matchingDocs.isNotEmpty()) {
                     val newActivities = ArrayList<Activity>()
@@ -149,7 +92,66 @@ class ActivityRepositoryImpl @Inject constructor(
                             newActivities.add(activity)
                         }
                     }
-                    //lastVisibleData= matchingDocs[matchingDocs.size - 1]
+                    lastVisibleClosestData= matchingDocs[matchingDocs.size - 1]
+                    trySend(Response.Success(newActivities))
+
+                }
+            }.addOnFailureListener(){
+                trySend(Response.Failure(e= SocialException(message = "Nearby activity download failure",e=Exception())))
+
+            }
+
+        awaitClose {
+        }
+    }
+    override suspend fun getMoreClosestActivities(lat: Double,lng:Double): Flow<Response<List<Activity>>> =callbackFlow {
+        val center = GeoLocation(lat,lng)
+        val radiusInM = 5.0 * 1000.0
+
+
+        val bounds = GeoFireUtils.getGeoHashQueryBounds(center, radiusInM)
+        val tasks: MutableList<Task<QuerySnapshot>> = ArrayList()
+        for (b in bounds) {
+            val q =  activitiesRef.whereEqualTo("public",true)
+                .orderBy("geoHash")
+                .startAfter(lastVisibleClosestData?.data?.get("geoHash"))
+                .endAt(b.endHash)
+                .limit(1)
+            tasks.add(q.get())
+        }
+        // Collect all the query results together into a single list
+        Tasks.whenAllComplete(tasks)
+            .addOnCompleteListener {
+                val matchingDocs: MutableList<DocumentSnapshot> = ArrayList()
+                for (task in tasks) {
+                    val snap = task.result
+
+
+                    for (doc in snap!!.documents) {
+                        val lat = doc.getDouble("lat")!!
+                        val lng = doc.getDouble("lng")!!
+
+                        // We have to filter out a few false positives due to GeoHash
+                        // accuracy, but most will match
+                        val docLocation = GeoLocation(lat, lng)
+                        val distanceInM = GeoFireUtils.getDistanceBetween(docLocation, center)
+                        if (distanceInM <= radiusInM) {
+                            matchingDocs.add(doc)
+                        }
+                    }
+                }
+
+                if (matchingDocs != null && matchingDocs.isNotEmpty()) {
+                    val newActivities = ArrayList<Activity>()
+                    for (document in matchingDocs) {
+                        val activity = document.toObject<Activity>()
+                        Log.d("getMoreClosestActivities",activity.toString())
+
+                        if (activity!=null){
+                            newActivities.add(activity)
+                        }
+                    }
+                    lastVisibleClosestData= matchingDocs[matchingDocs.size - 1]
                     trySend(Response.Success(newActivities))
 
                 }

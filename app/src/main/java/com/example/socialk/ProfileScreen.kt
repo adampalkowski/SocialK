@@ -388,7 +388,7 @@ fun ProfileScreen(
                 ScoreElement(label = "Friends", value = user.friends_ids.size)
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+            Row(modifier = Modifier.padding(horizontal=12.dp).horizontalScroll(rememberScrollState())) {
                 profileButton(
                     label = "Edit profile",
                     iconDrawable = R.drawable.ic_edit_profile,

@@ -1,5 +1,6 @@
 package com.example.socialk
 
+import android.util.Log
 import android.widget.Space
 import android.widget.Toast
 import androidx.compose.foundation.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -29,6 +31,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.example.socialk.chat.ChatComponents.SendButton
 import com.example.socialk.chat.ChatEvent
 import com.example.socialk.components.ScreenHeading
@@ -48,14 +52,21 @@ sealed class SearchEvent {
     object GoToSettings : SearchEvent()
     object GoToChat : SearchEvent()
     object GoBack : SearchEvent()
-    class OnInviteAccepted (user:User): SearchEvent(){val user=user}
-    class GoToUserProfile (user: User): SearchEvent(){val user=user}
+    class OnInviteAccepted(user: User) : SearchEvent() {
+        val user = user
+    }
+
+    class GoToUserProfile(user: User) : SearchEvent() {
+        val user = user
+    }
 
 }
 
 @Composable
-fun SearchScreen(userViewModel:UserViewModel?,onEvent: (SearchEvent) -> Unit) {
-
+fun SearchScreen(userViewModel: UserViewModel?, onEvent: (SearchEvent) -> Unit) {
+    var usersExist = remember { mutableStateOf(false) }
+    val friends_flow = userViewModel!!.friendState.collectAsState()
+    val more_friends_flow = userViewModel!!.friendMoreState.collectAsState()
     Surface(
         modifier = Modifier
             .fillMaxSize()
@@ -65,15 +76,14 @@ fun SearchScreen(userViewModel:UserViewModel?,onEvent: (SearchEvent) -> Unit) {
 
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             //HEADING
             ScreenHeading(onClick = { onEvent(SearchEvent.GoBack) }, title = "Search")
             Spacer(modifier = Modifier.height(36.dp))
             //EDIT TEXT
-            searchEditText(userViewModel,onEvent = onEvent)
+            searchEditText(userViewModel, onEvent = onEvent)
             Spacer(modifier = Modifier.height(4.dp))
             //INFORMATION
             Text(
@@ -101,30 +111,42 @@ fun SearchScreen(userViewModel:UserViewModel?,onEvent: (SearchEvent) -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
             //INVITES ROW
-            LazyRow{
-                userViewModel?.invitesStateFlow?.value.let { it->
-                    when(it){
-                                is Response.Success->{
-                                    items(it.data) { item ->
-                                        InviteCard(profileUrl = if (item.pictureUrl==null){"PIC"}else{item.pictureUrl!!},
-                                            name =if (item.name==null){"NAME"}else{item.name!!},
-                                            username =if (item.username==null){""}else{item.username!!} ,
-                                            onClick = {onEvent(SearchEvent.OnInviteAccepted(item))})
-                                        Spacer(modifier = Modifier.width(16.dp))
-                                    }
-                                }
-                                is Response.Loading-> {
-                                    item {
-                                        Box(modifier =Modifier) {
-                                            CircularProgressIndicator()
+            LazyRow {
+                userViewModel?.invitesStateFlow?.value.let { it ->
+                    when (it) {
+                        is Response.Success -> {
+                            items(it.data) { item ->
+                                InviteCard(profileUrl = if (item.pictureUrl == null) {
+                                    "PIC"
+                                } else {
+                                    item.pictureUrl!!
+                                },
+                                    name = if (item.name == null) {
+                                        "NAME"
+                                    } else {
+                                        item.name!!
+                                    },
+                                    username = if (item.username == null) {
+                                        ""
+                                    } else {
+                                        item.username!!
+                                    },
+                                    onClick = { onEvent(SearchEvent.OnInviteAccepted(item)) })
+                                Spacer(modifier = Modifier.width(16.dp))
+                            }
+                        }
+                        is Response.Loading -> {
+                            item {
+                                Box(modifier = Modifier) {
+                                    CircularProgressIndicator()
 
-                                        }
-                                    }
                                 }
-                                is Response.Failure->{
+                            }
+                        }
+                        is Response.Failure -> {
 
-                                }
-                        else->{}
+                        }
+                        else -> {}
                     }
                 }
 
@@ -179,28 +201,127 @@ fun SearchScreen(userViewModel:UserViewModel?,onEvent: (SearchEvent) -> Unit) {
                     username = "adamo12321",
                     onClick = {})
             }
+            Spacer(modifier = Modifier.height(12.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 12.dp), contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = "Friends list",
+                    style = com.example.socialk.ui.theme.Typography.h3,
+                    color = Color(0xff333333)
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            LazyColumn {
+                friends_flow.value.let {
+                    when (it) {
+                        is Response.Failure -> {
 
-            Spacer(modifier = Modifier.height(48.dp))
+                        }
+                        is Response.Loading -> {
 
-            //TODO HARDCODED NAME
-            ButtonLink(onClick = {}, username = "name")
+                        }
+                        is Response.Success -> {
+                            items(it.data) {
+                                Log.d("GEETINGUSERS", "MAin" + it.toString())
+
+                                UserListItem(Modifier, user = it, GoToProfile = {event-> onEvent(SearchEvent.GoToUserProfile(event))})
+
+                            }
+                            usersExist.value = true
+                        }
+                        else -> {}
+                    }
+                }
+                more_friends_flow.value.let {
+                    when (it) {
+                        is Response.Failure -> {
+
+                        }
+                        is Response.Loading -> {
+
+                        }
+                        is Response.Success -> {
+                            items(it.data) {
+                                Log.d("GEETINGUSERS", it.toString())
+                                UserListItem(Modifier, user = it, GoToProfile = {event-> onEvent (SearchEvent.GoToUserProfile(event))})
+                            }
+                        }
+                        else -> {}
+                    }
+                }
+                item {
+                    LaunchedEffect(true) {
+                        if (usersExist.value) {
+                            userViewModel.getMoreFriends(UserData.user!!.id)
+                        }
+                    }
+                }
+            }
+
         }
     }
+
     userViewModel?.isInviteAcceptedState?.value.let {
-        when(it){
-            is Response.Failure ->{
+        when (it) {
+            is Response.Failure -> {
 
             }
-            is Response.Loading ->{
+            is Response.Loading -> {
 
             }
-            is Response.Success ->{
+            is Response.Success -> {
 
             }
-            else->{}
+            else -> {}
         }
     }
 
+}
+
+@OptIn(ExperimentalGlideComposeApi::class, ExperimentalMaterialApi::class)
+@Composable
+fun UserListItem(modifier: Modifier = Modifier, user: User,GoToProfile:(User)->Unit) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth().padding(horizontal = 24.dp)
+
+    ) {
+        Row() {
+            Row(Modifier.clickable(onClick={GoToProfile(user)}).padding(vertical = 8.dp) ){
+                GlideImage(
+                    model = user.pictureUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column() {
+                    androidx.compose.material.Text(
+                        text = user.name!!, style = TextStyle(
+                            color = SocialTheme.colors.textPrimary,
+                            fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 16.sp
+                        )
+                    )
+                    androidx.compose.material.Text(
+                        text = user.username!!, style = TextStyle(
+                            color = SocialTheme.colors.textPrimary,
+                            fontFamily = Inter, fontWeight = FontWeight.Light, fontSize = 12.sp
+                        )
+                    )
+                }
+
+
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            searchActionButton(label = "Remove", onClick = {})
+        }
+
+    }
 }
 
 @Composable
@@ -208,7 +329,8 @@ fun ButtonLink(onClick: () -> Unit, username: String) {
     Box(
         modifier = Modifier
 
-            .padding(horizontal = 16.dp, vertical = 12.dp), contentAlignment = Alignment.Center
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .clickable(onClick = onClick), contentAlignment = Alignment.Center
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -293,7 +415,8 @@ fun InviteCard(profileUrl: String, name: String, username: String, onClick: () -
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun searchActionButton(label: String, onClick: () -> Unit) {
-    Card(onClick=onClick,
+    Card(
+        onClick = onClick,
         shape = RoundedCornerShape(8.dp), elevation = 0.dp, border = BorderStroke(
             1.dp,
             color = if (label.equals("Accept")) {
@@ -322,12 +445,12 @@ fun searchActionButton(label: String, onClick: () -> Unit) {
 
 
 @Composable
-fun searchEditText(userViewModel: UserViewModel?,onEvent: (SearchEvent) -> Unit) {
+fun searchEditText(userViewModel: UserViewModel?, onEvent: (SearchEvent) -> Unit) {
     val usernameTextSaver by rememberSaveable(stateSaver = ActivityTextStateSaver) {
         mutableStateOf(ActivityTextFieldState())
     }
     var textSendAvailable by remember { mutableStateOf(false) }
-    val userFlow=userViewModel?.userState?.collectAsState()
+    val userFlow = userViewModel?.userState?.collectAsState()
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -389,26 +512,28 @@ fun searchEditText(userViewModel: UserViewModel?,onEvent: (SearchEvent) -> Unit)
             }
             Spacer(modifier = Modifier.width(12.dp))
             SendButton(onEvent = {
-                if(textSendAvailable){
-                if (usernameTextSaver.text.isNotEmpty()) {
-                    userViewModel?.getUserByUsername(usernameTextSaver.text.trim())
-                }
+                if (textSendAvailable) {
+                    if (usernameTextSaver.text.isNotEmpty()) {
+                        userViewModel?.getUserByUsername(usernameTextSaver.text.trim())
+                    }
                 }
 
-            }, icon = R.drawable.ic_search, available =textSendAvailable )
+            }, icon = R.drawable.ic_search, available = textSendAvailable)
         }
         userFlow?.value.let {
-            when(it){
-                is Response.Success->  {
+            when (it) {
+                is Response.Success -> {
                     onEvent(SearchEvent.GoToUserProfile(it.data))
                     userViewModel?.resetUserValue()
                 }
-                is Response.Failure->{
-                    Toast.makeText(LocalContext.current,
-                        "Failed to find user with given username",Toast.LENGTH_LONG).show()
+                is Response.Failure -> {
+                    Toast.makeText(
+                        LocalContext.current,
+                        "Failed to find user with given username", Toast.LENGTH_LONG
+                    ).show()
 
                 }
-                else->{}
+                else -> {}
 
             }
         }

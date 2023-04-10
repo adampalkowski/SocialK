@@ -3,6 +3,7 @@ package com.example.socialk.map
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.util.DisplayMetrics
 import android.util.Log
 import android.widget.Toast
@@ -26,9 +27,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -40,17 +43,21 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.request.target.CustomTarget
+import com.example.socialk.ButtonLink
 import com.example.socialk.Destinations
 import com.example.socialk.R
+import com.example.socialk.SearchEvent
 import com.example.socialk.components.*
 import com.example.socialk.create.CreateActivityButton
 import com.example.socialk.create.CreateEvent
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.ChatViewModel
+import com.example.socialk.di.UserViewModel
 import com.example.socialk.home.*
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Response
+import com.example.socialk.model.User
 import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.Inter
@@ -61,15 +68,24 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.dynamiclinks.ktx.androidParameters
+import com.google.firebase.dynamiclinks.ktx.dynamicLink
+import com.google.firebase.dynamiclinks.ktx.dynamicLinks
+import com.google.firebase.ktx.Firebase
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.launch
 
 sealed class MapEvent {
     object GoToProfile : MapEvent()
+    object GoToEditProfile : MapEvent()
     object GoToChats : MapEvent()
+    object AddPeople : MapEvent()
+    object GoToGroup : MapEvent()
     object LogOut : MapEvent()
     object GoToHome : MapEvent()
     object GoToSettings : MapEvent()
+    class GoToUserProfile (val user: User): MapEvent()
+
     object AskForPermission : MapEvent()
     object BackPressed : MapEvent()
     object GoToTrending : MapEvent()
@@ -118,7 +134,7 @@ fun customShape() =  object : Shape {
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
-fun MapScreen(
+fun MapScreen(homeViewModel:HomeViewModel,
     systemUiController: SystemUiController,
     latLngInitial: LatLng?,
     activityViewModel: ActivityViewModel,
@@ -128,8 +144,11 @@ fun MapScreen(
     locationCallback: LocationCallback,
     activeUsersViewModel: ActiveUsersViewModel?,
     chatViewModel: ChatViewModel,
-    authViewModel: AuthViewModel?
+    authViewModel: AuthViewModel?,
+              userViewModel: UserViewModel
 ) {
+    Log.d("getClosestActivities","f")
+    view
     if(viewModel.location.value!=null ){
         Log.d("getClosestActivities","call")
         activityViewModel.getClosestActivities(viewModel.location.value!!.latitude,viewModel.location.value!!.longitude)
@@ -161,6 +180,8 @@ fun MapScreen(
 
 
     val context = LocalContext.current
+    //dialog for activity linked display
+    val showDialogState: Boolean by homeViewModel?.showDialog!!.collectAsState()
     var currentLocation: LatLng? by remember { mutableStateOf(null) }
     var location_picked_flow = viewModel.locations_picked.collectAsState()
     var isMapLoaded by remember { mutableStateOf(false) }
@@ -183,6 +204,8 @@ fun MapScreen(
         return
     }else{
     }*/
+    val clipboardManager = LocalClipboardManager.current
+
     val permission_flow = viewModel.granted_permission.collectAsState()
     val location_flow = viewModel.location.collectAsState()
     var bottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.HalfExpanded)
@@ -233,14 +256,25 @@ fun MapScreen(
                         fullName = UserData.user!!.name!!,
                         picture_url = UserData.user!!.pictureUrl!!,
                         icon = R.drawable.ic_person,
-                        onClick = {})
+                        onClick = {onEvent(MapEvent.GoToEditProfile)})
 
                     com.example.socialk.chat.ChatComponents.Divider()
+
+                    //friends list and search
+                    DrawerField(title = "Add friends", icon = R.drawable.ic_add_person, onClick = {onEvent(MapEvent.AddPeople)})
                     //trending
                     DrawerField(
                         title = "Trending",
                         icon = R.drawable.ic_trending,
-                        onClick = {onEvent(MapEvent.GoToTrending)})
+                        onClick = {onEvent(MapEvent.GoToTrending)}){
+                        Text(
+                            text = "Upcoming soon",
+                            style = TextStyle(
+                                fontFamily = Inter,
+                                fontWeight = FontWeight.Light,
+                                fontSize = 10.sp,color=SocialTheme.colors.textPrimary
+                            ))
+                    }
                     // calendar
                     DrawerField(title = "Calendar", icon = R.drawable.ic_calendar, onClick = {onEvent(MapEvent.GoToCalendar)}) {
                         activityViewModel.activitiesListState.value.let { it ->
@@ -290,6 +324,8 @@ fun MapScreen(
                         title = "Created",
                         icon = R.drawable.ic_event_available,
                         onClick = {onEvent(MapEvent.GoToCreated)})
+                    //bookmarked activities
+                    DrawerField(title = "Groups", icon = R.drawable.ic_groups, onClick = {onEvent(MapEvent.GoToGroup)})
 
                     //bookmarked activities
                     DrawerField(title = "Bookmarks", icon = R.drawable.ic_bookmark, onClick = {onEvent(MapEvent.GoToBookmarked)})
@@ -302,7 +338,20 @@ fun MapScreen(
 
                     //info
                     DrawerField(title = "Info", icon = R.drawable.ic_info, onClick = {onEvent(MapEvent.GoToInfo)})
-
+                    Spacer(Modifier.weight(1f))
+                    //TODO HARDCODED NAME
+                    ButtonLink(onClick = {
+                        val dynamicLink = Firebase.dynamicLinks.dynamicLink {
+                            link = Uri.parse("https://link.friendup.app/"+"User"+"/"+UserData.user!!.id)
+                            domainUriPrefix = "https://link.friendup.app/"
+                            // Open links with this app on Android
+                            androidParameters { }
+                        }
+                        val dynamicLinkUri = dynamicLink.uri
+                        val localClipboardManager=clipboardManager
+                        localClipboardManager.setText(AnnotatedString(dynamicLinkUri.toString()))
+                        Toast.makeText(context,"Copied user link to clipboard",Toast.LENGTH_LONG).show()
+                    }, username = UserData.user!!.username!!)
                 }
 
             },
@@ -641,6 +690,35 @@ fun MapScreen(
                                                     )
                                                 }
                                             }
+                                            Spacer(Modifier.width(24.dp))
+                                            androidx.compose.material.Card(
+                                                modifier = Modifier
+                                                    .width(48.dp)
+                                                    .height(48.dp),
+                                                onClick = {
+                                                    if(viewModel.location.value!=null ){
+                                                        Log.d("getClosestActivities","call")
+                                                        activityViewModel.getMoreClosestActivities(viewModel.location.value!!.latitude,viewModel.location.value!!.longitude)
+                                                    }
+                                                },
+                                                shape = RoundedCornerShape(12.dp),
+                                                backgroundColor = Color.White.copy(alpha = 0.95f),
+                                                elevation = 4.dp
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .background(color = Color.Transparent),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        modifier = Modifier.background(Color.Transparent),
+                                                        painter = painterResource(id = R.drawable.ic_remove),
+                                                        contentDescription = null,
+                                                        tint = Color.Black
+                                                    )
+                                                }
+                                            }
                                             Spacer(modifier = Modifier.weight(1f))
                                             androidx.compose.material.Card(
                                                 modifier =
@@ -699,7 +777,7 @@ fun MapScreen(
                                                     )
                                                 }
                                             }
-                                            Spacer(modifier = Modifier.width(12.dp))
+                                            /*Spacer(modifier = Modifier.width(12.dp))
                                             androidx.compose.material.Card(
                                                 shape = RoundedCornerShape(
                                                     100.dp
@@ -720,7 +798,7 @@ fun MapScreen(
                                                         .background(color = SocialTheme.colors.uiBackground)
                                                         .clip(CircleShape)
                                                 )
-                                            }
+                                            }*/
                                         }
 
 
@@ -811,6 +889,51 @@ fun MapScreen(
             else -> {}
         }
     }
+    userViewModel?.userState?.value.let { event ->
+        when (event) {
+            is Response.Success -> {
+                if (event.data != null) {
+                    onEvent(MapEvent.GoToUserProfile(event.data))
+                }
+            }
+            is Response.Loading -> {
+
+            }
+            is Response.Failure -> {
+
+            }
+            else -> {}
+        }
+    }
+
+
+    activityViewModel?.activityState?.value.let { event ->
+        when (event) {
+            is Response.Success -> {
+                Log.d("Homefragment2", event.toString())
+                if (event.data != null) {
+                    homeViewModel?.setActivity(event.data)
+                    homeViewModel?.setShowDialog(true)
+                }
+
+            }
+            is Response.Loading -> {
+
+            }
+            is Response.Failure -> {
+
+            }
+            else -> {}
+        }
+    }
+    activityDialog(
+        activity = homeViewModel?.activity?.value,
+        activityDialogState = showDialogState,
+        onEvent = {
+            homeViewModel?.setShowDialog(false)
+            activityViewModel?.resetActivityState()
+            homeViewModel?.removeActivity()
+        })
 }
 
 fun pointToCurrentLocation(cameraPositionState: CameraPositionState, currentLocation: LatLng) {
@@ -1215,7 +1338,7 @@ fun sheetContent(
                     }
                 )
             }
-            .background(Color.Red),
+            .background(SocialTheme.colors.uiBackground),
     ) {
         HomeScreenContent(activeUsersViewModel = activeUsersViewModel,
             viewModel = viewModel,

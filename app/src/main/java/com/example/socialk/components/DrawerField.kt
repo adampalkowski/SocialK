@@ -36,7 +36,8 @@ fun DrawerField(
 
 
     Box(modifier = modifier
-        .fillMaxWidth().clickable(onClick = onClick)
+        .fillMaxWidth()
+        .clickable(onClick = onClick)
         .padding(vertical = 16.dp)) {
         Column() {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Start) {
@@ -75,7 +76,9 @@ fun DrawerProfileField(
 ) {
     Box(modifier = modifier
         .fillMaxWidth()
-        .padding(vertical = 16.dp)) {
+        .padding(vertical = 16.dp)
+        .clickable(onClick = onClick)) {
+
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Start) {
             Spacer(modifier = Modifier.width(12.dp))
             AsyncImage(
@@ -97,6 +100,13 @@ fun DrawerProfileField(
                     fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 16.sp))
                 Text(text =username, style = TextStyle(color=SocialTheme.colors.textPrimary,
                     fontFamily = Inter, fontWeight = FontWeight.Light, fontSize = 12.sp))
+                Spacer(Modifier.height(6.dp))
+                Row(){
+                    Text(text ="Edit profile", style = TextStyle(color=SocialTheme.colors.textPrimary,
+                        fontFamily = Inter, fontWeight = FontWeight.Light, fontSize = 12.sp))
+                    Icon(painter = painterResource(id = R.drawable.ic_right), contentDescription = null,tint=SocialTheme.colors.iconPrimary)
+                }
+
 
             }
 

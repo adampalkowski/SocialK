@@ -1,9 +1,7 @@
 package com.example.socialk.components
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -12,31 +10,21 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.socialk.R
 import com.example.socialk.create.CreateEvent
@@ -50,7 +38,6 @@ import com.example.socialk.model.User
 import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
-import com.example.socialk.ui.theme.Typography
 
 @Composable
 fun GroupPicker(modifier: Modifier, chatViewModel: ChatViewModel,    onEvent: (CreateEvent) -> Unit,) {
@@ -134,6 +121,7 @@ fun UserPicker(
 
 ) {
     val checkedState = remember { mutableStateOf(false) }
+    val usersExist = remember { mutableStateOf(false) }
 
     val friends_flow = userViewModel.friendState.collectAsState()
     val more_friends_flow = userViewModel.friendMoreState.collectAsState()
@@ -208,13 +196,10 @@ fun UserPicker(
                                     UserPickerItem(user = it, onEvent = onEvent)
                                     Divider()
                                 }
-                                item{
-                                    Button(onClick = { userViewModel.getMoreFriends(UserData.user!!.id)}) {
-                                        Text("asdsad")
-                                    }
-                                }
 
+                                usersExist.value=true
                             }
+
                             is Response.Loading -> {}
                             is Response.Failure -> {}
                         }
@@ -234,6 +219,13 @@ fun UserPicker(
                             }
                             is Response.Loading -> {}
                             is Response.Failure -> {}
+                        }
+                    }
+                    item {
+                        LaunchedEffect(true) {
+                            if (usersExist.value) {
+                                userViewModel?.getMoreFriends(UserData.user!!.id)
+                            }
                         }
                     }
                 }

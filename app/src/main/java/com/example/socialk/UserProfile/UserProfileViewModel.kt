@@ -33,7 +33,7 @@ class UserProfileViewModel:ViewModel() {
         _navigateTo.value = Event(Screen.Settings)
     }
     fun handleGoToHome( ) {
-        _navigateTo.value = Event(Screen.Home)
+        _navigateTo.value = Event(Screen.Map)
     }
 
     fun handleGoToChats( ) {

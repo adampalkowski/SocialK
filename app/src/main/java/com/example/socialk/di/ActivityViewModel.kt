@@ -46,6 +46,8 @@ class ActivityViewModel @Inject constructor(
 
     private val _closestActivitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val closestActivitiesListState: State<Response<List<Activity>>> = _closestActivitiesListState
+    private val _moreclosestActivitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
+    val moreclosestActivitiesListState: State<Response<List<Activity>>> = _moreclosestActivitiesListState
 
     private val _activitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val activitiesListState: State<Response<List<Activity>>> = _activitiesListState
@@ -127,35 +129,35 @@ class ActivityViewModel @Inject constructor(
             }
         }
     }
-    fun getTrendingActivities(lat:Double,lng:Double){
+    fun getMoreClosestActivities(lat:Double,lng:Double){
         viewModelScope.launch {
             val list_without_removed_activites: ArrayList<Activity> = ArrayList()
-            repo.getTrendingActivities(lat,lng).collect { response ->
+            repo.getMoreClosestActivities(lat,lng).collect { response ->
                 when (response) {
                     is Response.Success -> {
                         response.data.forEach {
-                            Log.d("trendingscREEN",it.toString())
+                            Log.d("getClosestActivities",it.toString())
                             list_without_removed_activites.add(it)
                             val time_left: String = calculateTimeLeft(
                                 it.date,
                                 it.start_time,
                                 deleteActivity = { event ->
-                                    Log.d("trendingscREEN", "delete activity")
+                                    Log.d("getClosestActivities", "delete activity")
                                     deleteActivity(it.id)
                                     list_without_removed_activites.remove(it)
                                 })
                             it.time_left = time_left
 
-                            Log.d("trendingscREEN","list"+list_without_removed_activites.toString())
-                            _trendingActivitiesListState.value =
+                            Log.d("getClosestActivities","list"+list_without_removed_activites.toString())
+                            _moreclosestActivitiesListState.value =
                                 Response.Success(list_without_removed_activites as List<Activity>)
                         }
                     }
                     is Response.Failure -> {
-                        _trendingActivitiesListState.value = response
+                        _moreclosestActivitiesListState.value = response
                     }
                     is Response.Loading -> {
-                        _trendingActivitiesListState.value = response
+                        _moreclosestActivitiesListState.value = response
                     }
                 }
 
@@ -168,16 +170,18 @@ class ActivityViewModel @Inject constructor(
             repo.getActivity(id).collect { response ->
                 when (response) {
                     is Response.Success -> {
-                        response.data
-                        val time_left: String = calculateTimeLeft(
-                            response.data.date,
-                            response.data.start_time,
-                            deleteActivity = { event ->
-                                deleteActivity(response.data.id)
-                            })
-                        response.data.time_left = time_left
-                        _activityState.value = response
-                    }            else->{}
+                        if(response.data!=null){
+                            val time_left: String = calculateTimeLeft(
+                                response.data.date,
+                                response.data.start_time,
+                                deleteActivity = { event ->
+                                    deleteActivity(response.data.id)
+                                })
+                            response.data.time_left = time_left
+                            _activityState.value = response
+                        }
+                        }   else->{}
+
                 }
 
 

@@ -89,7 +89,7 @@ val Typography =Typography(
     button = TextStyle(
         fontFamily = Inter,
         fontSize = 14.sp,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Medium,
     ),
     caption = TextStyle(
         fontFamily = Karla,

@@ -7,7 +7,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.ActivityCompat
@@ -23,7 +22,8 @@ import com.example.socialk.Map
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.ChatViewModel
-import com.example.socialk.home.HomeEvent
+import com.example.socialk.di.UserViewModel
+import com.example.socialk.home.HomeViewModel
 import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.SocialTheme
@@ -31,13 +31,14 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.jar.Manifest
 
 @AndroidEntryPoint
 class MapFragment : Fragment() {
     private val viewModel by viewModels<MapViewModel>()
+    private val homeViewModel by activityViewModels<HomeViewModel>()
     private val authViewModel by viewModels<AuthViewModel>()
     private val chatViewModel by viewModels<ChatViewModel>()
+    private val userViewModel by viewModels<UserViewModel>()
     private val activityViewModel by activityViewModels<ActivityViewModel>()
     private val activeUsersViewModel by viewModels<ActiveUsersViewModel>()
     private var fusedLocationClient: FusedLocationProviderClient? = null
@@ -151,9 +152,25 @@ class MapFragment : Fragment() {
                 }
             }
         }
-        activityViewModel?.getActivitiesForUser(authViewModel?.currentUser?.uid)
+        homeViewModel.activity_link.value.let {
+            if (it != null) {
+                activityViewModel.getActivity(it)
+                homeViewModel.resetLink()
+            }
+        }
+        homeViewModel.user_link.value.let {
+            if (it != null) {
+                homeViewModel.resetUserLink()
+                viewModel.handleGoToUserProfile(it)
 
-        activeUsersViewModel?.getActiveUsersForUser(authViewModel?.currentUser?.uid)
+            }
+        }
+
+
+
+        activityViewModel.getActivitiesForUser(authViewModel?.currentUser?.uid)
+
+        activeUsersViewModel.getActiveUsersForUser(authViewModel?.currentUser?.uid)
 
         fusedLocationClient =
             LocationServices.getFusedLocationProviderClient(activity?.applicationContext!!)
@@ -224,14 +241,17 @@ class MapFragment : Fragment() {
                 val systemUiController = rememberSystemUiController()
 
                 SocialTheme {
-                    MapScreen(systemUiController, latLng, activityViewModel, onEvent = { event ->
+                    MapScreen(homeViewModel,systemUiController, latLng, activityViewModel, onEvent = { event ->
                         when (event) {
                             is MapEvent.GoToProfile -> viewModel.handleGoToProfile()
                             is MapEvent.LogOut -> viewModel.handleLogOut()
+                            is MapEvent.GoToEditProfile -> viewModel.handleGoToEditProfile()
                             is MapEvent.GoToSettings -> viewModel.handleGoToSettings()
                             is MapEvent.GoToHome -> viewModel.handleGoToHome()
                             is MapEvent.GoToChats -> viewModel.handleGoToChats()
-
+                            is MapEvent.AddPeople -> viewModel.handleGoToSearch()
+                            is MapEvent.GoToGroup -> viewModel.handleGoToGroup()
+                            is MapEvent.GoToUserProfile ->    viewModel.handleGoToUserProfile(event.user.id)
                             is MapEvent.GoToCreated -> viewModel.handleGoToCreated()
                             is MapEvent.GoToBookmarked -> viewModel.handleGoToBookmarked()
                             is MapEvent.GoToCalendar-> viewModel.handleGoToCalendar()
@@ -294,7 +314,7 @@ class MapFragment : Fragment() {
                             }
                         }, viewModel, locationCallback, activeUsersViewModel = activeUsersViewModel,
                         chatViewModel = chatViewModel,
-                        authViewModel = authViewModel)
+                        authViewModel = authViewModel,userViewModel=userViewModel)
                 }
             }
         }

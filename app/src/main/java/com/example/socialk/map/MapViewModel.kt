@@ -50,6 +50,16 @@ class MapViewModel : ViewModel(){
         _clicked_chat_activity.value = activity
         _navigateTo.value = Event(Screen.Chat)
     }
+    fun handleGoToSearch( ) {
+
+            _navigateTo.value = Event(Screen.Search)
+    }
+    fun handleGoToGroup() {
+            _navigateTo.value = Event(Screen.CreateGroup)
+    }
+    fun handleGoToEditProfile() {
+            _navigateTo.value = Event(Screen.EditProfile)
+    }
     fun handleGoToUserProfile(user_id:String){
         _clicked_profile.value=user_id
         _navigateTo.value = Event(Screen.UserProfile)
