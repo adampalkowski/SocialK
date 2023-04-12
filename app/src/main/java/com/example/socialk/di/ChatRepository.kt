@@ -14,6 +14,7 @@ interface ChatRepository {
     suspend fun addGroupHighlight(group_id:String,text_message:String): Flow<Response<Void?>>
     suspend fun removeGroupHighlight(group_id:String): Flow<Response<Void?>>
     suspend fun addImageFromGalleryToStorage(id:String,imageUri: Uri): Flow<Response<String>>
+    suspend fun addLoweResImageFromGalleryToStorage(id:String,imageUri: Uri): Flow<Response<String>>
     suspend fun updateChatCollectionRecentMessage(
         id: String,
         recentMessage: String

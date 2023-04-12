@@ -1,11 +1,11 @@
 package com.example.socialk.create
 
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -26,6 +26,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -39,8 +40,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import com.example.socialk.*
 import com.example.socialk.R
+import com.example.socialk.camera.CameraEvent
+import com.example.socialk.camera.CameraView
+import com.example.socialk.camera.ImageDisplay
 import com.example.socialk.components.CustomSocialDialog
 import com.example.socialk.components.PrivacyOption
 import com.example.socialk.di.ActivityViewModel
@@ -62,9 +67,11 @@ import com.marosseleng.compose.material3.datetimepickers.date.ui.dialog.DatePick
 import com.marosseleng.compose.material3.datetimepickers.time.domain.TimePickerDefaults
 import com.marosseleng.compose.material3.datetimepickers.time.domain.noSeconds
 import com.marosseleng.compose.material3.datetimepickers.time.ui.dialog.TimePickerDialog
+import java.io.File
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.*
+import java.util.concurrent.Executor
 
 sealed class CreateEvent {
     object GoToProfile : CreateEvent()
@@ -76,6 +83,9 @@ sealed class CreateEvent {
     object GoToLive : CreateEvent()
     object GoToEvent : CreateEvent()
     object GoToActivity : CreateEvent()
+    object OpenCamera : CreateEvent()
+    class DisplayPicture(val photo_url: String) : CreateEvent()
+    object OpenGallery : CreateEvent()
     object GoToMap : CreateEvent()
     object ClearState : CreateEvent()
     class UserSelected(user: User) : CreateEvent() {
@@ -116,7 +126,7 @@ sealed class CreateEvent {
 
 @OptIn(
     ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class,
-    ExperimentalMaterialApi::class
+    ExperimentalMaterialApi::class, ExperimentalAnimationApi::class
 )
 @Composable
 fun CreateScreen(
@@ -125,8 +135,18 @@ fun CreateScreen(
     userViewModel: UserViewModel,
     activityViewModel: ActivityViewModel?,
     onEvent: (CreateEvent) -> Unit,
-    bottomNavEvent: (Destinations) -> Unit
+    bottomNavEvent: (Destinations) -> Unit, outputDirectory: File?,
+    executor: Executor?,
+    onImageCaptured: (Uri) -> Unit,
 ) {
+    var image_uri by rememberSaveable{ mutableStateOf("".toUri()) }
+    var uri_flow= viewModel.photo_uri.collectAsState()
+    uri_flow.value.let {
+        if (it != null ){
+            image_uri=it
+
+        }
+    }
     Log.d("createscreen", "init" + location.toString())
     val openDialog = remember { mutableStateOf(false) }
     val displayAdvancedOptions = remember { mutableStateOf(false) }
@@ -403,7 +423,7 @@ fun CreateScreen(
                 onClick = {},
                 icon = R.drawable.ic_privacy,
                 selectedPrivacy = selectedPrivacy,
-                onPrivacySelected =  { privacyOption -> selectedPrivacy = privacyOption })
+                onPrivacySelected = { privacyOption -> selectedPrivacy = privacyOption })
             EditTextField(hint = "Additional information",
                 hideKeyboard = hideKeyboard,
                 onFocusClear = { hideKeyboard = false },
@@ -514,7 +534,14 @@ fun CreateScreen(
                             }
                         }
                     }
-
+                    ImageField(modifier = Modifier,
+                        onClick = {},
+                        title = "Image",
+                        description = "Set activity image",
+                        icon = R.drawable.ic_add_photo,image_uri=image_uri,
+                        openCamera = {onEvent(CreateEvent.OpenCamera)},
+                        openGallery = {onEvent(CreateEvent.OpenGallery)}, displayPicture = {onEvent(
+                            CreateEvent.DisplayPicture(image_uri.toString()))})
                     CustomField(
                         text = "Privacy",
                         modifier = Modifier,
@@ -528,10 +555,10 @@ fun CreateScreen(
                             "Activity sharing",
                             "Allow invited users to invite others to the activity.",
                             onSwitch = { enableActivitySharing = it })
-                      /*  ActivitySettingsBox(
-                            "Pictures",
-                            "Disable attach pictures to the activity.",
-                            onSwitch = { disablePictures = it })*/
+                        /*  ActivitySettingsBox(
+                              "Pictures",
+                              "Disable attach pictures to the activity.",
+                              onSwitch = { disablePictures = it })*/
                         ActivitySettingsBox(
                             "Notification",
                             "Don't notify invited users.",
@@ -542,38 +569,7 @@ fun CreateScreen(
                             secondDescription = "Disable chat ",
                             onSwitch = { privateChat = it },
                             secondOnSwitch = { disableChat = it })
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column() {
-                                Text(
-                                    text = "Chat",
-                                    fontFamily = Inter,
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 14.sp,
-                                    color = SocialTheme.colors.textPrimary
-                                )
-                                Text(
-                                    text = "Make chat visible only for activity participants.",
-                                    fontFamily = Inter,
-                                    fontWeight = FontWeight.Light,
-                                    fontSize = 12.sp,
-                                    color = SocialTheme.colors.textPrimary
-                                )
-                                Text(
-                                    text = "Disable chat.",
-                                    fontFamily = Inter,
-                                    fontWeight = FontWeight.Light,
-                                    fontSize = 12.sp,
-                                    color = SocialTheme.colors.textPrimary
-                                )
-                            }
-                            Spacer(modifier = Modifier.weight(1f))
-                            Switch2(onCheckedChange = {})
-                        }
+
                     }
                 }
 
@@ -641,7 +637,9 @@ fun CreateScreen(
                                 enableActivitySharing = enableActivitySharing,
                                 disablePictures = disablePictures,
                                 disableNotification = disableNotification,
-                                privateChat = privateChat, disableChat = disableChat, selectedPrivacy=selectedPrivacy.label
+                                privateChat = privateChat,
+                                disableChat = disableChat,
+                                selectedPrivacy = selectedPrivacy.label
 
                             )
                         )
@@ -775,8 +773,128 @@ fun CreateScreen(
 
 
         }
-    }
 
+
+    }
+    AnimatedVisibility(
+        visible = viewModel.shouldShowCamera.value,
+        enter = scaleIn(
+            animationSpec = tween(800),
+            transformOrigin = TransformOrigin(1f, 0.2f)
+        ),
+        exit = scaleOut(animationSpec = tween(800), transformOrigin = TransformOrigin(1f, 0.2f))
+
+    ) {
+
+        CameraView(
+            onEvent = { event ->
+                when (event) {
+                    is CameraEvent.BackPressed -> {
+                        if (viewModel.shouldShowCamera.value) {
+                            Log.d("CameraEvent","backpressed")
+                            viewModel.shouldShowCamera.value = false
+                        }
+                        if (viewModel.shouldShowPhoto.value) {
+                            viewModel.shouldShowPhoto.value = false
+                        }
+                    }
+                    is CameraEvent.SavePhoto -> {
+                        Log.d("CameraEvent","save photo")
+
+                        viewModel.shouldShowCamera.value = false
+                        viewModel.shouldShowPhoto.value = false
+                    }
+                    else -> {}
+                }
+            },
+            outputDirectory = outputDirectory!!,
+            executor = executor!!,
+            onImageCaptured = onImageCaptured,
+            onError = { Log.e("kilo", "View error:", it) }
+        )
+
+        if (viewModel.shouldShowPhoto.value) {
+            if (uri_flow.value == null) {
+                viewModel.shouldShowPhoto.value = false
+            } else {
+                ImageDisplay(
+                    modifier = Modifier.fillMaxSize(),
+                    uri_flow.value!!, onEvent = { event ->
+                        when (event) {
+                            is CameraEvent.RemovePhoto -> {
+                                Log.d("CameraEvent","remove photo")
+
+                                val photoFile =
+                                    uri_flow.value!!.lastPathSegment?.let {
+                                        File(outputDirectory,
+                                            it
+                                        )
+                                    }
+                                photoFile!!.delete()
+                                viewModel.photo_uri.value="".toUri()
+                                viewModel.shouldShowPhoto.value = false
+                                viewModel.shouldShowCamera.value = true
+                            }
+                            is CameraEvent.BackPressed -> {
+                                Log.d("CameraEvent","back pressed2 ")
+
+
+
+                                viewModel.shouldShowPhoto.value = false
+                                viewModel.shouldShowCamera.value = false
+
+
+                            }
+                            is CameraEvent.SetPicture -> {
+                                Log.d("CameraEvent","set pciture ")
+
+                                Log.d("CreateGroupScreen","settingsi mage")
+                                image_uri=event.image_url
+
+                                viewModel.shouldShowPhoto.value = false
+                                viewModel.shouldShowCamera.value = false
+
+                            }
+                            is CameraEvent.SavePhoto -> {
+                                Log.d("CameraEvent","save pciture 2")
+
+                                viewModel.shouldShowCamera.value = false
+                                viewModel.shouldShowPhoto.value = false
+                            }
+                            is CameraEvent.ImageSent -> {
+                                Log.d("CameraEvent","image  sent 2")
+
+                                viewModel.shouldShowPhoto.value = false
+                                viewModel.shouldShowCamera.value = false
+                            }
+                            is CameraEvent.DeletePhoto -> {
+                                Log.d("CameraEvent","delete  photo 2")
+                                val photoFile =
+                                    uri_flow.value!!.lastPathSegment?.let {
+                                        File(outputDirectory,
+                                            it
+                                        )
+                                    }
+                                photoFile!!.delete()
+                                /*
+                                activityViewModel?.removeParticipantImage(
+                                    viewModel.camera_activity_id.value,
+                                    viewModel?.currentUser!!.uid
+                                )*/
+                                viewModel.photo_uri.value="".toUri()
+                                viewModel.shouldShowPhoto.value = false
+                                viewModel.shouldShowCamera.value = false
+                                viewModel.displayPhoto.value = false
+                            }
+                            else -> {}
+                        }
+
+                    }, null, viewModel.displayPhoto.value
+                )
+            }
+
+        }
+    }
 }
 
 @Composable

@@ -1,32 +1,23 @@
 package com.example.socialk.create.FriendPicker
 
-import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import com.example.socialk.Chats
-import com.example.socialk.Home
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
-import com.example.socialk.Map
-import com.example.socialk.Profile
-import com.example.socialk.chat.ChatEvent
-import com.example.socialk.create.CreateEvent
-import com.example.socialk.create.CreateScreen
 import com.example.socialk.create.CreateViewModel
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.di.UserViewModel
 import com.example.socialk.model.Activity
 import com.example.socialk.model.Chat
-import com.example.socialk.model.User
 import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.AuthViewModel
 import com.example.socialk.ui.theme.SocialTheme
@@ -34,7 +25,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 @AndroidEntryPoint
@@ -65,6 +55,7 @@ class FriendsPickerFragment : Fragment() {
         }
 
         var group_name: String? = arguments?.getString("group_name")
+        var group_picture: String? = arguments?.getString("group_picture")
 
         var type: String = if (activityCreated != null ) {
             "activity"
@@ -96,6 +87,7 @@ class FriendsPickerFragment : Fragment() {
                                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
                                 val current = LocalDateTime.now().format(formatter)
                                 event.selected_ids.add(UserData.user!!.id)
+
                                 val chat = Chat(
                                     create_date = current,
                                     owner_id = UserData.user!!.id,
@@ -112,7 +104,7 @@ class FriendsPickerFragment : Fragment() {
                                     user_two_profile_pic = null,
                                     highlited_message = ""
                                 )
-                                chatViewModel.addChatCollection(chat)
+                                chatViewModel.addChatCollection(chat,group_picture)
                                 viewModel.handleGoToMap()
                             }
                             is FriendsPickerEvent.UpdateInvites -> {
@@ -128,10 +120,10 @@ class FriendsPickerFragment : Fragment() {
                                 }
                             }
                             is FriendsPickerEvent.CreateActivity -> {
+                                Toast.makeText(activity,"Processing activity",Toast.LENGTH_SHORT).show()
                                 event.selected_ids.add(UserData.user!!.id)
                                 activityCreated!!.invited_users =
                                     ArrayList(event.selected_ids.distinct())
-                                activityViewModel.addActivity(activityCreated)
 
                                 val chat = Chat(
                                     create_date = activityCreated.creation_time,
@@ -149,7 +141,16 @@ class FriendsPickerFragment : Fragment() {
                                     user_two_profile_pic = null,
                                     highlited_message = ""
                                 )
-                                chatViewModel.addChatCollection(chat)
+                                chatViewModel.addChatCollection(chat,group_picture, onFinished = {picture->
+                                    if(picture.isEmpty()){
+                                        activityViewModel.addActivity(activityCreated)
+                                    }else{
+                                        activityCreated.creator_profile_picture=picture
+                                        activityViewModel.addActivity(activityCreated)
+                                    }
+
+
+                                })
                                 viewModel.handleGoToMap()
 
                             }

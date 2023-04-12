@@ -100,7 +100,7 @@ class ActivityViewModel @Inject constructor(
                 when (response) {
                     is Response.Success -> {
                         response.data.forEach {
-                            Log.d("getClosestActivities",it.toString())
+                            Log.d("getClosestActimivities",it.toString())
                             list_without_removed_activites.add(it)
                             val time_left: String = calculateTimeLeft(
                                 it.date,

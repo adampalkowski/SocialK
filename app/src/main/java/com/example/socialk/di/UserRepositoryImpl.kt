@@ -33,39 +33,50 @@ class UserRepositoryImpl @Inject constructor(
 ) : UserRepository {
     private var lastVisibleDataFriends:DocumentSnapshot?=null
     override suspend fun getUser(id: String): Flow<Response<User>> = callbackFlow {
-        trySend(Response.Loading)
-        val registration = usersRef.document(id).addSnapshotListener{ snapshot, exception ->
-            if (exception != null) {
-                channel.close(exception)
-                Log.d("USERREPOSTIYRIMPL","exceoptiun")
-                return@addSnapshotListener
-            }
-            if (snapshot != null && snapshot.exists()) {
-                val user = snapshot.toObject(User::class.java)
-                if (user != null) {
-                    Log.d("USERREPOSTIYRIMPL","UPDATE")
-                    Log.d("USERREPOSTIYRIMPL",user.toString())
+        val registration =
+            usersRef.document(id).get().addOnSuccessListener { documents ->
 
-                    trySend(Response.Success(user))
+                val response = if (documents != null) {
+                    val user : User? =  documents!!.toObject<User>()
+                    if(user !=null){
+                        trySend(Response.Success(user))
+
+                    }else{
+                        trySend(
+                            Response.Failure(
+                                e = SocialException(
+                                    "getUser by name document null",
+                                    Exception()
+                                )
+                            )
+                        )
+
+                    }
+                } else {
+                    trySend(
+                        Response.Failure(
+                            e = SocialException(
+                                "getUser by name document null",
+                                Exception()
+                            )
+                        )
+                    )
                 }
-            } else {
+
+            }.addOnFailureListener { exception ->
+                channel.close(exception)
                 trySend(
                     Response.Failure(
                         e = SocialException(
-                            "get user snaphot doesn't exist",
+                            "get user by name document doesnt exist",
                             Exception()
                         )
                     )
                 )
-
             }
-        }
 
         awaitClose() {
-            Log.d("USERREPOSTIYRIMPL","REMOVED")
-            registration.remove()
         }
-
     }
 
     override suspend fun getUserListener(id: String): Flow<Response<User>> = callbackFlow {
@@ -261,13 +272,13 @@ class UserRepositoryImpl @Inject constructor(
             if (imageUri != null) {
                 val fileName = user_id
                 try {
-                    storageRef.child("images/images/$fileName" + "_200x200").delete().await1()
+                    storageRef.child("images/images/$fileName" + "_320x320").delete().await1()
                 }catch (e:StorageException){
 
                 }
                 val imageRef = storageRef.child("images/$fileName")
                 imageRef.putFile(imageUri).await1()
-                val reference = storageRef.child("images/images/$fileName" + "_200x200")
+                val reference = storageRef.child("images/images/$fileName" + "_320x320")
                 val url =keepTrying(5,reference)
                 emit(Response.Success(url.toString()))
             }

@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.net.toUri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -136,19 +137,42 @@ class ChatViewModel @Inject constructor(
             }
         }
     }
-    fun addChatCollection(chatCollection: Chat) {
+    fun addChatCollection(chatCollection: Chat,url:String?,onFinished:(String)->Unit={}) {
         viewModelScope.launch {
             val uuid: UUID = UUID.randomUUID()
             val id:String = uuid.toString()
             if (chatCollection.id!!.isEmpty()||chatCollection.id==null){
                 chatCollection.id=id
             }
+            if(url!=null && url.isNotEmpty()){
+                repo.addLoweResImageFromGalleryToStorage(id, url.toUri()).collect{ response ->
+                    when(response){
+                        is Response.Success ->{
+                            chatCollection.create_date= getTime()
+                            chatCollection.chat_picture=response.data
+                            repo.addChatCollection(chatCollection).collect{
+                                    response->
+                                _addChatCollectionState.value=response
+                            }
+                            onFinished(response.data)
+                        }
+                        is Response.Loading ->{
+                            _addChatCollectionState.value=Response.Loading
+                        }
+                        is Response.Failure ->{}
 
-            chatCollection.create_date= getTime()
-            repo.addChatCollection(chatCollection).collect{
-                    response->
-                _addChatCollectionState.value=response
+                    }
+                }
+            }else{
+                chatCollection.create_date= getTime()
+                repo.addChatCollection(chatCollection).collect{
+                        response->
+                    _addChatCollectionState.value=response
+                }
+                onFinished("")
             }
+
+
         }
     }
     fun deleteChatCollection(id: String) {

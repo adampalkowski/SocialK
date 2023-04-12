@@ -79,6 +79,7 @@ class SearchFragment: Fragment() {
 
                                 }
                                 is SearchEvent.GoToUserProfile ->{
+                                    Log.d("searchfragment","call")
                                     // event.user stores the value of searched user , pass it to the nav component so that user profile can be displayed
                                     viewModel.handleGoToUserProfile(event.user)
                                 }

@@ -27,6 +27,7 @@ class ChatRepositoryImpl @Inject constructor(
     private val messagesRef: CollectionReference,
     private val chatCollectionsRef: CollectionReference,
     private val resStorage: StorageReference,
+    private val lowResStorage: StorageReference,
 ) : ChatRepository {
     private var lastVisibleData: DocumentSnapshot? = null
     private var lastVisibleDataGroup: DocumentSnapshot? = null
@@ -97,8 +98,8 @@ class ChatRepositoryImpl @Inject constructor(
                 val fileName = id
                 val imageRef = resStorage.child("images/$fileName")
                 imageRef.putFile(imageUri).await1()
-                val reference = resStorage.child("images/$fileName" + "_600x600")
-                val url = keepTrying(5, reference)
+                val reference = resStorage.child("images/$fileName" + "_1080x1080")
+                val url = keepTrying(6, reference)
                 emit(Response.Success(url))
             }
         } catch (e: Exception) {
@@ -113,7 +114,32 @@ class ChatRepositoryImpl @Inject constructor(
             )
         }
     }
-
+    override suspend fun addLoweResImageFromGalleryToStorage(
+        id: String,
+        imageUri: Uri
+    ): Flow<Response<String>> = flow {
+        try {
+            emit(Response.Loading)
+            if (imageUri != null) {
+                val fileName = id
+                val imageRef = lowResStorage.child("images/$fileName")
+                imageRef.putFile(imageUri).await1()
+                val reference = lowResStorage.child("images/images/$fileName" + "_320x320")
+                val url = keepTrying(6, reference)
+                emit(Response.Success(url))
+            }
+        } catch (e: Exception) {
+            Log.d("ImagePicker", "try addLoweResImageFromGalleryToStorage EXCEPTION")
+            emit(
+                Response.Failure(
+                    e = SocialException(
+                        "addProfilePictureToStorage exception",
+                        Exception()
+                    )
+                )
+            )
+        }
+    }
     override suspend fun addChatCollection(chatCollection: Chat): Flow<Response<Void?>> = flow {
         try {
             emit(Response.Loading)

@@ -1,20 +1,27 @@
 package com.example.socialk.create
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import com.example.socialk.Chats
-import com.example.socialk.Home
+import com.example.socialk.*
 import com.example.socialk.Main.Screen
 import com.example.socialk.Main.navigate
 import com.example.socialk.Map
-import com.example.socialk.Profile
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.di.UserViewModel
@@ -28,10 +35,15 @@ import com.firebase.geofire.GeoFireUtils
 import com.firebase.geofire.GeoLocation
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.AndroidEntryPoint
+import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import kotlin.collections.HashMap
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @AndroidEntryPoint
 class CreateFragment : Fragment() {
@@ -40,6 +52,58 @@ class CreateFragment : Fragment() {
     private val authViewModel by viewModels<AuthViewModel>()
     private val userViewModel by viewModels<UserViewModel>()
     private val chatViewModel by viewModels<ChatViewModel>()
+
+
+    private  var outputDirectory: File? =null
+    private var cameraExecutor: ExecutorService?=null
+    private fun getOutputDirectory(): File {
+        val mediaDir = requireActivity().externalMediaDirs
+            .firstOrNull()?.let {
+                File(it, resources.getString(R.string.app_name)).apply { mkdirs() }
+            }
+
+        return if (mediaDir != null && mediaDir.exists()) mediaDir else requireActivity().filesDir
+    }
+    private suspend fun Context.getCameraProvider(): ProcessCameraProvider =
+        suspendCoroutine { continuation ->
+            ProcessCameraProvider.getInstance(this).also { cameraProvider ->
+                cameraProvider.addListener({
+                    continuation.resume(cameraProvider.get())
+                }, ContextCompat.getMainExecutor(this))
+            }
+        }
+
+    private fun requestCameraPermission() {
+        when {
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                Log.i("kilo", "Permission previously granted")
+            }
+
+            ActivityCompat.shouldShowRequestPermissionRationale(
+                requireActivity(),
+                Manifest.permission.CAMERA
+            ) -> Log.i("kilo", "Show camera permissions dialog")
+
+            else -> requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+        } else {
+            Log.i("kilo", "Permission denied")
+        }
+    }
+    private fun handleImageCapture(uri: Uri) {
+        viewModel.shouldShowCamera.value = true
+        viewModel.setPhotoUri(uri)
+        viewModel.shouldShowPhoto.value = true
+
+    }
     override fun onStart() {
         super.onStart()
     }
@@ -67,12 +131,23 @@ class CreateFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            // Callback is invoked after the user selects a media item or closes the
+            // photo picker.
+            if (uri != null) {
+                Log.d("ImageFromGallery", "image received"+uri.toString())
+                viewModel.setPhotoUri(uri)
+            } else {
+                Log.d("PhotoPicker", "No media selected")
+            }
+        }
         activityViewModel.activityAdded()
         viewModel.navigateTo.observe(viewLifecycleOwner) { navigateToEvent ->
             navigateToEvent.getContentIfNotHandled()?.let { navigateTo ->
                 if (navigateTo==Screen.FriendsPicker){
                     val bundle=Bundle()
                     bundle.putSerializable("activity",viewModel.created_activity.value)
+                    bundle.putString("group_picture",viewModel.photo_uri.value.toString())
                     navigate(navigateTo, Screen.Create,bundle)
 
                 }else{
@@ -82,7 +157,9 @@ class CreateFragment : Fragment() {
             }
 
         }
-
+        requestCameraPermission()
+        outputDirectory = getOutputDirectory()
+        cameraExecutor = Executors.newSingleThreadExecutor()
         val sharedPreferences = requireContext().getSharedPreferences("create_data", Context.MODE_PRIVATE)
         val name = sharedPreferences.getString("name", "")
 
@@ -129,6 +206,21 @@ class CreateFragment : Fragment() {
                             is CreateEvent.GoBack ->activity?.onBackPressedDispatcher?.onBackPressed()
                             is CreateEvent.ClearState -> activityViewModel.activityAdded()
                             is CreateEvent.GoToSettings -> viewModel.handleGoToSettings()
+                            is CreateEvent.OpenCamera->{      viewModel.shouldShowCamera.value = true
+                            }
+
+                            is CreateEvent.DisplayPicture->{
+                                viewModel.photo_uri.value=event.photo_url.toUri()
+                                viewModel.shouldShowCamera.value=true
+                                viewModel.shouldShowPhoto.value=true
+                                viewModel.displayPhoto.value=true
+                            }
+                            is CreateEvent.OpenGallery -> {
+                                pickMedia.launch(
+                                    PickVisualMediaRequest(
+                                        ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            }
                             is CreateEvent.GoToEvent -> viewModel.handleGoToEvent()
                             is CreateEvent.GoToLive -> viewModel.handleGoToLive()
                             is CreateEvent.GoToActivity -> viewModel.handleGoToActivity()
@@ -262,7 +354,7 @@ class CreateFragment : Fragment() {
                                 is Profile -> viewModel.handleGoToProfile()
                                 else->{}
                             }
-                        })
+                        },outputDirectory=outputDirectory, executor = cameraExecutor, onImageCaptured = ::handleImageCapture)
                 }
             }
         }

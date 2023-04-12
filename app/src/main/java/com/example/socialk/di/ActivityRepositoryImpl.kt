@@ -36,17 +36,19 @@ class ActivityRepositoryImpl @Inject constructor(
     private val chatCollectionsRef: CollectionReference,
     private val messagessRef: CollectionReference,
     private val resStorage: StorageReference,
+    private val lowResStorage: StorageReference,
 ):ActivityRepository{
     private var lastVisibleData: DocumentSnapshot? = null
     private var lastVisibleUserData: DocumentSnapshot? = null
     private var lastVisibleDataForUserProfile: DocumentSnapshot? = null
     private var lastVisibleClosestData: DocumentSnapshot? = null
 
+    private  var loaded_public_activities: ArrayList<Activity> = ArrayList()
 
     override suspend fun getClosestActivities(lat: Double,lng:Double): Flow<Response<List<Activity>>> =callbackFlow {
         lastVisibleClosestData=null
         val center = GeoLocation(lat,lng)
-        val radiusInM = 5.0 * 1000.0
+        val radiusInM = 50.0 * 1000.0
         Log.d("getMoreClosestActivites","settings null")
         val bounds = GeoFireUtils.getGeoHashQueryBounds(center, radiusInM)
         val tasks: MutableList<Task<QuerySnapshot>> = ArrayList()
@@ -93,6 +95,7 @@ class ActivityRepositoryImpl @Inject constructor(
                         }
                     }
                     lastVisibleClosestData= matchingDocs[matchingDocs.size - 1]
+
                     trySend(Response.Success(newActivities))
 
                 }
@@ -152,7 +155,11 @@ class ActivityRepositoryImpl @Inject constructor(
                         }
                     }
                     lastVisibleClosestData= matchingDocs[matchingDocs.size - 1]
-                    trySend(Response.Success(newActivities))
+                    loaded_public_activities.addAll(newActivities)
+                    val new_instance= ArrayList<Activity>()
+                    Log.d("ActivityRepositoryImpl",loaded_public_activities.toString())
+                    new_instance.addAll(loaded_public_activities)
+                    trySend(Response.Success(new_instance))
 
                 }
             }.addOnFailureListener(){

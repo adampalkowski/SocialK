@@ -11,7 +11,7 @@ data class Activity(
     val description: String,
     val creator_username: String,
     val creator_name: String,
-    val creator_profile_picture: String,
+    var creator_profile_picture: String,
     var time_left: String,
     var end_time: String,
     var geoHash: Any?,

@@ -50,10 +50,11 @@ class MapFragment : Fragment() {
             val locationList = locationResult.locations
             if (locationList.isNotEmpty()) {
                 //The last location in the list is the newest
+                Log.d("Mapfragment","location callback")
                 val location = locationList.last()
                 viewModel.setLocation(LatLng(location.latitude, location.longitude))
                 activityViewModel.setLocation(LatLng(location.latitude, location.longitude))
-
+                activityViewModel.getClosestActivities(location.latitude,location.longitude)
             }
         }
     }

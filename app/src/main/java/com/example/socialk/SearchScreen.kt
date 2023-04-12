@@ -35,6 +35,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.example.socialk.chat.ChatComponents.SendButton
 import com.example.socialk.chat.ChatEvent
+import com.example.socialk.components.HomeScreenHeading
 import com.example.socialk.components.ScreenHeading
 import com.example.socialk.create.ActivityTextFieldState
 import com.example.socialk.create.ActivityTextStateSaver
@@ -43,6 +44,7 @@ import com.example.socialk.di.UserViewModel
 import com.example.socialk.model.Response
 import com.example.socialk.model.User
 import com.example.socialk.model.UserData
+import com.example.socialk.settings.SettingsEvent
 import com.example.socialk.ui.theme.*
 import kotlin.text.Typography
 
@@ -66,7 +68,8 @@ sealed class SearchEvent {
 fun SearchScreen(userViewModel: UserViewModel?, onEvent: (SearchEvent) -> Unit) {
     var usersExist = remember { mutableStateOf(false) }
     val friends_flow = userViewModel!!.friendState.collectAsState()
-    val more_friends_flow = userViewModel!!.friendMoreState.collectAsState()
+    val userFlow = userViewModel.userState?.collectAsState()
+    val more_friends_flow = userViewModel.friendMoreState.collectAsState()
     Surface(
         modifier = Modifier
             .fillMaxSize()
@@ -80,7 +83,8 @@ fun SearchScreen(userViewModel: UserViewModel?, onEvent: (SearchEvent) -> Unit) 
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             //HEADING
-            ScreenHeading(onClick = { onEvent(SearchEvent.GoBack) }, title = "Search")
+            HomeScreenHeading(onEvent = { onEvent(SearchEvent.GoBack)}, title = "Add friends")
+            com.example.socialk.chat.ChatComponents.Divider()
             Spacer(modifier = Modifier.height(36.dp))
             //EDIT TEXT
             searchEditText(userViewModel, onEvent = onEvent)
@@ -227,7 +231,11 @@ fun SearchScreen(userViewModel: UserViewModel?, onEvent: (SearchEvent) -> Unit) 
                             items(it.data) {
                                 Log.d("GEETINGUSERS", "MAin" + it.toString())
 
-                                UserListItem(Modifier, user = it, GoToProfile = {event-> onEvent(SearchEvent.GoToUserProfile(event))})
+
+                                UserListItem(Modifier, user = it, GoToProfile = {event->
+
+                                    Log.d("searchfragment","scucess")
+                                    onEvent(SearchEvent.GoToUserProfile(event))})
 
                             }
                             usersExist.value = true
@@ -246,7 +254,9 @@ fun SearchScreen(userViewModel: UserViewModel?, onEvent: (SearchEvent) -> Unit) 
                         is Response.Success -> {
                             items(it.data) {
                                 Log.d("GEETINGUSERS", it.toString())
-                                UserListItem(Modifier, user = it, GoToProfile = {event-> onEvent (SearchEvent.GoToUserProfile(event))})
+                                UserListItem(Modifier, user = it, GoToProfile = {event->
+                                    Log.d("searchfragment","more")
+                                    onEvent (SearchEvent.GoToUserProfile(event))})
                             }
                         }
                         else -> {}
@@ -263,7 +273,25 @@ fun SearchScreen(userViewModel: UserViewModel?, onEvent: (SearchEvent) -> Unit) 
 
         }
     }
+    userFlow?.value.let {
+        when (it) {
+            is Response.Success -> {
+                userViewModel.resetUserValue()
+                Log.d("searchfragment","userlfoe")
+                onEvent(SearchEvent.GoToUserProfile(it.data))
 
+            }
+            is Response.Failure -> {
+                Toast.makeText(
+                    LocalContext.current,
+                    "Failed to find user with given username", Toast.LENGTH_LONG
+                ).show()
+
+            }
+            else -> {}
+
+        }
+    }
     userViewModel?.isInviteAcceptedState?.value.let {
         when (it) {
             is Response.Failure -> {
@@ -450,7 +478,7 @@ fun searchEditText(userViewModel: UserViewModel?, onEvent: (SearchEvent) -> Unit
         mutableStateOf(ActivityTextFieldState())
     }
     var textSendAvailable by remember { mutableStateOf(false) }
-    val userFlow = userViewModel?.userState?.collectAsState()
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -520,23 +548,7 @@ fun searchEditText(userViewModel: UserViewModel?, onEvent: (SearchEvent) -> Unit
 
             }, icon = R.drawable.ic_search, available = textSendAvailable)
         }
-        userFlow?.value.let {
-            when (it) {
-                is Response.Success -> {
-                    onEvent(SearchEvent.GoToUserProfile(it.data))
-                    userViewModel?.resetUserValue()
-                }
-                is Response.Failure -> {
-                    Toast.makeText(
-                        LocalContext.current,
-                        "Failed to find user with given username", Toast.LENGTH_LONG
-                    ).show()
 
-                }
-                else -> {}
-
-            }
-        }
 
     }
 

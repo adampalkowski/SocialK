@@ -44,6 +44,7 @@ fun ChatScreenTopBar(chat: Chat, onEvent: (ChatEvent) -> Unit) {
             }
 
             Spacer(modifier = Modifier.width(12.dp))
+
             if(chat.type.equals("duo")){
                 val image = if (chat.chat_picture != null) {
                     chat.chat_picture
@@ -72,6 +73,15 @@ fun ChatScreenTopBar(chat: Chat, onEvent: (ChatEvent) -> Unit) {
                 }
                 Image(
                     painter = rememberAsyncImagePainter(image),
+                    contentDescription = "profile image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                )
+            }else{
+                Image(
+                    painter = rememberAsyncImagePainter(chat.chat_picture),
                     contentDescription = "profile image",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier

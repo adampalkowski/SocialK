@@ -35,11 +35,13 @@ import com.example.socialk.PickUsername.UsernameState
 import com.example.socialk.PickUsername.UsernameStateSaver
 import com.example.socialk.UserProfile.DescriptionState
 import com.example.socialk.UserProfile.DescriptionStateSaver
+import com.example.socialk.components.HomeScreenHeading
 import com.example.socialk.components.ScreenHeading
 import com.example.socialk.di.UserViewModel
 import com.example.socialk.model.Response
 import com.example.socialk.model.User
 import com.example.socialk.model.UserData
+import com.example.socialk.settings.SettingsEvent
 import com.example.socialk.signinsignup.*
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
@@ -83,7 +85,8 @@ fun EditProfileScreen(
 
     Log.d("Edit_profile_screen",user.pictureUrl.toString())
     Column(modifier = Modifier.fillMaxSize()) {
-        ScreenHeading(onClick = { onEvent(EditProfileEvent.GoToHome) }, title = "Edit profile")
+        HomeScreenHeading(onEvent = { onEvent(EditProfileEvent.GoToHome)}, title = "Edit profile")
+        com.example.socialk.chat.ChatComponents.Divider()
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())

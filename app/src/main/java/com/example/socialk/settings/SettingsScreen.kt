@@ -38,6 +38,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.fragment.app.viewModels
 import com.example.socialk.R
 import com.example.socialk.components.CustomSocialDialog
+import com.example.socialk.components.HomeScreenHeading
 import com.example.socialk.components.ScreenHeading
 import com.example.socialk.components.SocialDialog
 import com.example.socialk.model.UserData
@@ -71,7 +72,8 @@ fun SettingsScreen(viewModel: AuthViewModel?, onEvent: (SettingsEvent) -> Unit) 
     ) {
 
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            ScreenHeading(title = "Settings",onClick={onEvent(SettingsEvent.GoBack)})
+            HomeScreenHeading(onEvent = { onEvent(SettingsEvent.GoBack)}, title = "Settings")
+            com.example.socialk.chat.ChatComponents.Divider()
             Spacer(modifier = Modifier.height(12.dp))
             settingsDivider(text = "Account")
             settingsItem(

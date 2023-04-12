@@ -30,7 +30,7 @@ fun HomeScreenHeading(onEvent: () -> Unit, title: String) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_back),
                     contentDescription = null,
-                    tint = SocialTheme.colors.iconInteractive,
+                    tint = SocialTheme.colors.iconPrimary,
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))

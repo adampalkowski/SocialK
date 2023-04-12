@@ -1,6 +1,7 @@
 package com.example.socialk.create.FriendPicker
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,6 +19,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -157,6 +159,7 @@ fun PickDisplay(
     all_friends: Boolean,
     onEvent: (FriendsPickerEvent) -> Unit,
 ) {
+    val context= androidx.compose.ui.platform.LocalContext.current
     var enabledButton by rememberSaveable {
         mutableStateOf(false)
     }
@@ -243,7 +246,9 @@ fun PickDisplay(
                 icon = R.drawable.ic_done,
                 iconTint = SocialTheme.colors.textSecondary,
                 borderColor = SocialTheme.colors.iconInteractive
-                )
+                , onError = {
+                    Toast.makeText(context,"No users selected",Toast.LENGTH_SHORT).show()
+            })
             }
 
     }
@@ -257,8 +262,10 @@ fun PickDisplay(
         iconTint: Color = SocialTheme.colors.iconPrimary,
         text: String,
         onEvent: () -> Unit,
+        onError:()->Unit,
         shape: Dp = 100.dp,
         backGroundColor: Color = SocialTheme.colors.uiBackground,
+        backGroundColorInActive:Color=SocialTheme.colors.iconInteractiveInactive,
         elevation: Dp = 4.dp,
         textColor: Color = SocialTheme.colors.textPrimary,
         textStyle: TextStyle = TextStyle(
@@ -266,12 +273,11 @@ fun PickDisplay(
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp
         ),
-        borderColor: Color = SocialTheme.colors.uiFloated
+        borderColor: Color = SocialTheme.colors.uiFloated,
     ) {
         Card(
             modifier = modifier,
             shape = RoundedCornerShape(shape),
-            border = BorderStroke(1.dp, color = borderColor),
             elevation = if (enabled) {
                 elevation
             } else {
@@ -281,12 +287,13 @@ fun PickDisplay(
                 if (enabled) {
                     onEvent()
                 } else {
+                    onError()
                 }
             }
         ) {
             Box(
                 modifier = Modifier
-                    .background(color = backGroundColor)
+                    .background(color = if(enabled) backGroundColor else backGroundColorInActive)
                     .padding(vertical = 12.dp, horizontal = 24.dp)
             ) {
                 Row {

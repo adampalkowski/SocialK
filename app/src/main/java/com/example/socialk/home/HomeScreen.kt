@@ -1230,7 +1230,18 @@ fun FriendsPublicPicker(selectedOption: Int, onOptionSelected: (Int) -> Unit) {
 
         Row(Modifier.align(Alignment.Center).padding(vertical = 8.dp)) {
             Column(Modifier.clickable { onOptionSelected(0) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = "Friends",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 12.sp),color=SocialTheme.colors.textPrimary)
+                Row(verticalAlignment = Alignment.CenterVertically){
+                    androidx.compose.material3.Icon(
+                        painter = painterResource(id = R.drawable.ic_handshake),
+                        contentDescription = null,
+                        tint =  SocialTheme.colors.iconPrimary
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(text = "Friends",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 12.sp),color=SocialTheme.colors.textPrimary)
+
+
+                }
+
                 AnimatedVisibility(
                     visible = if (selectedOption == 0) true else false,
                     enter = fadeIn(tween(300)),
@@ -1239,7 +1250,7 @@ fun FriendsPublicPicker(selectedOption: Int, onOptionSelected: (Int) -> Unit) {
                     androidx.compose.material3.Card(
                         shape = RoundedCornerShape(100.dp),
                         modifier = Modifier
-                            .width(48.dp)
+                            .width(64.dp)
                             .height(4.dp)
                     ) {
                         Box(Modifier.background(color = SocialTheme.colors.iconPrimary))
@@ -1249,7 +1260,17 @@ fun FriendsPublicPicker(selectedOption: Int, onOptionSelected: (Int) -> Unit) {
             }
             Spacer(Modifier.width(24.dp))
             Column(Modifier.clickable { onOptionSelected(1) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = "Public",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 12.sp),color=SocialTheme.colors.textPrimary)
+                Row(verticalAlignment = Alignment.CenterVertically){
+                    androidx.compose.material3.Icon(
+                        painter = painterResource(id = R.drawable.ic_public),
+                        contentDescription = null,
+                        tint =  SocialTheme.colors.iconPrimary
+                    )
+                    Spacer(Modifier.width(4.dp))
+
+                    Text(text = "Public",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 12.sp),color=SocialTheme.colors.textPrimary)
+                }
+
                 AnimatedVisibility(
                     visible = if (selectedOption == 1) true else false,
                     enter = fadeIn(tween(300)),
@@ -1257,7 +1278,7 @@ fun FriendsPublicPicker(selectedOption: Int, onOptionSelected: (Int) -> Unit) {
                 ) {
                     androidx.compose.material3.Card(
                         shape = RoundedCornerShape(100.dp),
-                        modifier = Modifier.width(48.dp)
+                        modifier = Modifier.width(64.dp)
                             .height(4.dp)
                     ) {
                         Box(Modifier.background(color =SocialTheme.colors.iconPrimary))

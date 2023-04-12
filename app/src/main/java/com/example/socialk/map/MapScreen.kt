@@ -6,6 +6,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.util.DisplayMetrics
 import android.util.Log
+import android.util.TypedValue
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
@@ -147,12 +148,7 @@ fun MapScreen(homeViewModel:HomeViewModel,
     authViewModel: AuthViewModel?,
               userViewModel: UserViewModel
 ) {
-    Log.d("getClosestActivities","f")
-    view
-    if(viewModel.location.value!=null ){
-        Log.d("getClosestActivities","call")
-        activityViewModel.getClosestActivities(viewModel.location.value!!.latitude,viewModel.location.value!!.longitude)
-    }
+
     //set status bar TRANSPARENT
     SideEffect {
         systemUiController.setStatusBarColor(color = androidx.compose.ui.graphics.Color.Transparent)
@@ -263,7 +259,7 @@ fun MapScreen(homeViewModel:HomeViewModel,
                     //friends list and search
                     DrawerField(title = "Add friends", icon = R.drawable.ic_add_person, onClick = {onEvent(MapEvent.AddPeople)})
                     //trending
-                    DrawerField(
+                    /*DrawerField(
                         title = "Trending",
                         icon = R.drawable.ic_trending,
                         onClick = {onEvent(MapEvent.GoToTrending)}){
@@ -274,9 +270,9 @@ fun MapScreen(homeViewModel:HomeViewModel,
                                 fontWeight = FontWeight.Light,
                                 fontSize = 10.sp,color=SocialTheme.colors.textPrimary
                             ))
-                    }
+                    }*/
                     // calendar
-                    DrawerField(title = "Calendar", icon = R.drawable.ic_calendar, onClick = {onEvent(MapEvent.GoToCalendar)}) {
+                    DrawerField(title = "Upcoming", icon = R.drawable.ic_calendar, onClick = {onEvent(MapEvent.GoToCalendar)}) {
                         activityViewModel.activitiesListState.value.let { it ->
                             when (it) {
                                 is Response.Success -> {
@@ -328,7 +324,7 @@ fun MapScreen(homeViewModel:HomeViewModel,
                     DrawerField(title = "Groups", icon = R.drawable.ic_groups, onClick = {onEvent(MapEvent.GoToGroup)})
 
                     //bookmarked activities
-                    DrawerField(title = "Bookmarks", icon = R.drawable.ic_bookmark, onClick = {onEvent(MapEvent.GoToBookmarked)})
+                   /* DrawerField(title = "Bookmarks", icon = R.drawable.ic_bookmark, onClick = {onEvent(MapEvent.GoToBookmarked)})*/
 
                     //setttings
                     DrawerField(title = "Settings", icon = R.drawable.ic_settings, onClick = {onEvent(MapEvent.GoToSettings)})
@@ -1402,7 +1398,8 @@ fun loadIcon(
         var bitmap: Bitmap? = null
         Glide.with(context)
             .asBitmap()
-            .load(url).circleCrop()
+            .load(url)
+            .circleCrop()
             .error(placeHolder)
             // to show a default icon in case of any errors
             .into(object : CustomTarget<Bitmap>() {
@@ -1419,6 +1416,22 @@ fun loadIcon(
 
                 }
             })
+        bitmap = bitmap?.let {
+            Bitmap.createScaledBitmap(
+                it,
+                TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    48f,
+                    context.resources.displayMetrics
+                ).toInt(),
+                TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    48f,
+                    context.resources.displayMetrics
+                ).toInt(),
+                true
+            )
+        }
         return BitmapDescriptorFactory.fromBitmap(
             bitmap!!.copy(
                 bitmap!!.config,
