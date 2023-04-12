@@ -133,6 +133,7 @@ class AuthRepositoryImpl @Inject constructor(
                 friends_ids = HashMap(),
                 blocked_ids =  ArrayList(),
                 invited_ids =  ArrayList(),
+                user_requests = ArrayList()
             )
             db.collection("Users").document(uid).set(user).await()
         }

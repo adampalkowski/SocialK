@@ -121,6 +121,7 @@ sealed class CreateEvent {
         val privateChat: Boolean,
         val disableChat: Boolean,
         val selectedPrivacy: String,
+        val awaitConfirmation: Boolean,
     ) : CreateEvent()
 }
 
@@ -164,6 +165,9 @@ fun CreateScreen(
         mutableStateOf(false)
     }
     var disableNotification by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var awaitConfirmation by rememberSaveable {
         mutableStateOf(false)
     }
     var privateChat by rememberSaveable {
@@ -569,6 +573,11 @@ fun CreateScreen(
                             secondDescription = "Disable chat ",
                             onSwitch = { privateChat = it },
                             secondOnSwitch = { disableChat = it })
+                        ActivitySettingsBox(
+                            "Participant confirmation",
+                            "Confirm or decline users request to join the activity.",
+                            onSwitch = { awaitConfirmation = it })
+
 
                     }
                 }
@@ -639,7 +648,8 @@ fun CreateScreen(
                                 disableNotification = disableNotification,
                                 privateChat = privateChat,
                                 disableChat = disableChat,
-                                selectedPrivacy = selectedPrivacy.label
+                                selectedPrivacy = selectedPrivacy.label,
+                                awaitConfirmation= awaitConfirmation
 
                             )
                         )

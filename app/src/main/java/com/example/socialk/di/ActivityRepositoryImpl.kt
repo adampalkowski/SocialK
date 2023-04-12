@@ -224,7 +224,24 @@ class ActivityRepositoryImpl @Inject constructor(
             emit(Response.Failure(e= SocialException("unlikeActivity exception",Exception())))
         }
     }
-
+    override suspend fun addRequestToActivity(activity_id: String, user_id: String): Flow<Response<Void?>> =flow{
+        try{
+            emit(Response.Loading)
+            val update = activitiesRef.document(activity_id).update("requests",FieldValue.arrayUnion(user_id)).await()
+            emit(Response.Success(update))
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("addRequestToActivity exception",Exception())))
+        }
+    }
+    override suspend fun removeRequestFromActivity(activity_id: String, user_id: String): Flow<Response<Void?>> =flow{
+        try{
+            emit(Response.Loading)
+            val update = activitiesRef.document(activity_id).update("requests",FieldValue.arrayRemove(user_id)).await()
+            emit(Response.Success(update))
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("removeRequestFromActivity exception",Exception())))
+        }
+    }
     override suspend fun addActivity(activity: Activity) :Flow<Response<Void?>> = flow {
         try {
             emit(Response.Loading)

@@ -55,6 +55,7 @@ sealed class ActivityItemEvent {
     class LikedActivity(activity: Activity) : ActivityItemEvent() {
         val activity = activity
     }
+    class SendRequest(val activity: Activity) : ActivityItemEvent()
 
     class NotLikedActivity(activity: Activity) : ActivityItemEvent() {
         val activity = activity
@@ -160,6 +161,10 @@ fun ActivityItem(modifier:Modifier=Modifier,
 
                 controls(onEvent = { event ->
                     when (event) {
+                        is ActivityItemEvent.SendRequest -> {
+                            Log.d("Mapfragment","open  event")
+                            onEvent(ActivityEvent.SendRequest(event.activity))
+                        }
                         is ActivityItemEvent.NotLikedActivity -> {
                             liked.value = true
                             onEvent(ActivityEvent.ActivityLiked(event.activity))
@@ -470,15 +475,31 @@ fun controls(onEvent: (ActivityItemEvent) -> Unit, activity: Activity, liked: Bo
         if (liked) {
 
         } else {
-            ChatButton(
-                onEvent = {
+            if(activity.awaitConfirmation){
+
+                ChatButton(
+                    onEvent = {
+                        onEvent(ActivityItemEvent.SendRequest(activity))
+
+                    }, icon =
+                    R.drawable.ic_loyalty
+                    , iconTint =
+                    SocialTheme.colors.iconPrimary
+                )
+            }else{
+
+
+                ChatButton(
+                    onEvent = {
                         onEvent(ActivityItemEvent.NotLikedActivity(activity))
 
-                }, icon =
+                    }, icon =
                     R.drawable.ic_add_task
-               , iconTint =
+                    , iconTint =
                     SocialTheme.colors.iconPrimary
-            )
+                )
+            }
+
 
         }
         if(!activity.disableChat){

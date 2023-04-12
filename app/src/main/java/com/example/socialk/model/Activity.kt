@@ -33,7 +33,9 @@ data class Activity(
     val disableNotification: Boolean,
     val privateChat: Boolean,
     val public:Boolean,
-    var participants_ids: ArrayList<String>
+    var participants_ids: ArrayList<String>,
+    val awaitConfirmation:Boolean,
+    var requests: ArrayList<String>,
 
     ) : java.io.Serializable {
     constructor() : this(
@@ -69,5 +71,7 @@ data class Activity(
         privateChat = false,
         public=false,
          participants_ids =ArrayList(),
+        awaitConfirmation=false,
+        requests=ArrayList()
     )
 }
