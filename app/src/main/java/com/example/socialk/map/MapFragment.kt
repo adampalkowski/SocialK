@@ -246,6 +246,9 @@ class MapFragment : Fragment() {
                     MapScreen(homeViewModel,systemUiController, latLng, activityViewModel, onEvent = { event ->
                         when (event) {
                             is MapEvent.GoToProfile -> viewModel.handleGoToProfile()
+                            is MapEvent.ReportActivity -> activityViewModel.reportActivity(event.activity_id)
+                            is MapEvent.LeaveActivity -> activityViewModel.unlikeActivity(event.activity_id,event.user_id)
+                            is MapEvent.HideActivity-> activityViewModel.hideActivity(event.activity_id,event.user_id)
                             is MapEvent.LogOut -> viewModel.handleLogOut()
                             is MapEvent.GoToEditProfile -> viewModel.handleGoToEditProfile()
                             is MapEvent.GoToSettings -> viewModel.handleGoToSettings()
@@ -282,15 +285,26 @@ class MapFragment : Fragment() {
                                 viewModel.handleGoToChat(event.activity)
                             }
                             is MapEvent.ActivityLiked -> {
-                                activityViewModel.likeActivity(
-                                    event.activity.id,
-                                    UserData.user!!
-                                )
+
+                                if (event.activity.participants_profile_pictures.values.size<2){
+                                    activityViewModel.likeActivity(
+                                        event.activity.id,
+                                        UserData.user!!
+                                    )
+                                }else{
+                                    activityViewModel.addActivityParticipant(
+                                        event.activity.id,
+                                        UserData.user!!
+                                    )
+                                }
+                                userViewModel.addActivityToUser(  event.activity.id,
+                                    UserData.user!!)
+
                             }
                             is MapEvent.ActivityUnLiked -> {
                                 activityViewModel.unlikeActivity(
                                     event.activity.id,
-                                    UserData.user!!
+                                    UserData.user!!.id
                                 )
                             }
                             is MapEvent.LeaveLiveActivity -> {

@@ -298,7 +298,8 @@ fun GroupPickerItem(chat: Chat, onEvent: (CreateEvent) -> Unit) {
                         contentDescription = "image sent",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
-                            .size(36.dp).background(color=SocialTheme.colors.uiBackground)
+                            .size(36.dp).background(color=SocialTheme.colors.uiBackground).clip(
+                                CircleShape)
                     )
 
                     Spacer(modifier = Modifier.width(8.dp))

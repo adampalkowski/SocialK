@@ -32,7 +32,7 @@ class ProfileFragment :Fragment(){
         }
         var user:User? =UserData.user
         if (user==null){
-            user=User(description = "",id="",name="", pictureUrl = "", username = "", email = "", blocked_ids = ArrayList() , invited_ids = ArrayList() , friends_ids = HashMap(), user_requests = ArrayList())
+            user=User(description = "",id="",name="", pictureUrl = "", username = "", email = "", blocked_ids = ArrayList() , invited_ids = ArrayList() , friends_ids = HashMap(), user_requests = ArrayList(),activities=ArrayList())
 
         }
 

@@ -107,6 +107,8 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:$nav_version")
     implementation("androidx.navigation:navigation-ui-ktx:$nav_version")
 
+    //coil
+    implementation("io.coil-kt:coil-compose:2.3.0")
     // Feature module Support
     implementation("androidx.navigation:navigation-dynamic-features-fragment:$nav_version")
 
@@ -131,7 +133,6 @@ dependencies {
     kapt "com.google.dagger:hilt-compiler:2.44"
     //Play Services
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4"
-    implementation("io.coil-kt:coil-compose:2.2.2")\
     //maps sdk
     implementation 'com.google.maps.android:maps-compose:2.10.0'
     implementation 'com.google.android.gms:play-services-maps:18.1.0'

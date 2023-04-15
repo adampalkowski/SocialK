@@ -30,10 +30,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import com.example.socialk.ActivitySettingsContent
 import com.example.socialk.R
 import com.example.socialk.chat.*
 import com.example.socialk.di.ChatViewModel
 import com.example.socialk.model.Activity
+import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 import com.google.firebase.dynamiclinks.ktx.androidParameters
@@ -48,6 +50,7 @@ sealed class BottomDialogEvent {
     }
 
     object GoToProfile : BottomDialogEvent()
+    object ReportActivity : BottomDialogEvent()
     class GoToFriendsPicker (val activity :Activity): BottomDialogEvent()
     object LogOut : BottomDialogEvent()
     object GoToSettings : BottomDialogEvent()
@@ -82,23 +85,9 @@ fun BottomDialog(state:ModalBottomSheetState=rememberModalBottomSheetState(Modal
                     DisplayParticipants(activity,onEvent={event->when(event){is BottomDialogEvent.GoBack->{displayParticipants.value=false}
                         else->{}} })
                 }else{
-                    ActivitySettingsContent(LocalContext.current,clipboardManager,displayParticipants, onEvent ={ event->
-                        when(event){
-                            is BottomDialogEvent.AlertHideActivity->{
-                                openDialog.value=true
-                            }
-                            is BottomDialogEvent.HideBottomDialog->{
-                                coroutineScope.launch { state.hide() }
-                            }
-                            is BottomDialogEvent.LeaveActivity->{
-                                onEvent(BottomDialogEvent.LeaveActivity(activity))
-                            }
-                            is BottomDialogEvent.GoToFriendsPicker->{
-                                onEvent(BottomDialogEvent.GoToFriendsPicker(event.activity))
-                            }
-                            else->{}
-                        }
-                    }, activity =activity)
+                    ActivitySettingsContent(LocalContext.current,clipboardManager,displayParticipants, leaveActivity = {}, onEvent ={ event->
+
+                    }, activity =activity, closeSettings = {}, likedActivity = true)
                     if(openDialog.value){
                         SocialDialog(
                             onDismiss = { openDialog.value=false },
@@ -144,15 +133,13 @@ fun DisplayParticipants(activity: Activity,onEvent:(BottomDialogEvent)->Unit) {
 
             Text(text = "Participants", style = TextStyle(fontFamily = Inter, fontWeight = FontWeight.SemiBold, fontSize = 16.sp ), color = SocialTheme.colors.textPrimary, modifier = Modifier.align(Alignment.Center))
         }
-        activity.participants_profile_pictures.forEach{
-            UserDisplay(it.value,activity.participants_usernames[it.key]!!)
-        }
+
     }
 
 }
 
 @Composable
-fun UserDisplay(value: String, s: String) {
+fun UserDisplay(image: String, name: String) {
     Card(elevation = 0.dp, shape = RoundedCornerShape(100.dp)) {
         Box(modifier = Modifier
             .fillMaxWidth()
@@ -160,94 +147,17 @@ fun UserDisplay(value: String, s: String) {
             .padding(horizontal = 24.dp, vertical = 12.dp)){
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
-                    painter = rememberAsyncImagePainter(value),
+                    painter = rememberAsyncImagePainter(image),
                     contentDescription = "profile image" , contentScale = ContentScale.Crop, modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
 
                 )
                 Spacer(modifier = Modifier.width(24.dp))
-                Text(text = s, modifier = Modifier,style = TextStyle(fontFamily = Inter, fontSize = 14.sp, fontWeight = FontWeight.SemiBold),color=SocialTheme.colors.textPrimary)
+                Text(text = name, modifier = Modifier,style = TextStyle(fontFamily = Inter, fontSize = 14.sp, fontWeight = FontWeight.SemiBold),color=SocialTheme.colors.textPrimary)
             }
 
         }
     }
 
-}
-@Composable
-fun ActivitySettingsContent(context:Context,
-    clipboardManager: androidx.compose.ui.platform.ClipboardManager,
-    displayParticipants: MutableState<Boolean>,
-    onEvent: (BottomDialogEvent) -> Unit,
-    activity:Activity) {
-    Box(modifier = Modifier.background(color=SocialTheme.colors.uiBackground)){
-        Column() {
-            Spacer(modifier = Modifier.width(12.dp))
-            if(activity.enableActivitySharing){
-                SettingsItem(text="Invite other users to activity",icon=R.drawable.ic_share,  onClick ={
-                    onEvent(BottomDialogEvent.GoToFriendsPicker(activity))
-                } )
-            }
-            SettingsItem(text="Leave activity",icon=R.drawable.ic_log_out, onClick ={onEvent(BottomDialogEvent.LeaveActivity(activity))} )
-            SettingsItem(text="Display participants",icon=R.drawable.ic_group_not_filled, onClick ={displayParticipants.value=!displayParticipants.value} )
-            SettingsItem(text="Hide activity",icon=R.drawable.ic_visibility_off,  onClick ={onEvent(BottomDialogEvent.AlertHideActivity)})
-            SettingsItem(text="Copy activity link",icon=R.drawable.ic_link,  onClick ={
-                val dynamicLink = Firebase.dynamicLinks.dynamicLink {
-                    link = Uri.parse("https://link.friendup.app/"+"Activity"+"/"+activity.id)
-                    domainUriPrefix = "https://link.friendup.app/"
-                    // Open links with this app on Android
-                    androidParameters { }
-                }
-                val dynamicLinkUri = dynamicLink.uri
-                val localClipboardManager=clipboardManager
-                localClipboardManager.setText(AnnotatedString(dynamicLinkUri.toString()))
-                onEvent(BottomDialogEvent.HideBottomDialog)
-                Toast.makeText(context,"Copied activity link to clipboard",Toast.LENGTH_LONG).show()
-            }  )
-
-            SettingsItem(text="Delete posted picture",icon=R.drawable.ic_hide_image, onClick ={/*TODO*/})
-            SettingsItem(text="Suggest time change",icon=R.drawable.ic_update_time,  onClick ={/*TODO*/} )
-            SettingsItem(text="Suggest date change",icon=R.drawable.ic_update_date, onClick ={/*TODO*/} )
-            SettingsItem(text="Suggest location change",icon=R.drawable.ic_update_location, onClick ={/*TODO*/} )
-        }
-    }
-}
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SettingsItem(text: String, icon: Int, onClick: () -> Unit){
-    androidx.compose.material3.Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .background(color = SocialTheme.colors.uiBackground),
-        shape = RoundedCornerShape(0.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = SocialTheme.colors.uiBackground,
-        ),
-        onClick = onClick
-    ) {
-        Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-            Spacer(modifier = Modifier.width(12.dp))
-            androidx.compose.material3.Icon(
-                painter = painterResource(id = icon),
-                tint = SocialTheme.colors.iconPrimary,
-                contentDescription = null
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            androidx.compose.material3.Text(
-                text = text, color = SocialTheme.colors.textPrimary, fontSize = 14.sp,
-                style = MaterialTheme.typography.body2, textAlign = TextAlign.Center
-            )
-            Spacer(Modifier.weight(1f))
-            androidx.compose.material3.Icon(
-                painter = painterResource(id = R.drawable.ic_right),
-                tint = SocialTheme.colors.iconPrimary,
-                contentDescription = null
-            )
-            Spacer(Modifier.width(24.dp))
-        }
-
-    }
 }

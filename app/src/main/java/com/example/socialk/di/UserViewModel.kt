@@ -112,6 +112,14 @@ class UserViewModel @Inject constructor(
 
     private val _isRequestRemovedState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isRequestRemovedState: State<Response<Void?>> =_isRequestRemovedState
+
+    private val _activityUsersState = mutableStateOf<Response<List<User>>>(Response.Loading)
+    val activityUsersState: State<Response<List<User>>> = _activityUsersState
+
+    private val _moreActivityUsersState = mutableStateOf<Response<List<User>>>(Response.Loading)
+    val oreActivityUsersState: State<Response<List<User>>> = _moreActivityUsersState
+
+
     fun addChatCollectionToUsers(id: String, friend_id: String, chat_id: String) {
         viewModelScope.launch {
             repo.addChatCollectionToUsers(id, friend_id, chat_id).collect { response ->
@@ -119,7 +127,20 @@ class UserViewModel @Inject constructor(
             }
         }
     }
-
+    fun getActivityUsers(id: String) {
+        viewModelScope.launch {
+            repo.getActivityUsers(id).collect { response ->
+                _activityUsersState.value = response
+            }
+        }
+    }
+    fun getMoreActivityUsers(id: String) {
+        viewModelScope.launch {
+            repo.getMoreActivityUsers(id).collect { response ->
+                _moreActivityUsersState.value = response
+            }
+        }
+    }
     fun getFriends(id: String) {
         viewModelScope.launch {
             repo.getFriends(id).collect { response ->
@@ -424,6 +445,14 @@ class UserViewModel @Inject constructor(
         viewModelScope.launch {
             repo.updateUser(id,firstAndLastName, description =description ).collect { response ->
                 _isUserUpdated.value = response
+            }
+        }
+    }
+
+    fun addActivityToUser(id: String, user: User) {
+        viewModelScope.launch {
+            repo.addActivityToUser(id, user).collect { response ->
+
             }
         }
     }

@@ -57,35 +57,6 @@ import java.util.*
 import java.util.concurrent.Executor
 import com.example.socialk.home.MapBox as MapBox1
 
-sealed class ActivityEvent() {
-    class OpenActivitySettings(activity: Activity) : ActivityEvent() {
-        val activity = activity
-    }
-    class SendRequest(val activity: Activity) : ActivityEvent()
-
-    class GoToProfile(user_id: String) : ActivityEvent() {
-        val user_id = user_id
-    }
-
-    class DisplayPicture(val photo_url: String, val activity_id: String) : ActivityEvent()
-    class OpenActivityChat(activity: Activity) : ActivityEvent() {
-        val activity = activity
-    }
-
-    class ActivityLiked(activity: Activity) : ActivityEvent() {
-        val activity = activity
-    }
-
-    class ActivityUnLiked(activity: Activity) : ActivityEvent() {
-        val activity = activity
-    }
-
-    class GoToMap(latlng: String) : ActivityEvent() {
-        val latlng = latlng
-    }
-
-    class OpenCamera(val activity_id: String) : ActivityEvent()
-}
 
 sealed class ActivityPreviewEvent {
     class GoToProfile(val id: String) : ActivityPreviewEvent()
@@ -410,7 +381,7 @@ fun HomeScreen(
                 is BottomDialogEvent.LeaveActivity -> {
                     activityViewModel?.unlikeActivity(
                         event.activity.id,
-                        UserData.user!!
+                        UserData.user!!.id
                     )
                 }
                 else -> {}
@@ -773,8 +744,8 @@ fun HomeScreenContent(
     isDark: Boolean,
     onEvent: (HomeEvent) -> Unit,
     homeViewModel: HomeViewModel?,
-    onLongClick: (Activity) -> Unit, closeBottomSheet: () -> Unit = {}
-) {
+    onLongClick: (Activity) -> Unit
+    ) {
     /*val refreshScope = rememberCoroutineScope()
     var refreshing by remember { mutableStateOf(false) }*/
 
@@ -972,7 +943,7 @@ fun PublicActivities(
                             title = item.title,
                             description = item.description,
                             date = item.date,
-                            liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
+                            liked = item.participants_ids.contains(UserData.user!!.id),
                             //todo add the time end
                             timePeriod = item.start_time + " - " + item.end_time,
                             custom_location = item.custom_location,
@@ -1014,7 +985,7 @@ fun PublicActivities(
                             title = item.title,
                             description = item.description,
                             date = item.date,
-                            liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
+                            liked = item.participants_ids.contains(UserData.user!!.id),
                             //todo add the time end
                             timePeriod = item.start_time + " - " + item.end_time,
                             custom_location = item.custom_location,
@@ -1154,7 +1125,7 @@ fun FriendsActivities(
                             title = item.title,
                             description = item.description,
                             date = item.date,
-                            liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
+                            liked = item.participants_ids.contains(UserData.user!!.id),
                             //todo add the time end
                             timePeriod = item.start_time + " - " + item.end_time,
                             custom_location = item.custom_location,
@@ -1197,7 +1168,7 @@ fun FriendsActivities(
                             title = item.title,
                             description = item.description,
                             date = item.date,
-                            liked = item.participants_usernames.containsKey(UserData.user!!.id!!),
+                            liked =item.participants_ids.contains(UserData.user!!.id),
                             //todo add the time end
                             timePeriod = item.start_time + " - " + item.end_time,
                             custom_location = item.custom_location,

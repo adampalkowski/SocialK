@@ -13,6 +13,7 @@ data class User(
     var invited_ids: ArrayList<String>,
     var description:String,
     var user_requests: ArrayList<String>,
+    var activities:ArrayList<String>,
 ) : Serializable {
     constructor() : this(
         name = "",
@@ -25,5 +26,6 @@ data class User(
         invited_ids = ArrayList(),
         description = "",
         user_requests= ArrayList(),
+        activities= ArrayList(),
     )
 }

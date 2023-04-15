@@ -33,6 +33,7 @@ import javax.inject.Singleton
 class ActivityRepositoryImpl @Inject constructor(
     private val activitiesRef: CollectionReference,
     private val activeUsersRef:CollectionReference,
+    private val usersRef:CollectionReference,
     private val chatCollectionsRef: CollectionReference,
     private val messagessRef: CollectionReference,
     private val resStorage: StorageReference,
@@ -198,10 +199,19 @@ class ActivityRepositoryImpl @Inject constructor(
         try{
             emit(Response.Loading)
             val update = activitiesRef.document(id).update("participants_profile_pictures"+"."+user.id,user.pictureUrl,"participants_usernames"+"."+user.id,user.username,
-            "participants_ids",FieldValue.arrayUnion(id)).await()
+            "participants_ids",FieldValue.arrayUnion(user.id)).await()
             emit(Response.Success(update))
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("likeActivity exception",Exception())))
+        }
+    }
+    override suspend fun addActivityParticipant(id: String, user: User): Flow<Response<Void?>> =flow{
+        try{
+            emit(Response.Loading)
+            val update = activitiesRef.document(id).update("participants_ids",FieldValue.arrayUnion(user.id)).await()
+            emit(Response.Success(update))
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("addActivityParticipant exception",Exception())))
         }
     }
 
@@ -214,11 +224,11 @@ class ActivityRepositoryImpl @Inject constructor(
             emit(Response.Failure(e= SocialException("likeActivity exception",Exception())))
         }
     }
-    override suspend fun unlikeActivity(id: String, user: User): Flow<Response<Void?>> =flow{
+    override suspend fun unlikeActivity(id: String, user_id: String): Flow<Response<Void?>> =flow{
         try{
             emit(Response.Loading)
-            val update = activitiesRef.document(id).update("participants_profile_pictures"+"."+user.id,FieldValue.delete(),"participants_usernames"+"."+user.id,FieldValue.delete(),
-            "participants_ids",FieldValue.arrayRemove(id)).await()
+            val update = activitiesRef.document(id).update("participants_profile_pictures"+"."+user_id,FieldValue.delete(),"participants_usernames"+"."+user_id,FieldValue.delete(),
+            "participants_ids",FieldValue.arrayRemove(user_id)).await()
             emit(Response.Success(update))
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("unlikeActivity exception",Exception())))
@@ -240,6 +250,24 @@ class ActivityRepositoryImpl @Inject constructor(
             emit(Response.Success(update))
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("removeRequestFromActivity exception",Exception())))
+        }
+    }
+    override suspend fun reportActivity(activity_id: String): Flow<Response<Void?>> =flow{
+        try{
+            emit(Response.Loading)
+            val update = activitiesRef.document(activity_id).update("reports",FieldValue.increment(1)).await()
+            emit(Response.Success(update))
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("removeRequestFromActivity exception",Exception())))
+        }
+    }
+    override suspend fun deleteActivityFromUser(user_id: String,activities_id:String): Flow<Response<Void?>> =flow{
+        try{
+            emit(Response.Loading)
+            val remove = usersRef.document(user_id).update("activities",FieldValue.arrayRemove(activities_id)).await()
+            emit(Response.Success(remove))
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("deleteActivityFromUser exception",Exception())))
         }
     }
     override suspend fun addActivity(activity: Activity) :Flow<Response<Void?>> = flow {
@@ -298,6 +326,16 @@ class ActivityRepositoryImpl @Inject constructor(
 
         }catch (e:Exception){
             emit(Response.Failure(e= SocialException("removeUserFromActivityInvites exception",Exception())))
+        }
+    }
+    override suspend fun hideActivity(activity_id: String,user_id:String): Flow<Response<Void?>> =flow {
+        try {
+            emit(Response.Loading)
+            val addition = activitiesRef.document(activity_id).update("invited_users",FieldValue.arrayRemove(user_id)).await()
+            emit(Response.Success(addition))
+
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("hideActivity exception",Exception())))
         }
     }
 

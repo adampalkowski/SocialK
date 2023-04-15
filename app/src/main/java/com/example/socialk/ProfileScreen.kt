@@ -34,7 +34,6 @@ import com.example.socialk.components.BottomBar
 import com.example.socialk.components.HomeScreenHeading
 import com.example.socialk.components.ScreenHeading
 import com.example.socialk.di.ActivityViewModel
-import com.example.socialk.home.ActivityEvent
 import com.example.socialk.home.HomeEvent
 import com.example.socialk.model.Response
 import com.example.socialk.model.User

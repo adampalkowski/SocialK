@@ -258,12 +258,7 @@ class HomeFragment : Fragment() {
                                             )
                                         }
 
-                                        is HomeEvent.ActivityUnLiked -> {
-                                            activityViewModel.unlikeActivity(
-                                                event.activity.id,
-                                                UserData.user!!
-                                            )
-                                        }
+
 
                                         is HomeEvent.DisplayPicture->{
                                             viewModel.camera_activity_id.value= event.activity_id
@@ -295,6 +290,7 @@ class HomeFragment : Fragment() {
                                             Log.d("HOmesCreen","FRIENDSPICKER")
                                             viewModel.handleGoToFriendsPicker(event.activity)
                                         }
+                                        else->{}
                                     }
                                 },
                                 bottomNavEvent = { screen ->

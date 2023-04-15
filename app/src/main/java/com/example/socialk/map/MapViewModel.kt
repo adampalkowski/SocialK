@@ -35,6 +35,8 @@ class MapViewModel : ViewModel(){
 
     private val _activity = MutableLiveData<Activity?>()
     val activity: LiveData<Activity?> = _activity
+    private val _activityID = MutableLiveData<String?>()
+    val activityID: LiveData<String?> = _activityID
     private val _photo_uri = MutableStateFlow<Uri?>("".toUri())
     val photo_uri: MutableStateFlow<Uri?> = _photo_uri
 
@@ -42,6 +44,12 @@ class MapViewModel : ViewModel(){
     val activity_link: LiveData<String?> = _activity_link
     fun permissionGranted(){
         _granted_permission.value=true
+    }
+    fun setActivityID(activity_ID:String){
+        _activityID.value=activity_ID
+    }
+    fun resetActivityID(){
+        _activityID.value=null
     }
     fun setLocationPicked(location: LatLng?){
         _locations_picked.value=location

@@ -138,6 +138,7 @@ class AppModule {
     ):ActivityRepository= ActivityRepositoryImpl(
         activitiesRef =db.collection("Activities"),
         activeUsersRef =db.collection("ActiveUsers"),
+        usersRef =db.collection("Users"),
         chatCollectionsRef =db.collection("groups") ,
         messagessRef =db.collection("Chats"),
         resStorage=highResStorage.reference,

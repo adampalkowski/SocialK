@@ -115,7 +115,7 @@ class FriendsPickerFragment : Fragment() {
                                     new_invites.clear()
                                     new_invites.addAll(distinctList)
                                     activityViewModel.updateActivityInvites(activityCreated.id,new_invites)
-                                    viewModel.handleGoToHome()
+                                    viewModel.handleGoToMap()
                                     Toast.makeText(activity,"Invites sent",Toast.LENGTH_SHORT).show()
                                 }
                             }

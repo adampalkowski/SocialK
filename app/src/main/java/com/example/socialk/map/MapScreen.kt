@@ -2,6 +2,7 @@ package com.example.socialk.map
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.util.DisplayMetrics
@@ -13,12 +14,15 @@ import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.*
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -26,6 +30,8 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -38,8 +44,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import androidx.compose.ui.window.Dialog
+import androidx.core.content.ContextCompat
+import coil.ImageLoader
+import coil.request.ErrorResult
 import coil.request.ImageRequest
+import coil.request.SuccessResult
+import coil.transform.CircleCropTransformation
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -47,10 +58,8 @@ import com.bumptech.glide.request.target.CustomTarget
 import com.example.socialk.ButtonLink
 import com.example.socialk.Destinations
 import com.example.socialk.R
-import com.example.socialk.SearchEvent
 import com.example.socialk.components.*
 import com.example.socialk.create.CreateActivityButton
-import com.example.socialk.create.CreateEvent
 import com.example.socialk.di.ActiveUsersViewModel
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.ChatViewModel
@@ -74,7 +83,11 @@ import com.google.firebase.dynamiclinks.ktx.dynamicLink
 import com.google.firebase.dynamiclinks.ktx.dynamicLinks
 import com.google.firebase.ktx.Firebase
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import coil.compose.rememberImagePainter as rememberImagePainter1
 
 sealed class MapEvent {
     object GoToProfile : MapEvent()
@@ -85,8 +98,11 @@ sealed class MapEvent {
     object LogOut : MapEvent()
     object GoToHome : MapEvent()
     object GoToSettings : MapEvent()
-    class GoToUserProfile (val user: User): MapEvent()
-    class SendRequest (val activity: Activity): MapEvent()
+    class GoToUserProfile(val user: User) : MapEvent()
+    class ReportActivity(val activity_id: String) : MapEvent()
+    class LeaveActivity(val activity_id: String,val user_id: String) : MapEvent()
+    class HideActivity(val activity_id: String,val user_id: String) : MapEvent()
+    class SendRequest(val activity: Activity) : MapEvent()
 
     object AskForPermission : MapEvent()
     object BackPressed : MapEvent()
@@ -136,7 +152,8 @@ fun customShape() =  object : Shape {
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
-fun MapScreen(homeViewModel:HomeViewModel,
+fun MapScreen(
+    homeViewModel: HomeViewModel,
     systemUiController: SystemUiController,
     latLngInitial: LatLng?,
     activityViewModel: ActivityViewModel,
@@ -147,7 +164,7 @@ fun MapScreen(homeViewModel:HomeViewModel,
     activeUsersViewModel: ActiveUsersViewModel?,
     chatViewModel: ChatViewModel,
     authViewModel: AuthViewModel?,
-              userViewModel: UserViewModel
+    userViewModel: UserViewModel
 ) {
 
     //set status bar TRANSPARENT
@@ -176,7 +193,6 @@ fun MapScreen(homeViewModel:HomeViewModel,
     }
 
 
-    val context = LocalContext.current
     //dialog for activity linked display
     val showDialogState: Boolean by homeViewModel?.showDialog!!.collectAsState()
     var currentLocation: LatLng? by remember { mutableStateOf(null) }
@@ -201,7 +217,6 @@ fun MapScreen(homeViewModel:HomeViewModel,
         return
     }else{
     }*/
-    val clipboardManager = LocalClipboardManager.current
 
     val permission_flow = viewModel.granted_permission.collectAsState()
     val location_flow = viewModel.location.collectAsState()
@@ -227,7 +242,12 @@ fun MapScreen(homeViewModel:HomeViewModel,
         mutableStateOf(MapProperties(mapType = MapType.NORMAL))
     }
 
-
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+    var reportActivityDialog by rememberSaveable { mutableStateOf(false) }
+    var participantsActivityDialog by rememberSaveable { mutableStateOf(false) }
+    var hideActivityDialog by rememberSaveable { mutableStateOf(false) }
+    var leaveActivityDialog by rememberSaveable { mutableStateOf(false) }
 
     Surface(
         Modifier.background(color = SocialTheme.colors.uiBackground),
@@ -238,119 +258,7 @@ fun MapScreen(homeViewModel:HomeViewModel,
             drawerBackgroundColor = SocialTheme.colors.uiBackground,
             drawerScrimColor = Color.Black.copy(alpha = 0.3f),
             drawerContent = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .padding(vertical = 48.dp)
-                        .padding(start = 8.dp)
-                        .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    //DRAWER Content
-
-                    //User profile
-                    DrawerProfileField(username = UserData.user!!.username!!,
-                        fullName = UserData.user!!.name!!,
-                        picture_url = UserData.user!!.pictureUrl!!,
-                        icon = R.drawable.ic_person,
-                        onClick = {onEvent(MapEvent.GoToEditProfile)})
-
-                    com.example.socialk.chat.ChatComponents.Divider()
-
-                    //friends list and search
-                    DrawerField(title = "Add friends", icon = R.drawable.ic_add_person, onClick = {onEvent(MapEvent.AddPeople)})
-                    //trending
-                    /*DrawerField(
-                        title = "Trending",
-                        icon = R.drawable.ic_trending,
-                        onClick = {onEvent(MapEvent.GoToTrending)}){
-                        Text(
-                            text = "Upcoming soon",
-                            style = TextStyle(
-                                fontFamily = Inter,
-                                fontWeight = FontWeight.Light,
-                                fontSize = 10.sp,color=SocialTheme.colors.textPrimary
-                            ))
-                    }*/
-                    // calendar
-                    DrawerField(title = "Upcoming", icon = R.drawable.ic_calendar, onClick = {onEvent(MapEvent.GoToCalendar)}) {
-                        activityViewModel.activitiesListState.value.let { it ->
-                            when (it) {
-                                is Response.Success -> {
-                                    if(it.data.size>0){
-                                        val first_activity = it.data.get(0)
-                                        Row() {
-                                            Spacer(Modifier.width(64.dp))
-                                            Icon(
-                                                painter = painterResource(id = R.drawable.ic_down_right),
-                                                tint = SocialTheme.colors.iconPrimary,
-                                                contentDescription = null
-                                            )
-                                            Column() {
-                                                Text(
-                                                    text = first_activity.time_left,
-                                                    style = TextStyle(
-                                                        fontFamily = Inter,
-                                                        fontWeight = FontWeight.Light,
-                                                        fontSize = 10.sp,color=SocialTheme.colors.textPrimary
-                                                    )
-                                                )
-                                                val text = if (first_activity.title.length>25){first_activity.title.take(25) +"..."}else{first_activity.title}
-                                                Text(
-                                                    text = text
-                                                    ,      style = TextStyle(
-                                                        fontFamily = Inter,
-                                                        fontWeight = FontWeight.Normal,
-                                                        fontSize = 12.sp,color=SocialTheme.colors.textPrimary
-                                                    ) )
-                                            }
-
-
-                                        }
-                                    }
-
-                                }
-                                is Response.Failure -> {}
-                                is Response.Loading -> {}
-                            }
-                        }
-                    }
-
-                    //user activities
-                    DrawerField(
-                        title = "Created",
-                        icon = R.drawable.ic_event_available,
-                        onClick = {onEvent(MapEvent.GoToCreated)})
-                    //bookmarked activities
-                    DrawerField(title = "Groups", icon = R.drawable.ic_groups, onClick = {onEvent(MapEvent.GoToGroup)})
-
-                    //bookmarked activities
-                   /* DrawerField(title = "Bookmarks", icon = R.drawable.ic_bookmark, onClick = {onEvent(MapEvent.GoToBookmarked)})*/
-
-                    //setttings
-                    DrawerField(title = "Settings", icon = R.drawable.ic_settings, onClick = {onEvent(MapEvent.GoToSettings)})
-
-                    //help
-                    DrawerField(title = "Help", icon = R.drawable.ic_help, onClick = {onEvent(MapEvent.GoToHelp)})
-
-                    //info
-                    DrawerField(title = "Info", icon = R.drawable.ic_info, onClick = {onEvent(MapEvent.GoToInfo)})
-                    Spacer(Modifier.weight(1f))
-                    //TODO HARDCODED NAME
-                    ButtonLink(onClick = {
-                        val dynamicLink = Firebase.dynamicLinks.dynamicLink {
-                            link = Uri.parse("https://link.friendup.app/"+"User"+"/"+UserData.user!!.id)
-                            domainUriPrefix = "https://link.friendup.app/"
-                            // Open links with this app on Android
-                            androidParameters { }
-                        }
-                        val dynamicLinkUri = dynamicLink.uri
-                        val localClipboardManager=clipboardManager
-                        localClipboardManager.setText(AnnotatedString(dynamicLinkUri.toString()))
-                        Toast.makeText(context,"Copied user link to clipboard",Toast.LENGTH_LONG).show()
-                    }, username = UserData.user!!.username!!)
-                }
-
+                DrawerContent(onEvent = onEvent, activityViewModel = activityViewModel)
             },
             drawerGesturesEnabled = false,
         ) { paddingValues ->
@@ -369,6 +277,62 @@ fun MapScreen(homeViewModel:HomeViewModel,
                     activityViewModel = activityViewModel,
                     chatViewModel = chatViewModel,
                     viewModel = authViewModel,
+                    activityEvent = {
+                        when (it) {
+                            is ActivityEvent.OpenActivityChat -> {
+                                Log.d("HomeScreen", "chat")
+                                onEvent(MapEvent.GoToChat(it.activity))
+                            }
+                            is ActivityEvent.ActivityLiked -> {
+                                Log.d("HomeScreen", "like")
+                                onEvent(MapEvent.ActivityLiked(it.activity))
+                            }
+                            is ActivityEvent.ActivityUnLiked -> {
+                                Log.d("HomeScreen", "dislike")
+                                onEvent(MapEvent.ActivityUnLiked(it.activity))
+
+                            }
+                            is ActivityEvent.SendRequest -> {
+                                onEvent(MapEvent.SendRequest(it.activity))
+                            }
+                            is ActivityEvent.GoToMap -> {
+                                onEvent(MapEvent.GoToMap(latlng = it.latlng))
+
+                            }
+                            is ActivityEvent.GoToProfile -> {
+                                onEvent(MapEvent.GoToProfileWithID(user_id = it.user_id))
+
+                            }
+                            is ActivityEvent.DisplayPicture -> {
+                                onEvent(MapEvent.DisplayPicture(it.photo_url, it.activity_id))
+                            }
+                            is ActivityEvent.ReportActivity -> {
+                                viewModel.setActivityID(it.activity_id)
+                                reportActivityDialog = true
+                            }
+                            is ActivityEvent.DisplayParticipants -> {
+                                viewModel.setActivityID(it.activity.id)
+                                userViewModel.getActivityUsers(it.activity.id)
+                                participantsActivityDialog = true
+
+                            }
+                            is ActivityEvent.GoToFriendsPicker -> {
+                                onEvent(MapEvent.GoToFriendsPicker(it.activity))
+
+                            }
+                            is ActivityEvent.HideActivity -> {
+                                viewModel.setActivityID(it.activity_id)
+                                hideActivityDialog = true
+
+                            }
+                            is ActivityEvent.LeaveActivity -> {
+                                viewModel.setActivityID(it.activity.id)
+                                leaveActivityDialog = true
+                            }
+                            else -> {}
+                        }
+
+                    }
                 ) { isExpanded ->
 
                     Box(
@@ -456,7 +420,6 @@ fun MapScreen(homeViewModel:HomeViewModel,
                                         uiSettings = uiSettings
                                     ) {
                                         location_flow.value.let {
-
                                             MarkerInfoWindow(
                                                 state = MarkerState(
                                                     position = it!!
@@ -497,16 +460,18 @@ fun MapScreen(homeViewModel:HomeViewModel,
                                                                 values.get(0).toDouble(),
                                                                 values.get(1).toDouble()
                                                             )
+                                                            var bitmap:BitmapDescriptor?= bitmapDescriptorFromVector(context=LocalContext.current,vectorResId=R.drawable.ic_person)
+                                                            urlToBitmap( scope= rememberCoroutineScope(),imageURL=activity.creator_profile_picture,context=LocalContext.current
+                                                                ,onSuccess={
+
+                                                                    Log.d("bitmapscriptiod","sucesss")
+                                                                    bitmap=BitmapDescriptorFactory.fromBitmap(it)},onError={})
                                                             MarkerInfoWindow(
                                                                 zIndex = 0.5f,
                                                                 state = MarkerState(
                                                                     position = latLng
                                                                 ),
-                                                                icon = loadIcon(
-                                                                    LocalContext.current,
-                                                                    activity.creator_profile_picture,
-                                                                    R.drawable.ic_person
-                                                                )
+                                                                icon =bitmap
                                                             ) {
                                                                 MapActivityPreview(
                                                                     bottomSheetActivity = activity,
@@ -693,9 +658,12 @@ fun MapScreen(homeViewModel:HomeViewModel,
                                                     .width(48.dp)
                                                     .height(48.dp),
                                                 onClick = {
-                                                    if(viewModel.location.value!=null ){
-                                                        Log.d("getClosestActivities","call")
-                                                        activityViewModel.getMoreClosestActivities(viewModel.location.value!!.latitude,viewModel.location.value!!.longitude)
+                                                    if (viewModel.location.value != null) {
+                                                        Log.d("getClosestActivities", "call")
+                                                        activityViewModel.getMoreClosestActivities(
+                                                            viewModel.location.value!!.latitude,
+                                                            viewModel.location.value!!.longitude
+                                                        )
                                                     }
                                                 },
                                                 shape = RoundedCornerShape(12.dp),
@@ -877,7 +845,7 @@ fun MapScreen(homeViewModel:HomeViewModel,
                 CircularProgressIndicator()
             }
             is Response.Success -> {
-                Toast.makeText(LocalContext.current,"Activity created",Toast.LENGTH_SHORT).show()
+                Toast.makeText(LocalContext.current, "Activity created", Toast.LENGTH_SHORT).show()
                 activityViewModel.activityAdded()
             }
             is Response.Failure -> Box(modifier = Modifier.fillMaxSize()) {
@@ -923,6 +891,8 @@ fun MapScreen(homeViewModel:HomeViewModel,
             else -> {}
         }
     }
+
+
     activityDialog(
         activity = homeViewModel?.activity?.value,
         activityDialogState = showDialogState,
@@ -931,7 +901,298 @@ fun MapScreen(homeViewModel:HomeViewModel,
             activityViewModel?.resetActivityState()
             homeViewModel?.removeActivity()
         })
+
+    AnimatedVisibility(visible = reportActivityDialog, enter = scaleIn(), exit = scaleOut()) {
+        var selectedOffensiveLangue by remember{ mutableStateOf(false) }
+        var selectedInappropraiteImages by remember{ mutableStateOf(false) }
+        var selectedIllegalActivites by remember{ mutableStateOf(false) }
+        var selectedPersonalAttacks by remember{ mutableStateOf(false) }
+        var selectedSpam by remember{ mutableStateOf(false) }
+        CustomSocialDialog(title = "Report activity",
+            info = "We take inappropriate activity seriously and appreciate your help in keeping our community safe and respectful. If you have come across any activity that you feel violates our community guidelines or is otherwise inappropriate," +
+                    " please let us know.",
+            icon = R.drawable.ic_report,
+            onDismiss = { reportActivityDialog = false },
+            onConfirm = {},
+            onCancel = { reportActivityDialog = false }, actionButtonText = "Send", actionButtonTextColor = SocialTheme.colors.iconInteractive){
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp)) {
+
+                ReportItem(title="Offensive language"
+                    ,description="Any activity containing hate speech, discriminatory language, or other language that is derogatory, abusive, or offensive to any group of people should be reported.",
+                    selected=selectedOffensiveLangue, checkedChange = {
+                        selectedOffensiveLangue = !selectedOffensiveLangue
+                    })
+                Spacer(Modifier.height(8.dp))
+                ReportItem(title="Inappropriate Images"
+                    ,description="Any images that are sexually explicit, violent, or graphic in nature should be reported.",
+                    selected=selectedInappropraiteImages, checkedChange = {
+                        selectedInappropraiteImages = !selectedInappropraiteImages
+                    })
+                Spacer(Modifier.height(8.dp))
+                ReportItem(title="Illegal Activities"
+                    ,description="Any activities that promote or depict illegal activities, such as drug use or violence, should be reported.",
+                    selected=selectedIllegalActivites, checkedChange = {
+                        selectedIllegalActivites = !selectedIllegalActivites
+                    })
+                Spacer(Modifier.height(8.dp))
+                ReportItem(title="Personal Attacks"
+                    ,description="Any activities that contain personal attacks, harassment, or bullying should be reported.",
+                    selected=selectedPersonalAttacks, checkedChange = {
+                        selectedPersonalAttacks = !selectedPersonalAttacks
+                    })
+                Spacer(Modifier.height(8.dp))
+                ReportItem(title="Spam"
+                    ,description="Any activities that are repetitive, irrelevant, or unsolicited should be reported.",
+                    selected=selectedSpam, checkedChange = {
+                        selectedSpam = !selectedSpam
+                    })
+                Spacer(modifier = Modifier.height(24.dp))
+                Row(modifier = Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.End) {
+                    ClickableText(text = AnnotatedString("Cancel")
+                        , style = TextStyle(color= SocialTheme.colors.textPrimary,
+                            fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
+                        ), onClick = { reportActivityDialog=false })
+                    Spacer(modifier = Modifier.width(24.dp))
+                    ClickableText(text = AnnotatedString("Send report"), style = TextStyle(color=SocialTheme.colors.iconInteractive,
+                        fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
+                    ), onClick = {
+                        if(selectedIllegalActivites ||selectedSpam||selectedInappropraiteImages||selectedOffensiveLangue||selectedPersonalAttacks){
+
+                            onEvent(MapEvent.ReportActivity(viewModel.activityID.value!!))
+                            viewModel.resetActivityID()
+                            reportActivityDialog = false
+                        }
+                    })
+                }
+            }
+        }
+    }
+    AnimatedVisibility(visible = hideActivityDialog, enter = scaleIn(), exit = scaleOut()) {
+        SocialDialog(title = "Hide activity",
+            info = "Confirm hiding the activity from your feed. Please note that hiding an activity is irreversible and once hidden, you will have to be invited again to see it.",
+            icon = R.drawable.ic_visibility_off,
+            onDismiss = { hideActivityDialog = false },
+            onConfirm = {onEvent(MapEvent.HideActivity(viewModel.activityID.value!!,UserData.user!!.id))
+                viewModel.resetActivityID()
+                hideActivityDialog = false},
+            onCancel = { hideActivityDialog = false }, actionButtonText = "Hide")
+    }
+    AnimatedVisibility(visible = leaveActivityDialog, enter = scaleIn(), exit = scaleOut()) {
+        SocialDialog(title = "Leave activity",
+            info = " If you no longer wish to participate in this activity, confirm leaving it. You will be removed from participants list.",
+            icon = R.drawable.ic_log_out,
+            onDismiss = { leaveActivityDialog = false },
+            onConfirm = {onEvent(MapEvent.LeaveActivity(viewModel.activityID.value!!,UserData.user!!.id))
+                        viewModel.resetActivityID()
+                leaveActivityDialog = false
+                        },
+            onCancel = { leaveActivityDialog = false }, actionButtonText = "Leave")
+    }
+
+    AnimatedVisibility(visible = participantsActivityDialog, enter = scaleIn(), exit = scaleOut()) {
+        Dialog(onDismissRequest ={participantsActivityDialog=false}) {
+            Card(shape= RoundedCornerShape(16.dp)) {
+                Box(modifier = Modifier
+                    .background(color = SocialTheme.colors.uiBackground)
+                    .padding(24.dp)) {
+                    LazyColumn {
+                        userViewModel.activityUsersState.value.let {
+                            when (it) {
+                                is Response.Success -> {
+                                    items(it.data) { user ->
+                                        UserDisplay(image = user.pictureUrl!!, name = user.name!!)
+
+                                    }
+                                }
+                                is Response.Failure -> {}
+                                is Response.Loading -> {}
+                            }
+                        }
+
+                        userViewModel.oreActivityUsersState.value.let {
+                            when (it) {
+                                is Response.Success -> {
+                                    items(it.data) { user ->
+                                        UserDisplay(image = user.pictureUrl!!, name = user.name!!)
+
+                                    }
+                                }
+                                is Response.Failure -> {}
+                                is Response.Loading -> {}
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+    }
 }
+
+@Composable
+fun ReportItem(title:String,description: String,selected:Boolean,checkedChange:(Boolean) ->Unit){
+    Card(modifier=Modifier,elevation=0.dp,shape= RoundedCornerShape(8.dp), border = BorderStroke(1.dp,color=SocialTheme.colors.uiFloated), backgroundColor = SocialTheme.colors.uiBackground) {
+        Row(modifier=Modifier.padding(horizontal = 8.dp,vertical=6.dp),verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceAround){
+            Column(Modifier.weight(0.8f)) {
+                Text(text=title,style= TextStyle(fontFamily = Inter, fontWeight = FontWeight.SemiBold, fontSize = 14.sp),color=SocialTheme.colors.textPrimary)
+                Text(text=description,
+                    style= TextStyle(fontFamily = Inter, fontWeight = FontWeight.Light, fontSize = 10.sp),color=SocialTheme.colors.textPrimary)
+            }
+
+            androidx.compose.material3.Checkbox(
+                checked = selected,
+                colors = CheckboxDefaults.colors(
+                    checkedColor = SocialTheme.colors.iconInteractive,
+                    uncheckedColor = Color.Black.copy(alpha = 0.8f)
+                ),
+                onCheckedChange =checkedChange)
+        }
+    }
+}
+@Composable
+fun DrawerContent(onEvent: (MapEvent) -> Unit, activityViewModel: ActivityViewModel) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxHeight()
+            .padding(vertical = 48.dp)
+            .padding(start = 8.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        //DRAWER Content
+
+        //User profile
+        DrawerProfileField(username = UserData.user!!.username!!,
+            fullName = UserData.user!!.name!!,
+            picture_url = UserData.user!!.pictureUrl!!,
+            icon = R.drawable.ic_person,
+            onClick = { onEvent(MapEvent.GoToEditProfile) })
+
+        com.example.socialk.chat.ChatComponents.Divider()
+
+        //friends list and search
+        DrawerField(
+            title = "Search",
+            icon = R.drawable.ic_search,
+            onClick = { onEvent(MapEvent.AddPeople) })
+        //trending
+        DrawerField(
+            title = "Trending",
+            icon = R.drawable.ic_trending,
+            onClick = {onEvent(MapEvent.GoToTrending)}){
+            Text(
+                text = "Upcoming soon",
+                style = TextStyle(
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.Light,
+                    fontSize = 10.sp,color=SocialTheme.colors.textPrimary
+                ))
+        }
+        // calendar
+        DrawerField(
+            title = "Upcoming",
+            icon = R.drawable.ic_calendar,
+            onClick = { onEvent(MapEvent.GoToCalendar) }) {
+            activityViewModel.activitiesListState.value.let { it ->
+                when (it) {
+                    is Response.Success -> {
+                        if (it.data.size > 0) {
+                            val first_activity = it.data.get(0)
+                            Row() {
+                                Spacer(Modifier.width(64.dp))
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_down_right),
+                                    tint = SocialTheme.colors.iconPrimary,
+                                    contentDescription = null
+                                )
+                                Column() {
+                                    Text(
+                                        text = first_activity.time_left,
+                                        style = TextStyle(
+                                            fontFamily = Inter,
+                                            fontWeight = FontWeight.Light,
+                                            fontSize = 10.sp, color = SocialTheme.colors.textPrimary
+                                        )
+                                    )
+                                    val text = if (first_activity.title.length > 25) {
+                                        first_activity.title.take(25) + "..."
+                                    } else {
+                                        first_activity.title
+                                    }
+                                    Text(
+                                        text = text, style = TextStyle(
+                                            fontFamily = Inter,
+                                            fontWeight = FontWeight.Normal,
+                                            fontSize = 12.sp, color = SocialTheme.colors.textPrimary
+                                        )
+                                    )
+                                }
+
+
+                            }
+                        }
+
+                    }
+                    is Response.Failure -> {}
+                    is Response.Loading -> {}
+                }
+            }
+        }
+
+        //user activities
+        DrawerField(
+            title = "Created",
+            icon = R.drawable.ic_event_available,
+            onClick = { onEvent(MapEvent.GoToCreated) })
+        //bookmarked activities
+        DrawerField(
+            title = "Groups",
+            icon = R.drawable.ic_groups,
+            onClick = { onEvent(MapEvent.GoToGroup) })
+
+        //bookmarked activities
+        /* DrawerField(title = "Bookmarks", icon = R.drawable.ic_bookmark, onClick = {onEvent(MapEvent.GoToBookmarked)})*/
+
+        //setttings
+        DrawerField(
+            title = "Settings",
+            icon = R.drawable.ic_settings,
+            onClick = { onEvent(MapEvent.GoToSettings) })
+
+        //help
+        DrawerField(
+            title = "Help",
+            icon = R.drawable.ic_help,
+            onClick = { onEvent(MapEvent.GoToHelp) })
+
+        //info
+        DrawerField(
+            title = "Info",
+            icon = R.drawable.ic_info,
+            onClick = { onEvent(MapEvent.GoToInfo) })
+        Spacer(Modifier.weight(1f))
+        //TODO HARDCODED NAME
+        ButtonLink(onClick = {
+            val dynamicLink = Firebase.dynamicLinks.dynamicLink {
+                link = Uri.parse("https://link.friendup.app/" + "User" + "/" + UserData.user!!.id)
+                domainUriPrefix = "https://link.friendup.app/"
+                // Open links with this app on Android
+                androidParameters { }
+            }
+            val dynamicLinkUri = dynamicLink.uri
+            val localClipboardManager = clipboardManager
+            localClipboardManager.setText(AnnotatedString(dynamicLinkUri.toString()))
+            Toast.makeText(context, "Copied user link to clipboard", Toast.LENGTH_LONG).show()
+        }, username = UserData.user!!.username!!)
+    }
+}
+
 
 fun pointToCurrentLocation(cameraPositionState: CameraPositionState, currentLocation: LatLng) {
     cameraPositionState.position =
@@ -1034,10 +1295,10 @@ fun MapActivityPreview(
             )
             //ChatMessageBox()
             Spacer(modifier = Modifier.height(4.dp))
-            ParticipantsBox(
+           /* ParticipantsBox(
                 bottomSheetActivity.participants_usernames,
                 bottomSheetActivity.participants_profile_pictures
-            )
+            )*/
 
         }
 
@@ -1160,6 +1421,7 @@ fun MapBottomDialog(
     activityViewModel: ActivityViewModel?,
     chatViewModel: ChatViewModel,
     viewModel: AuthViewModel?,
+    activityEvent: (ActivityEvent) -> Unit,
     content: @Composable (asdas: Boolean) -> Unit
 ) {
     val configuration = LocalConfiguration.current
@@ -1192,7 +1454,7 @@ fun MapBottomDialog(
         ),
         sheetContent = {
             sheetContent(
-                activityEvent = {},
+                activityEvent = activityEvent,
                 height,
                 expandedType,
                 activeUsersViewModel,
@@ -1209,81 +1471,6 @@ fun MapBottomDialog(
     }
 
 
-    /*     BottomSheetScaffold(sheetShape = RoundedCornerShape(32.dp), sheetElevation = 4.dp, scaffoldState = bottomSheetScaffoldState, sheetPeekHeight = height.dp, sheetBackgroundColor = SocialTheme.colors.uiFloated,sheetContent = {
-             sheetContent(height,)
-         }) {it->
-             content()
-         }*/
-
-    /*  ModalBottomSheetLayout(sheetShape = RoundedCornerShape(32.dp),
-          sheetState = state, sheetBackgroundColor = SocialTheme.colors.uiFloated,
-          sheetContentColor = SocialTheme.colors.textPrimary, scrimColor = Color.Transparent,
-          sheetContent = {
-              HomeScreenContent(activeUsersViewModel = activeUsersViewModel,
-                  viewModel = viewModel,
-                  activityViewModel = activityViewModel,
-                  padding = PaddingValues(12.dp), homeViewModel = null,
-                  isDark = isDark,
-                  activityEvent = {/*
-                          when (it) {
-                              is ActivityEvent.OpenActivityChat -> {
-                                  onEvent(HomeEvent.GoToChat(it.activity))
-                              }
-                              is ActivityEvent.ActivityLiked -> {
-                                  Log.d("HomeScreen", "like")
-                                  onEvent(HomeEvent.ActivityLiked(it.activity))
-                              }
-                              is ActivityEvent.ActivityUnLiked -> {
-                                  Log.d("HomeScreen", "dislike")
-                                  onEvent(HomeEvent.ActivityUnLiked(it.activity))
-
-                              }
-                              is ActivityEvent.GoToMap -> {
-                                  onEvent(HomeEvent.GoToMap(latlng = it.latlng))
-
-                              }
-                              is ActivityEvent.GoToProfile -> {
-                                  onEvent(HomeEvent.GoToProfileWithID(user_id = it.user_id))
-
-                              }
-                              is ActivityEvent.OpenActivitySettings -> {
-                                  Log.d("HomeScreen", "open settings")
-                                  bottomSheetType = "settings"
-                                  bottomSheetActivity = it.activity
-                                  scope.launch {
-                                      bottomSheetState.show()
-                                  }
-                              }
-                              is ActivityEvent.OpenCamera -> {
-                                  onEvent(HomeEvent.OpenCamera(it.activity_id))
-                              }
-                              is ActivityEvent.DisplayPicture -> {
-                                  onEvent(HomeEvent.DisplayPicture(it.photo_url, it.activity_id))
-                              }
-
-                              else -> {}
-                          }*/
-
-                  },
-                  onEvent = { homeEvent ->
-
-                  }, onLongClick = { activity ->
-
-                  }, closeBottomSheet = { couroutineScope.launch {  state.hide()} })
-          }
-      ){
-      }*/
-
-
-    /* Card(modifier=modifier.height(300.dp),shape = RoundedCornerShape(24.dp)) {
-         Box(modifier = Modifier.height(300.dp).background(color=SocialTheme.colors.uiBackground))
-         {
-
-         }
-
-     }*/
-
-
 }
 
 @Composable
@@ -1296,6 +1483,7 @@ fun sheetContent(
     activityViewModel: ActivityViewModel?,
     isDark: Boolean,
     onEvent: (MapEvent) -> Unit
+
 ) {
     var isUpdated = false
     val displayMetrics: DisplayMetrics = LocalContext.current.getResources().getDisplayMetrics()
@@ -1305,90 +1493,22 @@ fun sheetContent(
         Modifier
             .fillMaxWidth()
             .heightIn(min = 150.dp, max = 700.dp)
-            .pointerInput(Unit) {
-                detectVerticalDragGestures(
-                    onVerticalDrag = { change, dragAmount ->
-                        /*  change.consume()
-                        if (!isUpdated) {
-                            expandedType = when {
-                                dragAmount < 0 && expandedType == ExpandedType.COLLAPSED -> {
-                                    ExpandedType.HALF
-                                }
-                                dragAmount < 0 && expandedType == ExpandedType.HALF -> {
-                                    ExpandedType.FULL
-                                }
-                                dragAmount > 0 && expandedType == ExpandedType.FULL -> {
-                                    ExpandedType.HALF
-                                }
-                                dragAmount > 0 && expandedType == ExpandedType.HALF -> {
-                                    ExpandedType.COLLAPSED
-                                }
-                                else -> {
-                                    ExpandedType.FULL
-                                }
-                            }
-                            isUpdated = true
-                        }*/
-                    },
-                    onDragEnd = {
-                        isUpdated = false
-                    }
-                )
-            }
             .background(SocialTheme.colors.uiBackground),
     ) {
-        HomeScreenContent(activeUsersViewModel = activeUsersViewModel,
+        HomeScreenContent(
+            activeUsersViewModel = activeUsersViewModel,
             viewModel = viewModel,
             activityViewModel = activityViewModel,
             padding = PaddingValues(12.dp), homeViewModel = null,
             isDark = isDark,
-            activityEvent = {
-                when (it) {
-                    is ActivityEvent.OpenActivityChat -> {
-                        Log.d("HomeScreen", "chat")
-                        onEvent(MapEvent.GoToChat(it.activity))
-                    }
-                    is ActivityEvent.ActivityLiked -> {
-                        Log.d("HomeScreen", "like")
-                        onEvent(MapEvent.ActivityLiked(it.activity))
-                    }
-                    is ActivityEvent.ActivityUnLiked -> {
-                        Log.d("HomeScreen", "dislike")
-                        onEvent(MapEvent.ActivityUnLiked(it.activity))
-
-                    }
-                    is ActivityEvent.SendRequest -> {
-                        onEvent(MapEvent.SendRequest(it.activity))
-                    }
-                    is ActivityEvent.GoToMap -> {
-                        onEvent(MapEvent.GoToMap(latlng = it.latlng))
-
-                    }
-                    is ActivityEvent.GoToProfile -> {
-                        onEvent(MapEvent.GoToProfileWithID(user_id = it.user_id))
-
-                    }
-                    is ActivityEvent.OpenActivitySettings -> {
-                        /* Log.d("HomeScreen", "open settings")
-                         bottomSheetType = "settings"
-                         bottomSheetActivity = it.activity
-                         scope.launch {
-                             bottomSheetState.show()
-                         }*/
-                    }
-                    is ActivityEvent.DisplayPicture -> {
-                        onEvent(MapEvent.DisplayPicture(it.photo_url, it.activity_id))
-                    }
-
-                    else -> {}
-                }
-
-            },
+            activityEvent = activityEvent,
             onEvent = { homeEvent ->
 
-            }, onLongClick = { activity ->
+            },
+            onLongClick = { activity ->
 
-            }, closeBottomSheet = { /*couroutineScope.launch {  state.hide()}*/ })
+            },
+        )
     }
 
 }
@@ -1411,9 +1531,7 @@ fun loadIcon(
                     resource: Bitmap,
                     transition: com.bumptech.glide.request.transition.Transition<in Bitmap>?
                 ) {
-
                     bitmap = resource
-
                 }
 
                 override fun onLoadCleared(placeholder: Drawable?) {
@@ -1447,4 +1565,53 @@ fun loadIcon(
         return null
     }
 
+}
+
+fun urlToBitmap(
+    scope: CoroutineScope,
+    imageURL: String,
+    context: Context,
+    onSuccess: (bitmap: Bitmap) -> Unit,
+    onError: (error: Throwable) -> Unit
+) {
+    var bitmap: Bitmap? = null
+    val loadBitmap = scope.launch(Dispatchers.IO) {
+        val loader = ImageLoader(context)
+        val request = ImageRequest.Builder(context)
+            .data(imageURL)
+            .allowHardware(false)
+            .build()
+        val result = loader.execute(request)
+        if (result is SuccessResult) {
+            bitmap = (result.drawable as BitmapDrawable).bitmap
+        } else if (result is ErrorResult) {
+            cancel(result.throwable.localizedMessage ?: "ErrorResult", result.throwable)
+        }
+    }
+    loadBitmap.invokeOnCompletion { throwable ->
+        bitmap?.let {
+            onSuccess(it)
+        } ?: throwable?.let {
+            onError(it)
+        } ?: onError(Throwable("Undefined Error"))
+    }
+}
+fun bitmapDescriptorFromVector(
+    context: Context,
+    vectorResId: Int
+): BitmapDescriptor? {
+
+    // retrieve the actual drawable
+    val drawable = ContextCompat.getDrawable(context, vectorResId) ?: return null
+    drawable.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)
+    val bm = Bitmap.createBitmap(
+        drawable.intrinsicWidth,
+        drawable.intrinsicHeight,
+        Bitmap.Config.ARGB_8888
+    )
+
+    // draw it onto the bitmap
+    val canvas = android.graphics.Canvas(bm)
+    drawable.draw(canvas)
+    return BitmapDescriptorFactory.fromBitmap(bm)
 }

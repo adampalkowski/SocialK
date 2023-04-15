@@ -274,7 +274,7 @@ class CreateFragment : Fragment() {
                                         lng=lng,
                                         custom_location = event.custom_location,
                                         minUserCount=if(event.min.equals("")){0}else{event.min.toInt()},
-                                        maxUserCount=if(event.max.equals("")){0}else{event.max.toInt()},
+                                        maxUserCount=if(event.max.equals("")){100}else{event.max.toInt()},
                                         disableChat = event.disableChat,
                                         likes = 0,
                                         invited_users = arrayListOf(UserData.user!!.id),
@@ -290,7 +290,8 @@ class CreateFragment : Fragment() {
                                         public =if(event.selectedPrivacy.equals("Public")) true else false,
                                         participants_ids = arrayListOf(UserData.user!!.id),
                                         awaitConfirmation=event.awaitConfirmation,
-                                        requests = ArrayList()
+                                        requests = ArrayList(),
+                                        reports = 0
 
                                     )
                                     activityViewModel.addActivity(activity)
@@ -321,7 +322,7 @@ class CreateFragment : Fragment() {
                                         lng=lng,
                                         custom_location = event.custom_location,
                                         minUserCount=if(event.min.equals("")){0}else{event.min.toInt()},
-                                        maxUserCount=if(event.max.equals("")){0}else{event.max.toInt()},
+                                        maxUserCount=if(event.max.equals("")){100}else{event.max.toInt()},
                                         disableChat = event.disableChat,
                                         likes = 0,
                                         invited_users = arrayListOf(),
@@ -337,7 +338,9 @@ class CreateFragment : Fragment() {
                                         public =if(event.selectedPrivacy.equals("Public")) true else false,
                                         participants_ids = arrayListOf(UserData.user!!.id),
                                         awaitConfirmation=event.awaitConfirmation,
-                                          requests = ArrayList()
+                                          requests = ArrayList(),
+                                        reports = 0
+
                                     )
 
                                     viewModel.handleGoToFriendsPicker(activity)

@@ -32,6 +32,7 @@ class UserRepositoryImpl @Inject constructor(
     private val resStorage: StorageReference,
 ) : UserRepository {
     private var lastVisibleDataFriends:DocumentSnapshot?=null
+    private var lastVisibleUserActivityData: DocumentSnapshot? = null
     override suspend fun getUser(id: String): Flow<Response<User>> = callbackFlow {
         val registration =
             usersRef.document(id).get().addOnSuccessListener { documents ->
@@ -201,6 +202,77 @@ class UserRepositoryImpl @Inject constructor(
             emit(Response.Failure(e = SocialException("deleteUser exception", Exception())))
         }
     }
+    override suspend fun addActivityToUser(activity_id: String,user: User): Flow<Response<Void?>> = flow {
+        try {
+            emit(Response.Loading)
+            val update = usersRef.document(user.id).update("activities",FieldValue.arrayUnion(activity_id)).await1()
+            emit(Response.Success(update))
+        } catch (e: Exception) {
+            emit(Response.Failure(e = SocialException("deleteUser exception", Exception())))
+        }
+    }
+
+    override suspend fun getActivityUsers(activity_id: String): Flow<Response<List<User>>> =callbackFlow {
+        lastVisibleUserActivityData=null
+            val snapshotListener = usersRef.whereArrayContains("activities",activity_id) .orderBy("name", Query.Direction.DESCENDING).limit(10).get().addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val documents = task.result?.documents
+                    if (documents != null && documents.isNotEmpty()) {
+                        val newUsers = ArrayList<User>()
+                        for (document in documents) {
+                            val user = document.toObject<User>()
+
+
+                            if (user != null) {
+                                newUsers.add(user)
+                            }
+                        }
+                        lastVisibleUserActivityData = documents[documents.size - 1]
+                        trySend(Response.Success(newUsers))
+
+                    }
+                } else {
+                    // There are no more messages to load
+                    trySend(
+                        Response.Failure(
+                            e = SocialException(
+                                message = "failed to get users first",
+                                e = Exception()
+                            )
+                        )
+                    )
+                }
+            }
+        awaitClose {
+
+        }
+    }
+    override suspend fun getMoreActivityUsers(activity_id: String): Flow<Response<List<User>>> =callbackFlow {
+        val snapshotListener =  usersRef.whereArrayContains("activities",activity_id) .orderBy("name", Query.Direction.DESCENDING).limit(10).get().addOnCompleteListener { task->
+                if (task.isSuccessful) {
+                    val documents = task.result?.documents
+                    if (documents != null && documents.isNotEmpty()) {
+                        val newUsers = ArrayList<User>()
+                        for (document in documents) {
+                            val activity = document.toObject<User>()
+                            if (activity!=null){
+                                newUsers.add(activity)
+                            }
+                        }
+                        lastVisibleUserActivityData= documents[documents.size - 1]
+                        trySend(Response.Success(newUsers))
+
+                    }
+                } else {
+                    // There are no more messages to load
+                    trySend(Response.Failure(e=SocialException(message="failed to get more users",e=Exception())))
+                }
+
+            }
+        awaitClose {
+        }
+    }
+
     override suspend fun updateUser(id: String,firstAndLastName:String,description:String): Flow<Response<Void?>> = flow {
         try {
             emit(Response.Loading)

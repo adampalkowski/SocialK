@@ -12,6 +12,10 @@ interface UserRepository {
     suspend fun getUserByUsername(username:String):Flow<Response<User>>
     suspend fun addUser(user: User): Flow<Response<Void?>>
     suspend fun deleteUser(id:String): Flow<Response<Void?>>
+
+    suspend fun getActivityUsers(id: String): Flow<Response<List<User>>>
+    suspend fun getMoreActivityUsers(id: String): Flow<Response<List<User>>>
+    suspend fun addActivityToUser(id:String,user: User) : Flow<Response<Void?>>
     suspend fun addRequestToUser(activity_id: String,user_id: String): Flow<Response<Void?>>
     suspend fun removeRequestFromUser(activity_id: String,user_id: String): Flow<Response<Void?>>
 

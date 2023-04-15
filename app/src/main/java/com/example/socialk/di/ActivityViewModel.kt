@@ -113,6 +113,9 @@ class ActivityViewModel @Inject constructor(
                                 deleteActivity = { event ->
                                     Log.d("getClosestActivities", "delete activity")
                                     deleteActivity(it.id)
+                                    it.participants_ids.forEach{user_id->
+                                        deleteActivityFromUser(user_id,it.id)
+                                    }
                                     list_without_removed_activites.remove(it)
                                 })
                             it.time_left = time_left
@@ -134,6 +137,15 @@ class ActivityViewModel @Inject constructor(
             }
         }
     }
+
+    private fun deleteActivityFromUser(userId: String, activity_id: String) {
+        viewModelScope.launch {
+            repo.deleteActivityFromUser(userId,activity_id).collect { response ->
+                _isActivityInvitesUpdated.value = response
+            }
+        }
+    }
+
     fun getMoreClosestActivities(lat:Double,lng:Double){
         viewModelScope.launch {
             val list_without_removed_activites: ArrayList<Activity> = ArrayList()
@@ -149,6 +161,9 @@ class ActivityViewModel @Inject constructor(
                                 deleteActivity = { event ->
                                     Log.d("getClosestActivities", "delete activity")
                                     deleteActivity(it.id)
+                                    it.participants_ids.forEach{user_id->
+                                        deleteActivityFromUser(user_id,it.id)
+                                    }
                                     list_without_removed_activites.remove(it)
                                 })
                             it.time_left = time_left
@@ -216,6 +231,9 @@ class ActivityViewModel @Inject constructor(
                                     deleteActivity = { event ->
                                         Log.d("activityViewModel", "delete activity")
                                         deleteActivity(it.id)
+                                        it.participants_ids.forEach{user_id->
+                                            deleteActivityFromUser(user_id,it.id)
+                                        }
                                         list_without_removed_activites.remove(it)
                                     })
                                 it.time_left = time_left
@@ -262,6 +280,9 @@ class ActivityViewModel @Inject constructor(
                                     deleteActivity = { event ->
                                         Log.d("getActivitiesForUser", "delete activity")
                                         deleteActivity(it.id)
+                                        it.participants_ids.forEach{user_id->
+                                            deleteActivityFromUser(user_id,it.id)
+                                        }
                                         list_without_removed_activites.remove(it)
                                     })
                                 it.time_left = time_left
@@ -338,7 +359,20 @@ class ActivityViewModel @Inject constructor(
             }
         }
     }
-
+    fun hideActivity(activity_id: String, user_id: String) {
+        viewModelScope.launch {
+            repo.hideActivity(activity_id, user_id).collect { response ->
+                _isInviteRemovedFromActivity.value = response
+            }
+        }
+    }
+    fun reportActivity(activity_id: String ){
+        viewModelScope.launch {
+            repo.reportActivity(activity_id).collect { response ->
+                //todo reponse of report
+            }
+        }
+    }
     fun activityAdded() {
         _isActivityAddedState.value = null
     }
@@ -350,10 +384,17 @@ class ActivityViewModel @Inject constructor(
             }
         }
     }
-
-    fun unlikeActivity(id: String, user: User) {
+    fun addActivityParticipant(id: String, user: User) {
         viewModelScope.launch {
-            repo.unlikeActivity(id, user).collect { response ->
+            repo.addActivityParticipant(id, user).collect { response ->
+
+            }
+        }
+    }
+
+    fun unlikeActivity(id: String, user_id: String) {
+        viewModelScope.launch {
+            repo.unlikeActivity(id, user_id).collect { response ->
                 _isActivityDeletedState.value = response
             }
         }

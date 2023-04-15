@@ -1,6 +1,7 @@
 package com.example.socialk.components
 
 import android.util.Log
+import androidx.compose.animation.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,10 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Center
@@ -25,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -39,16 +38,18 @@ import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.example.socialk.ActivitySettingsContent
+import com.example.socialk.ActivitySettingsEvent
 import com.example.socialk.R
 import com.example.socialk.chat.ChatComponents.ChatButton
 import com.example.socialk.chat.checkIfToday
 import com.example.socialk.di.UserRepositoryImpl
-import com.example.socialk.home.ActivityEvent
 import com.example.socialk.model.Activity
 import com.example.socialk.model.UserData
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.SocialTheme
 import com.example.socialk.ui.theme.Typography
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 sealed class ActivityItemEvent {
@@ -120,8 +121,43 @@ sealed class ActivityItemEvent {
 }
 */
 
+sealed class ActivityEvent() {
+    class OpenActivitySettings(activity: Activity) : ActivityEvent() {
+        val activity = activity
+    }
+    class SendRequest(val activity: Activity) : ActivityEvent()
+
+    class GoToProfile(user_id: String) : ActivityEvent() {
+        val user_id = user_id
+    }
+
+    class DisplayPicture(val photo_url: String, val activity_id: String) : ActivityEvent()
+    class OpenActivityChat(activity: Activity) : ActivityEvent() {
+        val activity = activity
+    }
+
+    class ActivityLiked(activity: Activity) : ActivityEvent() {
+        val activity = activity
+    }
+
+    class ActivityUnLiked(activity: Activity) : ActivityEvent() {
+        val activity = activity
+    }
+
+    class GoToMap(latlng: String) : ActivityEvent() {
+        val latlng = latlng
+    }
+
+    class OpenCamera(val activity_id: String) : ActivityEvent()
+    class ReportActivity(val activity_id: String) : ActivityEvent()
+    class HideActivity(val activity_id: String,val user_id: String) : ActivityEvent()
+    class DisplayParticipants(val activity: Activity) : ActivityEvent()
+    class GoToFriendsPicker(val activity: Activity) : ActivityEvent()
+    class LeaveActivity(val activity: Activity) : ActivityEvent()
+}
 
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun ActivityItem(modifier:Modifier=Modifier,
     activity: Activity,
@@ -136,73 +172,91 @@ fun ActivityItem(modifier:Modifier=Modifier,
     location: String,
     liked: Boolean,
     onEvent: (ActivityEvent) -> Unit,
-                 onLongClick:()->Unit= {}
+                 onLongClick:()->Unit= {},
 ) {
     var liked = rememberSaveable { mutableStateOf(liked) }
+    val displayParticipants = rememberSaveable { mutableStateOf(false) }
+    val clipboardManager = LocalClipboardManager.current
+
+    var openSettings by rememberSaveable { mutableStateOf(false) }
     Box(
         modifier = Modifier
             .pointerInput(Unit) { detectTapGestures(onLongPress = { onLongClick() }) }
-            .padding(start = 12.dp)
-            .padding(end = 12.dp)
+
             .padding(vertical = 4.dp)
 
     ) {
         Column() {
-            TimeDivider(activity.start_time)
-            Spacer(modifier = Modifier.height(8.dp))
+            Card(modifier= Modifier
+                .background(SocialTheme.colors.uiFloated)
+                .padding(bottom = if (openSettings) 8.dp else 0.dp)
+                ,shape= RoundedCornerShape(bottomEnd = if(openSettings) 0.dp else 0.dp,bottomStart = if(openSettings) 0.dp else 0.dp),
+                elevation = if (openSettings) 4.dp else 0.dp) {
+                Column(
+                    Modifier
+                        .background(color = SocialTheme.colors.uiBackground)
+                        .padding(horizontal = 12.dp)){
+                    TimeDivider(activity.start_time)
+                    Spacer(modifier = Modifier.height(8.dp))
 
-            //ACtivity top content
-            ActivityItemCreatorBox(onClick = {onEvent(ActivityEvent.GoToProfile(activity.creator_id))},pictureUrl=activity.creator_profile_picture,username=activity.creator_username,timeLeft=activity.time_left,onSettingsClick={ onEvent(ActivityEvent.OpenActivitySettings(activity))})
+                    //ACtivity top content
+                    ActivityItemCreatorBox(onClick = {onEvent(ActivityEvent.GoToProfile(activity.creator_id))},pictureUrl=activity.creator_profile_picture,username=activity.creator_username,timeLeft=activity.time_left,onSettingsClick={
+                        openSettings= !openSettings
+                        onEvent(ActivityEvent.OpenActivitySettings(activity))})
 
-            Spacer(modifier = Modifier.height(12.dp))
-            //TEXT AND CONTROLS ROW
-            Row(modifier = Modifier, verticalAlignment = Alignment.CenterVertically) {
-                ActivityTextBox(modifier=Modifier.weight(1f),title,description)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    //TEXT AND CONTROLS ROW
+                    Row(modifier = Modifier, verticalAlignment = Alignment.CenterVertically) {
+                        ActivityTextBox(modifier=Modifier.weight(1f),title,description)
 
-                controls(onEvent = { event ->
-                    when (event) {
-                        is ActivityItemEvent.SendRequest -> {
-                            Log.d("Mapfragment","open  event")
-                            onEvent(ActivityEvent.SendRequest(event.activity))
-                        }
-                        is ActivityItemEvent.NotLikedActivity -> {
-                            liked.value = true
-                            onEvent(ActivityEvent.ActivityLiked(event.activity))
-                        }
-                        is ActivityItemEvent.OpenActivityChat -> {
-                            onEvent(ActivityEvent.OpenActivityChat(event.activity))
-                        }
-                        is ActivityItemEvent.OpenCamera -> {
-                            Log.d("activityRepositoryImpl","open camera event")
-                            onEvent(ActivityEvent.OpenCamera(event.activity_id))
-                        }
-                        is ActivityItemEvent.DisplayPicture -> {
-                            onEvent(ActivityEvent.DisplayPicture(photo_url = event.photo_url,event.activity_id))
-                        }
-                        else->{}
+                        controls(onEvent = { event ->
+                            when (event) {
+                                is ActivityItemEvent.SendRequest -> {
+                                    Log.d("Mapfragment","open  event")
+                                    onEvent(ActivityEvent.SendRequest(event.activity))
+                                }
+                                is ActivityItemEvent.NotLikedActivity -> {
+                                    liked.value = true
+                                    onEvent(ActivityEvent.ActivityLiked(event.activity))
+                                }
+                                is ActivityItemEvent.OpenActivityChat -> {
+                                    onEvent(ActivityEvent.OpenActivityChat(event.activity))
+                                }
+                                is ActivityItemEvent.OpenCamera -> {
+                                    Log.d("activityRepositoryImpl","open camera event")
+                                    onEvent(ActivityEvent.OpenCamera(event.activity_id))
+                                }
+                                is ActivityItemEvent.DisplayPicture -> {
+                                    onEvent(ActivityEvent.DisplayPicture(photo_url = event.photo_url,event.activity_id))
+                                }
+                                else->{}
+                            }
+                        }, activity, liked.value)
                     }
-                }, activity, liked.value)
+
+                    //DETAILS
+                    Spacer(modifier = Modifier.height(4.dp))
+                    //todo either custom location or latlng
+                    ActivityDetailsBar(min=activity.minUserCount,max=activity.maxUserCount,
+                        onEvent = onEvent, activity.participants_profile_pictures,activity.participants_ids,
+                        location = location,
+                        custom_location = custom_location,
+                        date = date,
+                        timePeriod = timePeriod
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                }
+
             }
 
-            //DETAILS
-            Spacer(modifier = Modifier.height(12.dp))
-            //todo either custom location or latlng
-            ActivityDetailsBar(min=activity.minUserCount,max=activity.maxUserCount,
-                onEvent = onEvent, activity.participants_profile_pictures,
-                location = location,
-                custom_location = custom_location,
-                date = date,
-                timePeriod = timePeriod
-            )
-            Spacer(modifier = Modifier.height(8.dp))
 
-        /*    Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp)
-                    .height(1.dp)
-                    .background(color = SocialTheme.colors.uiFloated)
-            )*/
+            AnimatedVisibility(visible = openSettings,enter= scaleIn(),exit= scaleOut()) {
+
+                    ActivitySettingsContent(LocalContext.current,clipboardManager,displayParticipants,leaveActivity = {liked.value=false}, onEvent =onEvent
+                    ,closeSettings={  openSettings=false}, activity =activity,likedActivity=liked.value)
+            }
+
 
 
         }
@@ -211,11 +265,19 @@ fun ActivityItem(modifier:Modifier=Modifier,
 
 @Composable
 fun TimeDivider(startTime: String) {
-    Row(verticalAlignment = CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)) {
-        Card(shape = RoundedCornerShape(100.dp), modifier = Modifier.height(1.dp).weight(1f).background(color=SocialTheme.colors.uiFloated), backgroundColor = SocialTheme.colors.uiFloated, elevation = 0.dp) {
+    Row(verticalAlignment = CenterVertically, modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 32.dp)) {
+        Card(shape = RoundedCornerShape(100.dp), modifier = Modifier
+            .height(1.dp)
+            .weight(1f)
+            .background(color = SocialTheme.colors.uiFloated), backgroundColor = SocialTheme.colors.uiFloated, elevation = 0.dp) {
         }
         Text(text =startTime, color = SocialTheme.colors.iconPrimary, style = TextStyle(fontFamily = Inter, fontSize = 10.sp, fontWeight = FontWeight.Light))
-        Card(shape = RoundedCornerShape(100.dp), modifier = Modifier.height(1.dp).weight(1f).background(color=SocialTheme.colors.uiFloated), backgroundColor = SocialTheme.colors.uiFloated, elevation = 0.dp) {
+        Card(shape = RoundedCornerShape(100.dp), modifier = Modifier
+            .height(1.dp)
+            .weight(1f)
+            .background(color = SocialTheme.colors.uiFloated), backgroundColor = SocialTheme.colors.uiFloated, elevation = 0.dp) {
         }
     }
 }
@@ -291,7 +353,7 @@ fun ActivityItemCreatorBox(onClick:()->Unit,pictureUrl:String,username:String,ti
 
 @Composable
 fun ActivityDetailsBar(min:Int,max:Int,
-    onEvent: (ActivityEvent) -> Unit, participants_pictures: HashMap<String, String>,
+    onEvent: (ActivityEvent) -> Unit, participants_pictures: HashMap<String, String>,participants_ids:ArrayList<String>,
     location: String?,
     custom_location: String?,
     date: String,
@@ -328,7 +390,7 @@ fun ActivityDetailsBar(min:Int,max:Int,
 
                             )}
                 }
-                if (participants_pictures.values.toList().size > 4) {
+                if (participants_ids.size > 4) {
                     Card(modifier = Modifier.size(32.dp), shape = CircleShape) {
                         AsyncImage(
                             modifier = Modifier
@@ -351,7 +413,7 @@ fun ActivityDetailsBar(min:Int,max:Int,
                             Text(
                                 modifier = Modifier.align(Center),
                                 textAlign = TextAlign.Center,
-                                text = "+"+(participants_pictures.values.toList().size-4).toString(),
+                                text = "+"+(participants_ids.size-4).toString(),
                                 style = TextStyle(
                                     fontFamily = Inter,
                                     fontSize = 10.sp,
@@ -371,8 +433,29 @@ fun ActivityDetailsBar(min:Int,max:Int,
 
 
             item {
-                Spacer(modifier = Modifier.width(32.dp))
+                Spacer(modifier = Modifier.width(24.dp))
             }
+            if (min>0 || max >0)
+            {
+                item{
+                    Icon(painterResource(id = R.drawable.ic_check_list_16),tint=SocialTheme.colors.iconPrimary, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    if(min>0){
+                        Text(text="Min ${min.toString()}",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Normal, fontSize = 10.sp,color=SocialTheme.colors.textPrimary))
+                    }
+                    if(min>0 && max>0){
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                    }
+                    if(max>0){
+                        Text(text="Max ${max.toString()}",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Normal, fontSize = 10.sp,color=SocialTheme.colors.textPrimary))
+
+                    }
+                    Spacer(modifier = Modifier.width(24.dp))
+                }
+            }
+
+
             item {
             //two cases
                 // one custom location exists then write text
@@ -475,29 +558,30 @@ fun controls(onEvent: (ActivityItemEvent) -> Unit, activity: Activity, liked: Bo
         if (liked) {
 
         } else {
-            if(activity.awaitConfirmation){
+            if(activity.participants_ids.size<activity.maxUserCount){
+                if(activity.awaitConfirmation){
 
-                ChatButton(
-                    onEvent = {
-                        onEvent(ActivityItemEvent.SendRequest(activity))
+                    ChatButton(
+                        onEvent = {
+                            onEvent(ActivityItemEvent.SendRequest(activity))
 
-                    }, icon =
-                    R.drawable.ic_loyalty
-                    , iconTint =
-                    SocialTheme.colors.iconPrimary
-                )
-            }else{
+                        }, icon =
+                        R.drawable.ic_loyalty
+                        , iconTint =
+                        SocialTheme.colors.iconPrimary
+                    )
+                }else{
 
 
-                ChatButton(
-                    onEvent = {
-                        onEvent(ActivityItemEvent.NotLikedActivity(activity))
-
-                    }, icon =
-                    R.drawable.ic_add_task
-                    , iconTint =
-                    SocialTheme.colors.iconPrimary
-                )
+                    ChatButton(
+                        onEvent = {
+                            onEvent(ActivityItemEvent.NotLikedActivity(activity))
+                        }, icon =
+                        R.drawable.ic_add_task
+                        , iconTint =
+                        SocialTheme.colors.iconPrimary
+                    )
+                }
             }
 
 
