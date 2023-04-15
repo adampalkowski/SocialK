@@ -86,6 +86,7 @@ sealed class MapEvent {
     object GoToHome : MapEvent()
     object GoToSettings : MapEvent()
     class GoToUserProfile (val user: User): MapEvent()
+    class SendRequest (val activity: Activity): MapEvent()
 
     object AskForPermission : MapEvent()
     object BackPressed : MapEvent()
@@ -1355,6 +1356,9 @@ fun sheetContent(
                         Log.d("HomeScreen", "dislike")
                         onEvent(MapEvent.ActivityUnLiked(it.activity))
 
+                    }
+                    is ActivityEvent.SendRequest -> {
+                        onEvent(MapEvent.SendRequest(it.activity))
                     }
                     is ActivityEvent.GoToMap -> {
                         onEvent(MapEvent.GoToMap(latlng = it.latlng))

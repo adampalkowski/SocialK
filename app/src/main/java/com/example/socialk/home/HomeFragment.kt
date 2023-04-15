@@ -257,6 +257,7 @@ class HomeFragment : Fragment() {
                                                 UserData.user!!
                                             )
                                         }
+
                                         is HomeEvent.ActivityUnLiked -> {
                                             activityViewModel.unlikeActivity(
                                                 event.activity.id,

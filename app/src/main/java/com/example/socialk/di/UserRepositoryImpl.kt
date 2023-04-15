@@ -173,7 +173,25 @@ class UserRepositoryImpl @Inject constructor(
             emit(Response.Failure(e = SocialException("addUser exception", Exception())))
         }
     }
+    override suspend fun addRequestToUser(activity_id: String,user_id: String): Flow<Response<Void?>> = flow {
+        try{
+            emit(Response.Loading)
+            val update = usersRef.document(user_id).update("user_requests",FieldValue.arrayUnion(activity_id)).await()
+            emit(Response.Success(update))
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("addRequestToActivity exception",Exception())))
+        }
+    }
 
+    override suspend fun removeRequestFromUser(activity_id: String,user_id: String): Flow<Response<Void?>>  = flow {
+        try{
+            emit(Response.Loading)
+            val update = usersRef.document(user_id).update("user_requests",FieldValue.arrayUnion(activity_id)).await()
+            emit(Response.Success(update))
+        }catch (e:Exception){
+            emit(Response.Failure(e= SocialException("addRequestToActivity exception",Exception())))
+        }
+    }
     override suspend fun deleteUser(id: String): Flow<Response<Void?>> = flow {
         try {
             emit(Response.Loading)

@@ -23,6 +23,8 @@ interface ActivityRepository {
     suspend fun addParticipantImageToActivity(activity_id:String,user_id:String,picture_url: String) : Flow<Response<Void?>>
     suspend fun setParticipantPicture(id:String,user: User) : Flow<Response<Void?>>
     suspend fun unlikeActivity(id:String,user:User) : Flow<Response<Void?>>
+    suspend fun addRequestToActivity(activity_id:String,user_id:String) : Flow<Response<Void?>>
+    suspend fun removeRequestFromActivity(activity_id:String,user_id:String) : Flow<Response<Void?>>
 
     suspend fun addActivity(activity:Activity) : Flow<Response<Void?>>
     suspend fun updateActivityInvites(activity_id: String,invites:ArrayList<String>) : Flow<Response<Void?>>

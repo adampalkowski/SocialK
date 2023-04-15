@@ -107,6 +107,11 @@ class UserViewModel @Inject constructor(
 
     private var registration: ListenerRegistration? = null
 
+    private val _isRequestAddedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isRequestAddedState: State<Response<Void?>> =_isRequestAddedState
+
+    private val _isRequestRemovedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isRequestRemovedState: State<Response<Void?>> =_isRequestRemovedState
     fun addChatCollectionToUsers(id: String, friend_id: String, chat_id: String) {
         viewModelScope.launch {
             repo.addChatCollectionToUsers(id, friend_id, chat_id).collect { response ->
@@ -137,6 +142,23 @@ class UserViewModel @Inject constructor(
             }
         }
     }
+    fun addRequestToUser(activity_id: String,user_id: String) {
+        viewModelScope.launch {
+            repo.addRequestToUser(activity_id, user_id).collect { response ->
+                _isRequestAddedState.value=response
+
+            }
+        }
+    }
+    fun removeRequestFromUser(activity_id: String,user_id: String) {
+        viewModelScope.launch {
+            repo.removeRequestFromUser(activity_id, user_id).collect { response ->
+                _isRequestRemovedState.value=response
+
+            }
+        }
+    }
+
     fun recreateChatCollection(current_user_id: String, user_id: String, chat: Chat) {
         viewModelScope.launch {
             repo.recreateChatCollection(current_user_id, user_id, chat).collect { response ->

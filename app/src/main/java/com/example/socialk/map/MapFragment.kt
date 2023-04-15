@@ -237,6 +237,7 @@ class MapFragment : Fragment() {
             val values = latlngInitial?.split("/")
             latLng = LatLng(values?.get(0)?.toDouble()!!, values?.get(1)?.toDouble()!!)
         }
+        Log.d("Mapfragment","launch")
         return ComposeView(requireContext()).apply {
             setContent {
                 val systemUiController = rememberSystemUiController()
@@ -259,6 +260,11 @@ class MapFragment : Fragment() {
                             is MapEvent.GoToTrending -> viewModel.handleGoToTrending()
                             is MapEvent.GoToHelp -> viewModel.handleGoToHelp()
                             is MapEvent.GoToInfo -> viewModel.handleGoToInfo()
+                            is MapEvent.SendRequest -> {
+                                Log.d("Mapfragment","send request")
+                                activityViewModel.addRequestToActivity(event.activity.id,UserData.user!!.id)
+                                userViewModel.addRequestToUser(event.activity.id,UserData.user!!.id)
+                            }
 
 
                             is MapEvent.BackPressed -> {}

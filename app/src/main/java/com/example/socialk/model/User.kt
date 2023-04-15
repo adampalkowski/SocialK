@@ -12,6 +12,7 @@ data class User(
     var friends_ids: HashMap<String,String>,
     var invited_ids: ArrayList<String>,
     var description:String,
+    var user_requests: ArrayList<String>,
 ) : Serializable {
     constructor() : this(
         name = "",
@@ -22,6 +23,7 @@ data class User(
         blocked_ids = ArrayList(),
         friends_ids = HashMap(),
         invited_ids = ArrayList(),
-        description = ""
+        description = "",
+        user_requests= ArrayList(),
     )
 }

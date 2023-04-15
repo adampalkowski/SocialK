@@ -61,6 +61,7 @@ sealed class ActivityEvent() {
     class OpenActivitySettings(activity: Activity) : ActivityEvent() {
         val activity = activity
     }
+    class SendRequest(val activity: Activity) : ActivityEvent()
 
     class GoToProfile(user_id: String) : ActivityEvent() {
         val user_id = user_id

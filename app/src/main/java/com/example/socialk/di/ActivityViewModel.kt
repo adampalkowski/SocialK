@@ -81,6 +81,11 @@ class ActivityViewModel @Inject constructor(
     private val _isInviteAddedToActivity = mutableStateOf<Response<Void?>?>(Response.Success(null))
     val isInviteAddedToActivity: State<Response<Void?>?> = _isInviteAddedToActivity
 
+    private val _isRequestAddedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isRequestAddedState: State<Response<Void?>> =_isRequestAddedState
+
+    private val _isRequestRemovedState = mutableStateOf<Response<Void?>>(Response.Success(null))
+    val isRequestRemovedState: State<Response<Void?>> =_isRequestRemovedState
     private val _isInviteRemovedFromActivity =
         mutableStateOf<Response<Void?>?>(Response.Success(null))
     val isInviteRemovedFromActivity: State<Response<Void?>?> = _isInviteRemovedFromActivity
@@ -354,7 +359,23 @@ class ActivityViewModel @Inject constructor(
         }
 
     }
+    fun removeRequestFromActivity(activity_id: String,user_id: String) {
+        viewModelScope.launch {
+            repo.removeRequestFromActivity(activity_id,user_id).collect { response ->
+                _isRequestRemovedState.value=response
+            }
 
+        }
+    }
+    fun addRequestToActivity(activity_id: String,user_id: String) {
+        viewModelScope.launch {
+            repo.addRequestToActivity(activity_id,user_id).collect { response ->
+                _isRequestAddedState.value=response
+
+            }
+
+        }
+    }
     fun deleteActivity(id: String) {
         viewModelScope.launch {
             repo.deleteActivity(id).collect { response ->
@@ -500,5 +521,7 @@ class ActivityViewModel @Inject constructor(
 
         }
     }
+
+
 
 }

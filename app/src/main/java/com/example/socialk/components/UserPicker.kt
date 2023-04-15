@@ -288,6 +288,22 @@ fun GroupPickerItem(chat: Chat, onEvent: (CreateEvent) -> Unit) {
                 .padding(vertical = 8.dp, horizontal = 12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically){
+                if(chat.chat_picture!=null && chat.chat_picture!!.isNotEmpty()){
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(chat.chat_picture)
+                            .crossfade(true)
+                            .build(),
+                        placeholder = painterResource(R.drawable.ic_add_photo),
+                        contentDescription = "image sent",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(36.dp).background(color=SocialTheme.colors.uiBackground)
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+
                 Text(
                     text = chat.chat_name.toString(),
                     style = TextStyle(

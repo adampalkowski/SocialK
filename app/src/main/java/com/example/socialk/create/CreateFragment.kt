@@ -41,6 +41,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -287,7 +288,9 @@ class CreateFragment : Fragment() {
                                         disableNotification=event.disableNotification,
                                         privateChat=event.privateChat,
                                         public =if(event.selectedPrivacy.equals("Public")) true else false,
-                                        participants_ids = arrayListOf(UserData.user!!.id)
+                                        participants_ids = arrayListOf(UserData.user!!.id),
+                                        awaitConfirmation=event.awaitConfirmation,
+                                        requests = ArrayList()
 
                                     )
                                     activityViewModel.addActivity(activity)
@@ -332,8 +335,9 @@ class CreateFragment : Fragment() {
                                         disableNotification=event.disableNotification,
                                         privateChat=event.privateChat,
                                         public =if(event.selectedPrivacy.equals("Public")) true else false,
-                                        participants_ids = arrayListOf(UserData.user!!.id)
-
+                                        participants_ids = arrayListOf(UserData.user!!.id),
+                                        awaitConfirmation=event.awaitConfirmation,
+                                          requests = ArrayList()
                                     )
 
                                     viewModel.handleGoToFriendsPicker(activity)
