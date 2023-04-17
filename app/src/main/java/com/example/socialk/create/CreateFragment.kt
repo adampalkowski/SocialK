@@ -291,7 +291,8 @@ class CreateFragment : Fragment() {
                                         participants_ids = arrayListOf(UserData.user!!.id),
                                         awaitConfirmation=event.awaitConfirmation,
                                         requests = ArrayList(),
-                                        reports = 0
+                                        reports = 0,
+                                        tags = event.tags,
 
                                     )
                                     activityViewModel.addActivity(activity)
@@ -339,9 +340,11 @@ class CreateFragment : Fragment() {
                                         participants_ids = arrayListOf(UserData.user!!.id),
                                         awaitConfirmation=event.awaitConfirmation,
                                           requests = ArrayList(),
-                                        reports = 0
+                                        reports = 0,
+                                        tags = event.tags,
 
-                                    )
+
+                                        )
 
                                     viewModel.handleGoToFriendsPicker(activity)
                                     clearSharedPrefs()

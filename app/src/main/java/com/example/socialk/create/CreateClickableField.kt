@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
@@ -165,7 +166,7 @@ fun PrivacyField(
 @Composable
 fun ImageField(
     modifier: Modifier,
-    onClick: (Int) -> Unit,
+    onClick: () -> Unit,
     title: String,
     iconSize:Int=28,
     text: String = "value",
@@ -182,7 +183,11 @@ fun ImageField(
     openCamera:() ->Unit,
     openGallery:() ->Unit,image_uri: Uri?=null,displayPicture:() ->Unit,
 ) {
-    Column(modifier = modifier) {
+    var showContent by remember {
+        mutableStateOf(false)
+    }
+    Column(modifier = modifier.clickable(onClick={onClick()
+        showContent=!showContent}) ) {
 
         Row(
             modifier = Modifier
@@ -215,12 +220,15 @@ fun ImageField(
             }
 
             Spacer(modifier = Modifier.weight(1f))
-            Log.d("CreateGroupScreen","cadas")
-            Log.d("CreateGroupScreen",image_uri.toString())
 
-            if(image_uri!=null && image_uri.toString().isNotEmpty())
-            {
-                Row(){
+
+
+
+        }
+        if(showContent){
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                if(image_uri!=null && image_uri.toString().isNotEmpty())
+                {
                     Card(onClick = {displayPicture()}) {
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
@@ -231,56 +239,56 @@ fun ImageField(
                             contentDescription = "image sent",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
-                                .size(48.dp).background(color=SocialTheme.colors.uiBackground)
+                                .size(128.dp)
+                                .background(color = SocialTheme.colors.uiBackground)
                         )
                     }
-                    Spacer(modifier = Modifier.width(24.dp))
 
                 }
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly,modifier=Modifier.fillMaxWidth()){
+                    Card(shape = RoundedCornerShape(12.dp), border = BorderStroke(1.dp,SocialTheme.colors.uiFloated), onClick = {openCamera()}) {
+                        Box(modifier = Modifier
+                            .background(color = SocialTheme.colors.uiBackground)
+                            .padding(horizontal = 16.dp, vertical = 12.dp)){
+                            Row(verticalAlignment = Alignment.CenterVertically){
+                                Icon(
+                                    modifier = Modifier.size(iconSize.dp),
+                                    painter = painterResource(id = R.drawable.ic_camera),
+                                    contentDescription = null,
+                                    tint = iconTint
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(text = "Take picture",style= TextStyle(fontFamily = Inter, fontWeight = FontWeight.Light, fontSize = 16.sp,color=SocialTheme.colors.textPrimary))
+                            }
+                        }
+
+                    }
+
+                    Card(shape = RoundedCornerShape(12.dp), border = BorderStroke(1.dp,SocialTheme.colors.uiFloated), onClick = {openGallery()}) {
+                        Box(modifier = Modifier
+
+                            .background(color = SocialTheme.colors.uiBackground)
+                            .padding(horizontal = 16.dp, vertical = 12.dp)){
+                            Row(verticalAlignment = Alignment.CenterVertically){
+                                Icon(
+                                    modifier = Modifier.size(iconSize.dp),
+                                    painter = painterResource(id = R.drawable.ic_photo_library),
+                                    contentDescription = null,
+                                    tint = iconTint
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(text = "Gallery",style= TextStyle(fontFamily = Inter, fontWeight = FontWeight.Light, fontSize = 16.sp,color=SocialTheme.colors.textPrimary))
+                            }
+                        }
+
+                    }
+                }
+
             }
-
-
+            Spacer(modifier = Modifier.height(16.dp))
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly,modifier=Modifier.fillMaxWidth()){
-            Card(shape = RoundedCornerShape(12.dp), border = BorderStroke(1.dp,SocialTheme.colors.uiFloated), onClick = {openCamera()}) {
-                Box(modifier = Modifier
 
-                    .background(color = SocialTheme.colors.uiBackground)
-                    .padding(horizontal = 12.dp, vertical = 6.dp)){
-                    Row(verticalAlignment = Alignment.CenterVertically){
-                        Icon(
-                            modifier = Modifier.size(iconSize.dp),
-                            painter = painterResource(id = R.drawable.ic_camera),
-                            contentDescription = null,
-                            tint = iconTint
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "Take picture",style= TextStyle(fontFamily = Inter, fontWeight = FontWeight.Light, fontSize = 12.sp,color=SocialTheme.colors.textPrimary))
-                    }
-                }
-
-            }
-
-            Card(shape = RoundedCornerShape(12.dp), border = BorderStroke(1.dp,SocialTheme.colors.uiFloated), onClick = {openGallery()}) {
-                Box(modifier = Modifier
-
-                    .background(color = SocialTheme.colors.uiBackground)
-                    .padding(horizontal = 12.dp, vertical = 6.dp)){
-                    Row(verticalAlignment = Alignment.CenterVertically){
-                        Icon(
-                            modifier = Modifier.size(iconSize.dp),
-                            painter = painterResource(id = R.drawable.ic_photo_library),
-                            contentDescription = null,
-                            tint = iconTint
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "Gallery",style= TextStyle(fontFamily = Inter, fontWeight = FontWeight.Light, fontSize = 12.sp,color=SocialTheme.colors.textPrimary))
-                    }
-                }
-
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
         Divider()
     }
 }
@@ -350,7 +358,7 @@ fun EditTextField(
 @Composable
 fun CustomField(
     modifier: Modifier,
-    onClick: (Int) -> Unit,
+    onClick: () -> Unit,
     title: String,
     iconSize:Int=28,
     text: String = "value",
@@ -367,8 +375,9 @@ fun CustomField(
     disableDescription:Boolean=false,
             content: @Composable () -> Unit,
 ) {
-    Column(modifier = modifier) {
-
+    var showContent by remember{ mutableStateOf(false) }
+    Column(modifier = modifier.clickable (onClick={onClick()
+    showContent=!showContent})) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -405,11 +414,16 @@ fun CustomField(
             Spacer(modifier = Modifier.weight(1f))
 
         }
+        if(showContent){
+            content()
 
-        content()
+
         Spacer(modifier = Modifier.height(12.dp))
+
+        }
         Divider()
     }
+
 }
 @Composable
 fun CustomLocationField(

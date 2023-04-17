@@ -248,6 +248,7 @@ fun MapScreen(
     var participantsActivityDialog by rememberSaveable { mutableStateOf(false) }
     var hideActivityDialog by rememberSaveable { mutableStateOf(false) }
     var leaveActivityDialog by rememberSaveable { mutableStateOf(false) }
+    var openFilterDialog by rememberSaveable { mutableStateOf(false) }
 
     Surface(
         Modifier.background(color = SocialTheme.colors.uiBackground),
@@ -270,6 +271,7 @@ fun MapScreen(
             ) {
                 MapBottomDialog(
                     modifier = Modifier,
+                    openFilter={      openFilterDialog = true},
                     state = bottomSheetState,
                     type = bottomSheetType,
                     onEvent = onEvent,
@@ -991,7 +993,136 @@ fun MapScreen(
                         },
             onCancel = { leaveActivityDialog = false }, actionButtonText = "Leave")
     }
+    AnimatedVisibility(visible = openFilterDialog, enter = scaleIn(), exit = scaleOut()) {
+        var tags = ArrayList<String>()
+        Dialog(onDismissRequest ={openFilterDialog=false}) {
+            Card(shape= RoundedCornerShape(16.dp)) {
+                Box(modifier = Modifier
+                    .background(color = SocialTheme.colors.uiBackground)
+                    .padding(24.dp)) {
+                    var selectedFitness by remember { mutableStateOf(false) }
+                    var selectedCreative by remember { mutableStateOf(false) }
+                    var selectedMusic by remember { mutableStateOf(false) }
+                    var selectedGames by remember { mutableStateOf(false) }
+                    var selectedSocial by remember { mutableStateOf(false) }
+                    var selectedEducation by remember { mutableStateOf(false) }
+                    var selectedVolunteer by remember { mutableStateOf(false) }
+                    var selectedTravel by remember { mutableStateOf(false) }
+                    var selectedFood by remember { mutableStateOf(false) }
+                    var selectedWellness by remember { mutableStateOf(false) }
+                    Column() {
+                        Column(
+                            Modifier
+                                .padding(horizontal = 0.dp)
+                                .verticalScroll(rememberScrollState())) {
+                            Row(verticalAlignment = Alignment.CenterVertically){
+                                Icon(painter= painterResource(id = R.drawable.ic_tag_36), contentDescription = null,tint=SocialTheme.colors.textPrimary)
+                                Spacer(Modifier.width(8.dp))
+                                Text(text = "Tags",style= TextStyle(fontFamily = Inter, fontSize = 20.sp, fontWeight = FontWeight.SemiBold),color=SocialTheme.colors.textPrimary)
+                            }
+                            Spacer(Modifier.height(12.dp))
 
+                            TagLabelItem(
+                                title =  Category.SPORTS.label,
+                                icon = R.drawable.ic_fitness,
+                                selected = selectedFitness,
+                                checkedChange = { selectedFitness = !selectedFitness })
+                            Spacer(Modifier.height(6.dp))
+                            TagLabelItem(
+                                title =  Category.CREATIVE.label,
+                                icon = R.drawable.ic_creative,
+                                selected = selectedCreative,
+                                checkedChange = { selectedCreative = !selectedCreative })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.MUSIC.label,
+                                icon = R.drawable.ic_piano,
+                                selected = selectedMusic,
+                                checkedChange = { selectedMusic = !selectedMusic })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.GAMES.label,
+                                icon = R.drawable.ic_games,
+                                selected = selectedGames,
+                                checkedChange = { selectedGames = !selectedGames })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.SOCIAL.label,
+                                icon = R.drawable.ic_celebration,
+                                selected = selectedSocial,
+                                checkedChange = { selectedSocial = !selectedSocial })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.EDUCATION.label,
+                                icon = R.drawable.ic_book,
+                                selected = selectedEducation,
+                                checkedChange = { selectedEducation = !selectedEducation })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.VOLUNTEER.label,
+                                icon = R.drawable.ic_volounteer,
+                                selected = selectedVolunteer,
+                                checkedChange = { selectedVolunteer = !selectedVolunteer })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.TRAVEL.label,
+                                icon = R.drawable.ic_travel,
+                                selected = selectedTravel,
+                                checkedChange = { selectedTravel = !selectedTravel })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.FOOD.label,
+                                icon = R.drawable.ic_food,
+                                selected = selectedFood,
+                                checkedChange = { selectedFood = !selectedFood })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.WELLNESS.label,
+                                icon = R.drawable.ic_wellness,
+                                selected = selectedWellness,
+                                checkedChange = { selectedWellness = !selectedWellness })
+
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        Row(modifier = Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.End) {
+                            ClickableText(text = AnnotatedString("Cancel")
+                                , style = TextStyle(color= SocialTheme.colors.textPrimary,
+                                    fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
+                                ), onClick = {openFilterDialog=false  })
+                            Spacer(modifier = Modifier.width(24.dp))
+                            ClickableText(text = AnnotatedString("Confirm"), style = TextStyle(color=SocialTheme.colors.textInteractive,
+                                fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
+                            ), onClick = { activityViewModel.getClosestFilteredActivities(activityViewModel.location.value!!.latitude,activityViewModel.location.value!!.longitude,tags) })
+                        }
+                    }
+
+                    if (selectedFitness && !tags.contains(Category.SPORTS.label)) tags.add(Category.SPORTS.label) else tags.remove(Category.SPORTS.label)
+                    if (selectedFood && !tags.contains(Category.FOOD.label)) tags.add(Category.FOOD.label) else tags.remove(Category.FOOD.label)
+                    if (selectedMusic && !tags.contains(Category.MUSIC.label)) tags.add(Category.MUSIC.label) else tags.remove(Category.MUSIC.label)
+                    if (selectedWellness && !tags.contains(Category.WELLNESS.label)) tags.add(Category.WELLNESS.label) else tags.remove(Category.WELLNESS.label)
+                    if (selectedTravel && !tags.contains(Category.TRAVEL.label)) tags.add(Category.TRAVEL.label) else tags.remove(Category.TRAVEL.label)
+
+                    if (selectedCreative && !tags.contains(Category.CREATIVE.label)) tags.add(Category.CREATIVE.label) else tags.remove(Category.CREATIVE.label)
+
+                    if (selectedGames && !tags.contains(Category.GAMES.label)) tags.add(Category.GAMES.label) else tags.remove(Category.GAMES.label)
+
+                    if (selectedSocial && !tags.contains(Category.SOCIAL.label)) tags.add(Category.SOCIAL.label) else tags.remove(Category.SOCIAL.label)
+
+                    if (selectedEducation && !tags.contains(Category.EDUCATION.label)) tags.add(Category.EDUCATION.label) else tags.remove(Category.EDUCATION.label)
+
+                    if (selectedVolunteer && !tags.contains(Category.VOLUNTEER.label)) tags.add(Category.VOLUNTEER.label) else tags.remove(Category.VOLUNTEER.label)
+                }
+            }
+        }
+    }
     AnimatedVisibility(visible = participantsActivityDialog, enter = scaleIn(), exit = scaleOut()) {
         Dialog(onDismissRequest ={participantsActivityDialog=false}) {
             Card(shape= RoundedCornerShape(16.dp)) {
@@ -1422,7 +1553,9 @@ fun MapBottomDialog(
     chatViewModel: ChatViewModel,
     viewModel: AuthViewModel?,
     activityEvent: (ActivityEvent) -> Unit,
+    openFilter:() -> Unit,
     content: @Composable (asdas: Boolean) -> Unit
+
 ) {
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp
@@ -1461,7 +1594,8 @@ fun MapBottomDialog(
                 viewModel,
                 activityViewModel,
                 isDark,
-                onEvent = onEvent
+                onEvent = onEvent,
+                openFilter = openFilter
             )
         },
         // This is the height in collapsed state
@@ -1482,7 +1616,8 @@ fun sheetContent(
     viewModel: AuthViewModel?,
     activityViewModel: ActivityViewModel?,
     isDark: Boolean,
-    onEvent: (MapEvent) -> Unit
+    onEvent: (MapEvent) -> Unit,
+    openFilter:() -> Unit
 
 ) {
     var isUpdated = false
@@ -1507,7 +1642,7 @@ fun sheetContent(
             },
             onLongClick = { activity ->
 
-            },
+            }, openFilter = openFilter
         )
     }
 

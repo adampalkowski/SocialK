@@ -205,7 +205,7 @@ fun HomeScreen(
                     }, onLongClick = { activity ->
                         bottomSheetActivity = activity
                         displayActivity = true
-                    })
+                    }, openFilter = {})
             }
 
         })
@@ -744,7 +744,8 @@ fun HomeScreenContent(
     isDark: Boolean,
     onEvent: (HomeEvent) -> Unit,
     homeViewModel: HomeViewModel?,
-    onLongClick: (Activity) -> Unit
+    onLongClick: (Activity) -> Unit,
+    openFilter:() -> Unit
     ) {
     /*val refreshScope = rememberCoroutineScope()
     var refreshing by remember { mutableStateOf(false) }*/
@@ -854,7 +855,7 @@ fun HomeScreenContent(
         Column() {
             FriendsPublicPicker(
                 selectedOption,
-                onOptionSelected = { value -> selectedOption = value })
+                onOptionSelected = { value -> selectedOption = value },openFilter=openFilter,refresh={})
             AnimatedVisibility(
                 visible = if (selectedOption == 0) true else false,
                 enter = fadeIn(tween(500)),
@@ -914,7 +915,48 @@ fun PublicActivities(
 ) {
     var activitiesExist = remember { mutableStateOf(false) }
     LazyColumn {
+        activityViewModel?.closestFilteredActivitiesListState?.value.let {
+            when (it) {
+                is Response.Success -> {
+                    /* refreshing = false*/
+                    //display activities
 
+                    items(it.data) { item ->
+                        /*if (updateActivity) {
+                            if (item.id == homeViewModel.camera_activity_id.value) {
+                                item.pictures[UserData.user!!.id] = photo_url
+                            }
+                            updateActivity = false
+                        }
+                        if (updateDeleteActivity) {
+                            if (item.id == homeViewModel.camera_activity_id.value) {
+                                item.pictures.remove(UserData.user!!.id)
+                            }
+                            updateDeleteActivity = false
+                        }*/
+                        ActivityItem(
+                            activity = item,
+                            onEvent = activityEvent,
+                            username = item.creator_username,
+                            profilePictureUrl = item.creator_profile_picture,
+                            timeLeft = item.time_left,
+                            title = "FILTERED",
+                            description = item.description,
+                            date = item.date,
+                            liked = item.participants_ids.contains(UserData.user!!.id),
+                            //todo add the time end
+                            timePeriod = item.start_time + " - " + item.end_time,
+                            custom_location = item.custom_location,
+                            location = item.location,
+                            onLongClick = { /*onLongClick(item)*/ }
+                        )
+
+                    }
+                    activitiesExist.value = true
+                }
+                else -> {}
+            }
+        }
         activityViewModel?.closestActivitiesListState?.value.let {
             when (it) {
                 is Response.Success -> {
@@ -1194,69 +1236,97 @@ fun FriendsActivities(
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun FriendsPublicPicker(selectedOption: Int, onOptionSelected: (Int) -> Unit) {
+fun FriendsPublicPicker(selectedOption: Int, onOptionSelected: (Int) -> Unit,openFilter:() -> Unit,refresh:() -> Unit) {
 
     Box(Modifier.fillMaxWidth()) {
 
-        Row(Modifier.align(Alignment.Center).padding(vertical = 8.dp)) {
-            Column(Modifier.clickable { onOptionSelected(0) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                Row(verticalAlignment = Alignment.CenterVertically){
-                    androidx.compose.material3.Icon(
-                        painter = painterResource(id = R.drawable.ic_handshake),
-                        contentDescription = null,
-                        tint =  SocialTheme.colors.iconPrimary
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(text = "Friends",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 12.sp),color=SocialTheme.colors.textPrimary)
+        Row(
+            Modifier
+                .padding(top = 8.dp, bottom = 0.dp)) {
+            Spacer(modifier = Modifier.width(12.dp))
+            androidx.compose.material3.Card(modifier=Modifier,onClick = openFilter,shape= CircleShape, border = BorderStroke(1.dp,SocialTheme.colors.uiFloated)) {
+                Box(
+                    Modifier
+                        .background(color = SocialTheme.colors.uiBackground)
+                        .padding(12.dp)){
+                    androidx.compose.material3.Icon(painter = painterResource(id = R.drawable.ic_filter), contentDescription = null, tint = SocialTheme.colors.iconPrimary)
 
-
-                }
-
-                AnimatedVisibility(
-                    visible = if (selectedOption == 0) true else false,
-                    enter = fadeIn(tween(300)),
-                    exit = fadeOut(tween(300))
-                ) {
-                    androidx.compose.material3.Card(
-                        shape = RoundedCornerShape(100.dp),
-                        modifier = Modifier
-                            .width(64.dp)
-                            .height(4.dp)
-                    ) {
-                        Box(Modifier.background(color = SocialTheme.colors.iconPrimary))
-                    }
-                }
-
-            }
-            Spacer(Modifier.width(24.dp))
-            Column(Modifier.clickable { onOptionSelected(1) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                Row(verticalAlignment = Alignment.CenterVertically){
-                    androidx.compose.material3.Icon(
-                        painter = painterResource(id = R.drawable.ic_public),
-                        contentDescription = null,
-                        tint =  SocialTheme.colors.iconPrimary
-                    )
-                    Spacer(Modifier.width(4.dp))
-
-                    Text(text = "Public",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 12.sp),color=SocialTheme.colors.textPrimary)
-                }
-
-                AnimatedVisibility(
-                    visible = if (selectedOption == 1) true else false,
-                    enter = fadeIn(tween(300)),
-                    exit = fadeOut(tween(300))
-                ) {
-                    androidx.compose.material3.Card(
-                        shape = RoundedCornerShape(100.dp),
-                        modifier = Modifier.width(64.dp)
-                            .height(4.dp)
-                    ) {
-                        Box(Modifier.background(color =SocialTheme.colors.iconPrimary))
-                    }
                 }
             }
+            Spacer(Modifier.weight(1f))
+            Row(){
+                Column(Modifier.clickable { onOptionSelected(0) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Row(verticalAlignment = Alignment.CenterVertically){
+                        androidx.compose.material3.Icon(
+                            painter = painterResource(id = R.drawable.ic_handshake),
+                            contentDescription = null,
+                            tint =  SocialTheme.colors.iconPrimary
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(text = "Friends",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 12.sp),color=SocialTheme.colors.textPrimary)
+
+
+                    }
+
+                    AnimatedVisibility(
+                        visible = if (selectedOption == 0) true else false,
+                        enter = fadeIn(tween(300)),
+                        exit = fadeOut(tween(300))
+                    ) {
+                        androidx.compose.material3.Card(
+                            shape = RoundedCornerShape(100.dp),
+                            modifier = Modifier
+                                .width(64.dp)
+                                .height(4.dp)
+                        ) {
+                            Box(Modifier.background(color = SocialTheme.colors.iconPrimary))
+                        }
+                    }
+
+                }
+                Spacer(Modifier.width(24.dp))
+                Column(Modifier.clickable { onOptionSelected(1) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Row(verticalAlignment = Alignment.CenterVertically){
+                        androidx.compose.material3.Icon(
+                            painter = painterResource(id = R.drawable.ic_public),
+                            contentDescription = null,
+                            tint =  SocialTheme.colors.iconPrimary
+                        )
+                        Spacer(Modifier.width(4.dp))
+
+                        Text(text = "Public",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 12.sp),color=SocialTheme.colors.textPrimary)
+                    }
+
+                    AnimatedVisibility(
+                        visible = if (selectedOption == 1) true else false,
+                        enter = fadeIn(tween(300)),
+                        exit = fadeOut(tween(300))
+                    ) {
+                        androidx.compose.material3.Card(
+                            shape = RoundedCornerShape(100.dp),
+                            modifier = Modifier
+                                .width(64.dp)
+                                .height(4.dp)
+                        ) {
+                            Box(Modifier.background(color =SocialTheme.colors.iconPrimary))
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.weight(1f))
+
+            androidx.compose.material3.Card(modifier=Modifier,onClick = refresh,shape= CircleShape, border = BorderStroke(1.dp,SocialTheme.colors.uiFloated)) {
+                Box(
+                    Modifier
+                        .background(color = SocialTheme.colors.uiBackground)
+                        .padding(12.dp)){
+                    androidx.compose.material3.Icon(painter = painterResource(id = R.drawable.ic_refresh), contentDescription = null, tint = SocialTheme.colors.iconPrimary)
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+
         }
 
 

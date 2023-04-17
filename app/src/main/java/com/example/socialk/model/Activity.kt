@@ -36,7 +36,7 @@ data class Activity(
     var participants_ids: ArrayList<String>,
     val awaitConfirmation:Boolean,
     var requests: ArrayList<String>,
-    var reports:Int,
+    var reports:Int,    var tags: ArrayList<String>,
 
     ) : java.io.Serializable {
     constructor() : this(
@@ -74,6 +74,7 @@ data class Activity(
          participants_ids =ArrayList(),
         awaitConfirmation=false,
         requests=ArrayList(),
-        reports=0
+        reports=0,
+        tags=ArrayList(),
     )
 }

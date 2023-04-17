@@ -46,6 +46,8 @@ class ActivityViewModel @Inject constructor(
 
     private val _closestActivitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val closestActivitiesListState: State<Response<List<Activity>>> = _closestActivitiesListState
+    private val _closestFilteredActivitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
+    val closestFilteredActivitiesListState: State<Response<List<Activity>>> = _closestFilteredActivitiesListState
     private val _moreclosestActivitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val moreclosestActivitiesListState: State<Response<List<Activity>>> = _moreclosestActivitiesListState
 
@@ -137,7 +139,84 @@ class ActivityViewModel @Inject constructor(
             }
         }
     }
+    fun getMoreFilteredClosestActivities(lat:Double,lng:Double,tags:ArrayList<String>){
+        viewModelScope.launch {
+            val list_without_removed_activites: ArrayList<Activity> = ArrayList()
+            repo.getMoreFilteredClosestActivities(lat,lng,tags).collect { response ->
+                when (response) {
+                    is Response.Success -> {
+                        response.data.forEach {
+                            Log.d("getClosestActimivities",it.toString())
+                            list_without_removed_activites.add(it)
+                            val time_left: String = calculateTimeLeft(
+                                it.date,
+                                it.start_time,
+                                deleteActivity = { event ->
+                                    Log.d("getClosestActivities", "delete activity")
+                                    deleteActivity(it.id)
+                                    it.participants_ids.forEach{user_id->
+                                        deleteActivityFromUser(user_id,it.id)
+                                    }
+                                    list_without_removed_activites.remove(it)
+                                })
+                            it.time_left = time_left
 
+                            Log.d("getClosestActivities","list"+list_without_removed_activites.toString())
+                            _closestFilteredActivitiesListState.value =
+                                Response.Success(list_without_removed_activites as List<Activity>)
+                        }
+                    }
+                    is Response.Failure -> {
+                        _closestFilteredActivitiesListState.value = response
+                    }
+                    is Response.Loading -> {
+                        _closestFilteredActivitiesListState.value = response
+                    }
+                }
+
+
+            }
+        }
+    }
+    fun getClosestFilteredActivities(lat:Double,lng:Double,tags:ArrayList<String>){
+        viewModelScope.launch {
+            val list_without_removed_activites: ArrayList<Activity> = ArrayList()
+            repo.getClosestFilteredActivities(lat,lng,tags).collect { response ->
+                when (response) {
+                    is Response.Success -> {
+                        response.data.forEach {
+                            Log.d("getClosestActimivities",it.toString())
+                            list_without_removed_activites.add(it)
+                            val time_left: String = calculateTimeLeft(
+                                it.date,
+                                it.start_time,
+                                deleteActivity = { event ->
+                                    Log.d("getClosestActivities", "delete activity")
+                                    deleteActivity(it.id)
+                                    it.participants_ids.forEach{user_id->
+                                        deleteActivityFromUser(user_id,it.id)
+                                    }
+                                    list_without_removed_activites.remove(it)
+                                })
+                            it.time_left = time_left
+
+                            Log.d("getClosestActivities","list"+list_without_removed_activites.toString())
+                            _closestFilteredActivitiesListState.value =
+                                Response.Success(list_without_removed_activites as List<Activity>)
+                        }
+                    }
+                    is Response.Failure -> {
+                        _closestFilteredActivitiesListState.value = response
+                    }
+                    is Response.Loading -> {
+                        _closestFilteredActivitiesListState.value = response
+                    }
+                }
+
+
+            }
+        }
+    }
     private fun deleteActivityFromUser(userId: String, activity_id: String) {
         viewModelScope.launch {
             repo.deleteActivityFromUser(userId,activity_id).collect { response ->

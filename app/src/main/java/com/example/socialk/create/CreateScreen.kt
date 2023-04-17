@@ -36,7 +36,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,13 +45,14 @@ import com.example.socialk.R
 import com.example.socialk.camera.CameraEvent
 import com.example.socialk.camera.CameraView
 import com.example.socialk.camera.ImageDisplay
+import com.example.socialk.components.Category
 import com.example.socialk.components.CustomSocialDialog
 import com.example.socialk.components.PrivacyOption
+import com.example.socialk.components.TagLabelItem
 import com.example.socialk.di.ActivityViewModel
 import com.example.socialk.di.UserViewModel
 import com.example.socialk.map.loadIcon
 import com.example.socialk.model.Chat
-import com.example.socialk.model.Response
 import com.example.socialk.model.User
 import com.example.socialk.model.UserData
 import com.example.socialk.signinsignup.TextFieldState
@@ -122,6 +122,7 @@ sealed class CreateEvent {
         val disableChat: Boolean,
         val selectedPrivacy: String,
         val awaitConfirmation: Boolean,
+        val tags: ArrayList<String>,
     ) : CreateEvent()
 }
 
@@ -140,11 +141,11 @@ fun CreateScreen(
     executor: Executor?,
     onImageCaptured: (Uri) -> Unit,
 ) {
-    var image_uri by rememberSaveable{ mutableStateOf("".toUri()) }
-    var uri_flow= viewModel.photo_uri.collectAsState()
+    var image_uri by rememberSaveable { mutableStateOf("".toUri()) }
+    var uri_flow = viewModel.photo_uri.collectAsState()
     uri_flow.value.let {
-        if (it != null ){
-            image_uri=it
+        if (it != null) {
+            image_uri = it
 
         }
     }
@@ -238,6 +239,7 @@ fun CreateScreen(
             })
     }
 
+
     if (isTimeDialogShown) {
         TimePickerDialog(
             onDismissRequest = { isTimeDialogShown = false },
@@ -289,6 +291,7 @@ fun CreateScreen(
         mutableStateOf(MapProperties(mapType = MapType.NORMAL))
     }
     val pattern = "\\((-?\\d+\\.\\d+),(-?\\d+\\.\\d+)\\)".toRegex()
+    var tags = ArrayList<String>()
     var latLng = LatLng(0.0, 0.0)
     var matchResult: MatchResult? = null
     if (location.value != null) {
@@ -492,6 +495,111 @@ fun CreateScreen(
 
                     }
                     CustomField(
+                        modifier = Modifier,
+                        onClick = {},
+                        title = "Tags",
+                        description = "Add tags to easier with the group of people that you are searching for.",
+                        icon = R.drawable.ic_tag
+                    ) {
+                        var selectedFitness by remember { mutableStateOf(false) }
+                        var selectedCreative by remember { mutableStateOf(false) }
+                        var selectedMusic by remember { mutableStateOf(false) }
+                        var selectedGames by remember { mutableStateOf(false) }
+                        var selectedSocial by remember { mutableStateOf(false) }
+                        var selectedEducation by remember { mutableStateOf(false) }
+                        var selectedVolunteer by remember { mutableStateOf(false) }
+                        var selectedTravel by remember { mutableStateOf(false) }
+                        var selectedFood by remember { mutableStateOf(false) }
+                        var selectedWellness by remember { mutableStateOf(false) }
+
+                        Column(Modifier.padding(horizontal = 24.dp)) {
+
+                            TagLabelItem(
+                                title =  Category.SPORTS.label,
+                                icon = R.drawable.ic_fitness,
+                                selected = selectedFitness,
+                                checkedChange = { selectedFitness = !selectedFitness })
+                            Spacer(Modifier.height(6.dp))
+                            TagLabelItem(
+                                title =  Category.CREATIVE.label,
+                                icon = R.drawable.ic_creative,
+                                selected = selectedCreative,
+                                checkedChange = { selectedCreative = !selectedCreative })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.MUSIC.label,
+                                icon = R.drawable.ic_piano,
+                                selected = selectedMusic,
+                                checkedChange = { selectedMusic = !selectedMusic })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.GAMES.label,
+                                icon = R.drawable.ic_games,
+                                selected = selectedGames,
+                                checkedChange = { selectedGames = !selectedGames })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.SOCIAL.label,
+                                icon = R.drawable.ic_celebration,
+                                selected = selectedSocial,
+                                checkedChange = { selectedSocial = !selectedSocial })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.EDUCATION.label,
+                                icon = R.drawable.ic_book,
+                                selected = selectedEducation,
+                                checkedChange = { selectedEducation = !selectedEducation })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.VOLUNTEER.label,
+                                icon = R.drawable.ic_volounteer,
+                                selected = selectedVolunteer,
+                                checkedChange = { selectedVolunteer = !selectedVolunteer })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.TRAVEL.label,
+                                icon = R.drawable.ic_travel,
+                                selected = selectedTravel,
+                                checkedChange = { selectedTravel = !selectedTravel })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.FOOD.label,
+                                icon = R.drawable.ic_food,
+                                selected = selectedFood,
+                                checkedChange = { selectedFood = !selectedFood })
+                            Spacer(Modifier.height(6.dp))
+
+                            TagLabelItem(
+                                title = Category.WELLNESS.label,
+                                icon = R.drawable.ic_wellness,
+                                selected = selectedWellness,
+                                checkedChange = { selectedWellness = !selectedWellness })
+
+                        }
+                        if (selectedFitness && !tags.contains(Category.SPORTS.label)) tags.add(Category.SPORTS.label) else tags.remove(Category.SPORTS.label)
+                        if (selectedFood && !tags.contains(Category.FOOD.label)) tags.add(Category.FOOD.label) else tags.remove(Category.FOOD.label)
+                        if (selectedMusic && !tags.contains(Category.MUSIC.label)) tags.add(Category.MUSIC.label) else tags.remove(Category.MUSIC.label)
+                        if (selectedWellness && !tags.contains(Category.WELLNESS.label)) tags.add(Category.WELLNESS.label) else tags.remove(Category.WELLNESS.label)
+                        if (selectedTravel && !tags.contains(Category.TRAVEL.label)) tags.add(Category.TRAVEL.label) else tags.remove(Category.TRAVEL.label)
+
+                        if (selectedCreative && !tags.contains(Category.CREATIVE.label)) tags.add(Category.CREATIVE.label) else tags.remove(Category.CREATIVE.label)
+
+                        if (selectedGames && !tags.contains(Category.GAMES.label)) tags.add(Category.GAMES.label) else tags.remove(Category.GAMES.label)
+
+                        if (selectedSocial && !tags.contains(Category.SOCIAL.label)) tags.add(Category.SOCIAL.label) else tags.remove(Category.SOCIAL.label)
+
+                        if (selectedEducation && !tags.contains(Category.EDUCATION.label)) tags.add(Category.EDUCATION.label) else tags.remove(Category.EDUCATION.label)
+
+                        if (selectedVolunteer && !tags.contains(Category.VOLUNTEER.label)) tags.add(Category.VOLUNTEER.label) else tags.remove(Category.VOLUNTEER.label)
+                    }
+                    CustomField(
                         text = "Additional information",
                         modifier = Modifier,
                         title = "Participants limits",
@@ -542,10 +650,13 @@ fun CreateScreen(
                         onClick = {},
                         title = "Image",
                         description = "Set activity image",
-                        icon = R.drawable.ic_add_photo,image_uri=image_uri,
-                        openCamera = {onEvent(CreateEvent.OpenCamera)},
-                        openGallery = {onEvent(CreateEvent.OpenGallery)}, displayPicture = {onEvent(
-                            CreateEvent.DisplayPicture(image_uri.toString()))})
+                        icon = R.drawable.ic_add_photo, image_uri = image_uri,
+                        openCamera = { onEvent(CreateEvent.OpenCamera) },
+                        openGallery = { onEvent(CreateEvent.OpenGallery) }, displayPicture = {
+                            onEvent(
+                                CreateEvent.DisplayPicture(image_uri.toString())
+                            )
+                        })
                     CustomField(
                         text = "Privacy",
                         modifier = Modifier,
@@ -649,8 +760,8 @@ fun CreateScreen(
                                 privateChat = privateChat,
                                 disableChat = disableChat,
                                 selectedPrivacy = selectedPrivacy.label,
-                                awaitConfirmation= awaitConfirmation
-
+                                awaitConfirmation = awaitConfirmation,
+                                tags=tags
                             )
                         )
                     }
@@ -801,7 +912,7 @@ fun CreateScreen(
                 when (event) {
                     is CameraEvent.BackPressed -> {
                         if (viewModel.shouldShowCamera.value) {
-                            Log.d("CameraEvent","backpressed")
+                            Log.d("CameraEvent", "backpressed")
                             viewModel.shouldShowCamera.value = false
                         }
                         if (viewModel.shouldShowPhoto.value) {
@@ -809,7 +920,7 @@ fun CreateScreen(
                         }
                     }
                     is CameraEvent.SavePhoto -> {
-                        Log.d("CameraEvent","save photo")
+                        Log.d("CameraEvent", "save photo")
 
                         viewModel.shouldShowCamera.value = false
                         viewModel.shouldShowPhoto.value = false
@@ -832,21 +943,22 @@ fun CreateScreen(
                     uri_flow.value!!, onEvent = { event ->
                         when (event) {
                             is CameraEvent.RemovePhoto -> {
-                                Log.d("CameraEvent","remove photo")
+                                Log.d("CameraEvent", "remove photo")
 
                                 val photoFile =
                                     uri_flow.value!!.lastPathSegment?.let {
-                                        File(outputDirectory,
+                                        File(
+                                            outputDirectory,
                                             it
                                         )
                                     }
                                 photoFile!!.delete()
-                                viewModel.photo_uri.value="".toUri()
+                                viewModel.photo_uri.value = "".toUri()
                                 viewModel.shouldShowPhoto.value = false
                                 viewModel.shouldShowCamera.value = true
                             }
                             is CameraEvent.BackPressed -> {
-                                Log.d("CameraEvent","back pressed2 ")
+                                Log.d("CameraEvent", "back pressed2 ")
 
 
 
@@ -856,32 +968,33 @@ fun CreateScreen(
 
                             }
                             is CameraEvent.SetPicture -> {
-                                Log.d("CameraEvent","set pciture ")
+                                Log.d("CameraEvent", "set pciture ")
 
-                                Log.d("CreateGroupScreen","settingsi mage")
-                                image_uri=event.image_url
+                                Log.d("CreateGroupScreen", "settingsi mage")
+                                image_uri = event.image_url
 
                                 viewModel.shouldShowPhoto.value = false
                                 viewModel.shouldShowCamera.value = false
 
                             }
                             is CameraEvent.SavePhoto -> {
-                                Log.d("CameraEvent","save pciture 2")
+                                Log.d("CameraEvent", "save pciture 2")
 
                                 viewModel.shouldShowCamera.value = false
                                 viewModel.shouldShowPhoto.value = false
                             }
                             is CameraEvent.ImageSent -> {
-                                Log.d("CameraEvent","image  sent 2")
+                                Log.d("CameraEvent", "image  sent 2")
 
                                 viewModel.shouldShowPhoto.value = false
                                 viewModel.shouldShowCamera.value = false
                             }
                             is CameraEvent.DeletePhoto -> {
-                                Log.d("CameraEvent","delete  photo 2")
+                                Log.d("CameraEvent", "delete  photo 2")
                                 val photoFile =
                                     uri_flow.value!!.lastPathSegment?.let {
-                                        File(outputDirectory,
+                                        File(
+                                            outputDirectory,
                                             it
                                         )
                                     }
@@ -891,7 +1004,7 @@ fun CreateScreen(
                                     viewModel.camera_activity_id.value,
                                     viewModel?.currentUser!!.uid
                                 )*/
-                                viewModel.photo_uri.value="".toUri()
+                                viewModel.photo_uri.value = "".toUri()
                                 viewModel.shouldShowPhoto.value = false
                                 viewModel.shouldShowCamera.value = false
                                 viewModel.displayPhoto.value = false
