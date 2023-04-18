@@ -14,9 +14,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -211,7 +213,18 @@ fun LiveScreenContent(activeUsersViewModel:ActiveUsersViewModel,onEvent: (LiveEv
                         currentLocation.value!!.latitude.toString()+"/"+currentLocation.value!!.longitude.toString()}
                 )
             )
-        }, text = "Share live activity", modifier = Modifier)
+        }, text = "Share live activity", modifier = Modifier){
+            androidx.compose.material3.Text(
+                text = "Share live activity",
+                style = TextStyle(
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontFamily = Inter,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            )
+
+        }
     }
 
 }

@@ -54,6 +54,7 @@ import coil.transform.CircleCropTransformation
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.target.CustomTarget
 import com.example.socialk.ButtonLink
 import com.example.socialk.Destinations
@@ -83,10 +84,8 @@ import com.google.firebase.dynamiclinks.ktx.dynamicLink
 import com.google.firebase.dynamiclinks.ktx.dynamicLinks
 import com.google.firebase.ktx.Firebase
 import com.google.maps.android.compose.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import okhttp3.internal.wait
 import coil.compose.rememberImagePainter as rememberImagePainter1
 
 sealed class MapEvent {
@@ -191,7 +190,7 @@ fun MapScreen(
             onBackPressedCallback.remove()
         }
     }
-
+    val contextF= LocalContext.current
 
     //dialog for activity linked display
     val showDialogState: Boolean by homeViewModel?.showDialog!!.collectAsState()
@@ -236,12 +235,21 @@ fun MapScreen(
             )
         )
     }
-    var bitmap: BitmapDescriptor? =
-        loadIcon(LocalContext.current, UserData.user?.pictureUrl!!, R.drawable.ic_person)
+
+
     var properties by remember {
         mutableStateOf(MapProperties(mapType = MapType.NORMAL))
     }
-
+    var selectedFitness by remember { mutableStateOf(false) }
+    var selectedCreative by remember { mutableStateOf(false) }
+    var selectedMusic by remember { mutableStateOf(false) }
+    var selectedGames by remember { mutableStateOf(false) }
+    var selectedSocial by remember { mutableStateOf(false) }
+    var selectedEducation by remember { mutableStateOf(false) }
+    var selectedVolunteer by remember { mutableStateOf(false) }
+    var selectedTravel by remember { mutableStateOf(false) }
+    var selectedFood by remember { mutableStateOf(false) }
+    var selectedWellness by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     var reportActivityDialog by rememberSaveable { mutableStateOf(false) }
@@ -336,7 +344,7 @@ fun MapScreen(
 
                     }
                 ) { isExpanded ->
-
+                    Log.d("MapScreen", "re compose ")
                     Box(
                         Modifier
                             .fillMaxSize()
@@ -421,11 +429,12 @@ fun MapScreen(
                                         },
                                         uiSettings = uiSettings
                                     ) {
+
                                         location_flow.value.let {
                                             MarkerInfoWindow(
                                                 state = MarkerState(
                                                     position = it!!
-                                                ), icon = bitmap
+                                                ), icon = loadIcon(contextF ,   UserData.user?.pictureUrl!!, R.drawable.ic_person)
                                             ) {
                                                 Column() {
                                                     Card(shape = RoundedCornerShape(6.dp)) {
@@ -462,52 +471,26 @@ fun MapScreen(
                                                                 values.get(0).toDouble(),
                                                                 values.get(1).toDouble()
                                                             )
-                                                            var bitmap:BitmapDescriptor?= bitmapDescriptorFromVector(context=LocalContext.current,vectorResId=R.drawable.ic_person)
-                                                            urlToBitmap( scope= rememberCoroutineScope(),imageURL=activity.creator_profile_picture,context=LocalContext.current
-                                                                ,onSuccess={
+                                                            var activityIcon: BitmapDescriptor? by remember { mutableStateOf(null) }
 
-                                                                    Log.d("bitmapscriptiod","sucesss")
-                                                                    bitmap=BitmapDescriptorFactory.fromBitmap(it)},onError={})
+                                                            // load the icon asynchronously
+                                                            LaunchedEffect( activity.creator_profile_picture) {
+                                                                withContext(Dispatchers.IO) {
+                                                                    activityIcon = loadIcon(context ,  activity.creator_profile_picture, R.drawable.ic_person)
+                                                                }
+                                                            }
                                                             MarkerInfoWindow(
                                                                 zIndex = 0.5f,
                                                                 state = MarkerState(
                                                                     position = latLng
                                                                 ),
-                                                                icon =bitmap
+                                                                icon =activityIcon
                                                             ) {
                                                                 MapActivityPreview(
                                                                     bottomSheetActivity = activity,
                                                                     onEvent = {}
                                                                 )
-                                                                /* Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-                                                                     androidx.compose.material3.Card(
-                                                                         shape = RoundedCornerShape(
-                                                                             16.dp
-                                                                         )
-                                                                     ) {
-                                                                         Box(modifier = Modifier.background(color = SocialTheme.colors.uiBackground),) {
-                                                                             MapActivityItem(
-                                                                                 activity = activity,
-                                                                                 username = activity.creator_username,
-                                                                                 profilePictureUrl = activity.creator_profile_picture,
-                                                                                 timeLeft = activity.time_left,
-                                                                                 title = activity.title,
-                                                                                 description = activity.description,
-                                                                                 date = activity.date,
-                                                                                 timePeriod = activity.start_time + "-" + activity.end_time,
-                                                                                 custom_location = activity.custom_location,
-                                                                                 liked = activity.participants_usernames.containsKey(
-                                                                                     UserData.user!!.id
-                                                                                 ),
-                                                                                 onEvent = {}
-                                                                             )
 
-                                                                         }}
-
-
-                                                                             Spacer(modifier = Modifier.height(4.dp))
-                                                                         }
-                                                                         */
                                                             }
                                                         }
 
@@ -529,48 +512,65 @@ fun MapScreen(
                                                                 values.get(0).toDouble(),
                                                                 values.get(1).toDouble()
                                                             )
+                                                            var moreActivityIcon: BitmapDescriptor? by remember { mutableStateOf(null) }
+
+                                                            // load the icon asynchronously
+                                                            LaunchedEffect( activity.creator_profile_picture) {
+                                                                withContext(Dispatchers.IO) {
+                                                                    moreActivityIcon = loadIcon(context ,  activity.creator_profile_picture, R.drawable.ic_person)
+                                                                }
+                                                            }
                                                             MarkerInfoWindow(
                                                                 state = MarkerState(
                                                                     position = latLng
                                                                 ),
-                                                                icon = loadIcon(
-                                                                    LocalContext.current,
-                                                                    activity.creator_profile_picture,
-                                                                    R.drawable.ic_person
-                                                                )
+                                                                icon =moreActivityIcon
                                                             ) {
                                                                 MapActivityPreview(
                                                                     bottomSheetActivity = activity,
                                                                     onEvent = {}
                                                                 )
-                                                                /*  Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-                                                                      androidx.compose.material3.Card(
-                                                                          shape = RoundedCornerShape(
-                                                                              16.dp
-                                                                          )
-                                                                      ) {
-                                                                          Box(modifier = Modifier.background(color = SocialTheme.colors.uiBackground),) {
-                                                                              MapActivityItem(
-                                                                                  activity = activity,
-                                                                                  username = activity.creator_username,
-                                                                                  profilePictureUrl = activity.creator_profile_picture,
-                                                                                  timeLeft = activity.time_left,
-                                                                                  title = activity.title,
-                                                                                  description = activity.description,
-                                                                                  date = activity.date,
-                                                                                  timePeriod = activity.start_time + "-" + activity.end_time,
-                                                                                  custom_location = activity.custom_location,
-                                                                                  liked = activity.participants_usernames.containsKey(
-                                                                                      UserData.user!!.id
-                                                                                  ),
-                                                                                  onEvent = {}
-                                                                              )
+                                                            }
+                                                        }
 
-                                                                          }}
+                                                    }
 
+                                                }
+                                                is Response.Loading -> {}
+                                                is Response.Failure -> {}
+                                            }
+                                        }
 
-                                                                      Spacer(modifier = Modifier.height(4.dp))
-                                                                  }*/
+                                        activityViewModel.closestActivitiesListState.value.let {
+                                            when (it) {
+                                                is Response.Success -> {
+                                                    it.data.forEach { activity ->
+                                                        if (activity.location.isNotEmpty()) {
+                                                            val values =
+                                                                activity.location.split("/")
+                                                            val latLng = LatLng(
+                                                                values.get(0).toDouble(),
+                                                                values.get(1).toDouble()
+                                                            )
+                                                            var activityIcon: BitmapDescriptor? by remember { mutableStateOf(null) }
+
+                                                            // load the icon asynchronously
+                                                            LaunchedEffect( activity.creator_profile_picture) {
+                                                                withContext(Dispatchers.IO) {
+                                                                    activityIcon = loadIcon(context ,  activity.creator_profile_picture, R.drawable.ic_person)
+                                                                }
+                                                            }
+                                                            MarkerInfoWindow(
+                                                                zIndex = 0.5f,
+                                                                state = MarkerState(
+                                                                    position = latLng
+                                                                ),
+                                                                icon =activityIcon
+                                                            ) {
+                                                                MapActivityPreview(
+                                                                    bottomSheetActivity = activity,
+                                                                    onEvent = {}
+                                                                )
 
                                                             }
                                                         }
@@ -582,6 +582,47 @@ fun MapScreen(
                                                 is Response.Failure -> {}
                                             }
                                         }
+                                        activityViewModel.moreclosestActivitiesListState.value.let {
+                                            when (it) {
+                                                is Response.Success -> {
+                                                    it.data.forEach { activity ->
+                                                        if (activity.location.isNotEmpty()) {
+                                                            val values =
+                                                                activity.location.split("/")
+                                                            val latLng = LatLng(
+                                                                values.get(0).toDouble(),
+                                                                values.get(1).toDouble()
+                                                            )
+                                                            var moreActivityIcon: BitmapDescriptor? by remember { mutableStateOf(null) }
+
+                                                            // load the icon asynchronously
+                                                            LaunchedEffect( activity.creator_profile_picture) {
+                                                                withContext(Dispatchers.IO) {
+                                                                    moreActivityIcon = loadIcon(context ,  activity.creator_profile_picture, R.drawable.ic_person)
+                                                                }
+                                                            }
+                                                            MarkerInfoWindow(
+                                                                state = MarkerState(
+                                                                    position = latLng
+                                                                ),
+                                                                icon =moreActivityIcon
+                                                            ) {
+                                                                MapActivityPreview(
+                                                                    bottomSheetActivity = activity,
+                                                                    onEvent = {}
+                                                                )
+                                                            }
+                                                        }
+
+                                                    }
+
+                                                }
+                                                is Response.Loading -> {}
+                                                is Response.Failure -> {}
+                                            }
+                                        }
+
+
                                         location_picked_flow.value.let {
                                             if (it == null) {
                                             } else {
@@ -589,7 +630,7 @@ fun MapScreen(
                                                 MarkerInfoWindow(
                                                     state = MarkerState(
                                                         position = it!!
-                                                    ), icon = bitmap
+                                                    ), icon = loadIcon(contextF ,   UserData.user?.pictureUrl!!, R.drawable.ic_person)
                                                 ) {
                                                     Column() {
                                                         Card(shape = RoundedCornerShape(6.dp)) {
@@ -637,7 +678,7 @@ fun MapScreen(
                                                     }
                                                 },
                                                 shape = RoundedCornerShape(12.dp),
-                                                backgroundColor = Color.White.copy(alpha = 0.95f),
+                                                backgroundColor =  SocialTheme.colors.uiBackground,
                                                 elevation = 4.dp
                                             ) {
                                                 Box(
@@ -650,7 +691,7 @@ fun MapScreen(
                                                         modifier = Modifier.background(Color.Transparent),
                                                         painter = painterResource(id = R.drawable.ic_menu),
                                                         contentDescription = null,
-                                                        tint = Color.Black
+                                                        tint =  SocialTheme.colors.textPrimary
                                                     )
                                                 }
                                             }
@@ -664,12 +705,13 @@ fun MapScreen(
                                                         Log.d("getClosestActivities", "call")
                                                         activityViewModel.getMoreClosestActivities(
                                                             viewModel.location.value!!.latitude,
-                                                            viewModel.location.value!!.longitude
+                                                            viewModel.location.value!!.longitude,
+                                                            50.0*1000.0
                                                         )
                                                     }
                                                 },
                                                 shape = RoundedCornerShape(12.dp),
-                                                backgroundColor = Color.White.copy(alpha = 0.95f),
+                                                backgroundColor = SocialTheme.colors.uiBackground,
                                                 elevation = 4.dp
                                             ) {
                                                 Box(
@@ -680,9 +722,9 @@ fun MapScreen(
                                                 ) {
                                                     Icon(
                                                         modifier = Modifier.background(Color.Transparent),
-                                                        painter = painterResource(id = R.drawable.ic_remove),
+                                                        painter = painterResource(id = R.drawable.ic_cloud_sync),
                                                         contentDescription = null,
-                                                        tint = Color.Black
+                                                        tint =  SocialTheme.colors.textPrimary
                                                     )
                                                 }
                                             }
@@ -707,7 +749,7 @@ fun MapScreen(
                                                         ).show()
                                                     }
                                                 },
-                                                backgroundColor = Color.White,
+                                                backgroundColor =  SocialTheme.colors.uiBackground,
                                                 elevation = 4.dp
                                             ) {
                                                 Box(
@@ -717,7 +759,7 @@ fun MapScreen(
                                                     Icon(
                                                         painter = painterResource(id = R.drawable.ic_current_location),
                                                         contentDescription = null,
-                                                        tint = Color.Black
+                                                        tint = SocialTheme.colors.textPrimary
                                                     )
 
                                                 }
@@ -730,7 +772,7 @@ fun MapScreen(
                                                     .height(48.dp),
                                                 shape = RoundedCornerShape(12.dp),
                                                 onClick = { onEvent(MapEvent.GoToChats) },
-                                                backgroundColor = Color.White,
+                                                backgroundColor =  SocialTheme.colors.uiBackground,
                                                 elevation = 4.dp
                                             ) {
                                                 Box(
@@ -740,7 +782,7 @@ fun MapScreen(
                                                     Icon(
                                                         painter = painterResource(id = R.drawable.instagram_chat_icon_isolated_on_transparent_background_png),
                                                         contentDescription = null,
-                                                        tint = Color.Black
+                                                        tint = SocialTheme.colors.textPrimary
                                                     )
                                                 }
                                             }
@@ -793,25 +835,35 @@ fun MapScreen(
 
                                         AnimatedVisibility(
                                             visible = displayCreateButton,
-                                            enter = scaleIn(),
-                                            exit = scaleOut()
                                         ) {
 
-                                            CreateActivityButton(
-                                                modifier = Modifier.width(200.dp),
-                                                text = "Add location",
-                                                onClick = {
-                                                    onEvent(
-                                                        MapEvent.GoToCreateActivity(
-                                                            location_picked_flow.value!!
-                                                        )
+                                        CreateActivityButton(
+                                            modifier = Modifier.width(200.dp),
+                                            text = "",
+                                            onClick = {
+                                                onEvent(
+                                                    MapEvent.GoToCreateActivity(
+                                                        location_picked_flow.value!!
                                                     )
-                                                },
-                                                icon = R.drawable.ic_right
-                                            )
+                                                )
+                                            },
+                                            icon = R.drawable.ic_right,
+                                        ){
 
-                                            Spacer(modifier = Modifier.height(12.dp))
+                                                androidx.compose.material3.Text(
+                                                    text = "Add location",
+                                                    style = TextStyle(
+                                                        color = Color.White,
+                                                        fontSize = 16.sp,
+                                                        fontFamily = Inter,
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    )
+                                                )
+
+
                                         }
+                                        }
+
                                     }
                                 }
 
@@ -1000,16 +1052,22 @@ fun MapScreen(
                 Box(modifier = Modifier
                     .background(color = SocialTheme.colors.uiBackground)
                     .padding(24.dp)) {
-                    var selectedFitness by remember { mutableStateOf(false) }
-                    var selectedCreative by remember { mutableStateOf(false) }
-                    var selectedMusic by remember { mutableStateOf(false) }
-                    var selectedGames by remember { mutableStateOf(false) }
-                    var selectedSocial by remember { mutableStateOf(false) }
-                    var selectedEducation by remember { mutableStateOf(false) }
-                    var selectedVolunteer by remember { mutableStateOf(false) }
-                    var selectedTravel by remember { mutableStateOf(false) }
-                    var selectedFood by remember { mutableStateOf(false) }
-                    var selectedWellness by remember { mutableStateOf(false) }
+                    if (selectedFitness && !tags.contains(Category.SPORTS.label)) tags.add(Category.SPORTS.label) else tags.remove(Category.SPORTS.label)
+                    if (selectedFood && !tags.contains(Category.FOOD.label)) tags.add(Category.FOOD.label) else tags.remove(Category.FOOD.label)
+                    if (selectedMusic && !tags.contains(Category.MUSIC.label)) tags.add(Category.MUSIC.label) else tags.remove(Category.MUSIC.label)
+                    if (selectedWellness && !tags.contains(Category.WELLNESS.label)) tags.add(Category.WELLNESS.label) else tags.remove(Category.WELLNESS.label)
+                    if (selectedTravel && !tags.contains(Category.TRAVEL.label)) tags.add(Category.TRAVEL.label) else tags.remove(Category.TRAVEL.label)
+
+                    if (selectedCreative && !tags.contains(Category.CREATIVE.label)) tags.add(Category.CREATIVE.label) else tags.remove(Category.CREATIVE.label)
+
+                    if (selectedGames && !tags.contains(Category.GAMES.label)) tags.add(Category.GAMES.label) else tags.remove(Category.GAMES.label)
+
+                    if (selectedSocial && !tags.contains(Category.SOCIAL.label)) tags.add(Category.SOCIAL.label) else tags.remove(Category.SOCIAL.label)
+
+                    if (selectedEducation && !tags.contains(Category.EDUCATION.label)) tags.add(Category.EDUCATION.label) else tags.remove(Category.EDUCATION.label)
+
+                    if (selectedVolunteer && !tags.contains(Category.VOLUNTEER.label)) tags.add(Category.VOLUNTEER.label) else tags.remove(Category.VOLUNTEER.label)
+
                     Column() {
                         Column(
                             Modifier
@@ -1017,8 +1075,12 @@ fun MapScreen(
                                 .verticalScroll(rememberScrollState())) {
                             Row(verticalAlignment = Alignment.CenterVertically){
                                 Icon(painter= painterResource(id = R.drawable.ic_tag_36), contentDescription = null,tint=SocialTheme.colors.textPrimary)
-                                Spacer(Modifier.width(8.dp))
-                                Text(text = "Tags",style= TextStyle(fontFamily = Inter, fontSize = 20.sp, fontWeight = FontWeight.SemiBold),color=SocialTheme.colors.textPrimary)
+                                Spacer(Modifier.width(3.dp))
+                                Text(text = "Filter by tags",style= TextStyle(fontFamily = Inter, fontSize = 16.sp, fontWeight = FontWeight.SemiBold),color=SocialTheme.colors.textPrimary)
+                                Spacer(Modifier.weight(1f))
+                                ClickableText(text = AnnotatedString("Clear filters"),style= TextStyle(fontFamily = Inter, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,color=Color( 0xFF3773FF)), onClick = {activityViewModel.setTags(null)
+                                openFilterDialog=false})
+
                             }
                             Spacer(Modifier.height(12.dp))
 
@@ -1098,27 +1160,20 @@ fun MapScreen(
                                     fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
                                 ), onClick = {openFilterDialog=false  })
                             Spacer(modifier = Modifier.width(24.dp))
-                            ClickableText(text = AnnotatedString("Confirm"), style = TextStyle(color=SocialTheme.colors.textInteractive,
+                            ClickableText(text = AnnotatedString("Confirm"), style = TextStyle(color=if(tags.isEmpty()) SocialTheme.colors.textInteractive else Color( 0xFF3773FF),
                                 fontFamily = Inter , fontWeight = FontWeight.Medium , fontSize = 14.sp
-                            ), onClick = { activityViewModel.getClosestFilteredActivities(activityViewModel.location.value!!.latitude,activityViewModel.location.value!!.longitude,tags) })
+                            ), onClick = {
+                                if(tags.isNotEmpty()){
+                                    activityViewModel.getClosestFilteredActivities(activityViewModel.location.value!!.latitude,activityViewModel.location.value!!.longitude,tags,50.0*1000.0)
+                                    activityViewModel.setTags(tags)
+                                }
+
+
+                            openFilterDialog=false})
                         }
                     }
 
-                    if (selectedFitness && !tags.contains(Category.SPORTS.label)) tags.add(Category.SPORTS.label) else tags.remove(Category.SPORTS.label)
-                    if (selectedFood && !tags.contains(Category.FOOD.label)) tags.add(Category.FOOD.label) else tags.remove(Category.FOOD.label)
-                    if (selectedMusic && !tags.contains(Category.MUSIC.label)) tags.add(Category.MUSIC.label) else tags.remove(Category.MUSIC.label)
-                    if (selectedWellness && !tags.contains(Category.WELLNESS.label)) tags.add(Category.WELLNESS.label) else tags.remove(Category.WELLNESS.label)
-                    if (selectedTravel && !tags.contains(Category.TRAVEL.label)) tags.add(Category.TRAVEL.label) else tags.remove(Category.TRAVEL.label)
 
-                    if (selectedCreative && !tags.contains(Category.CREATIVE.label)) tags.add(Category.CREATIVE.label) else tags.remove(Category.CREATIVE.label)
-
-                    if (selectedGames && !tags.contains(Category.GAMES.label)) tags.add(Category.GAMES.label) else tags.remove(Category.GAMES.label)
-
-                    if (selectedSocial && !tags.contains(Category.SOCIAL.label)) tags.add(Category.SOCIAL.label) else tags.remove(Category.SOCIAL.label)
-
-                    if (selectedEducation && !tags.contains(Category.EDUCATION.label)) tags.add(Category.EDUCATION.label) else tags.remove(Category.EDUCATION.label)
-
-                    if (selectedVolunteer && !tags.contains(Category.VOLUNTEER.label)) tags.add(Category.VOLUNTEER.label) else tags.remove(Category.VOLUNTEER.label)
                 }
             }
         }
@@ -1660,6 +1715,8 @@ fun loadIcon(
             .load(url)
             .circleCrop()
             .error(placeHolder)
+            .override(200, 200) // resize the image to 48x48 pixels
+            .diskCacheStrategy(DiskCacheStrategy.ALL) //
             // to show a default icon in case of any errors
             .into(object : CustomTarget<Bitmap>() {
                 override fun onResourceReady(
@@ -1702,51 +1759,3 @@ fun loadIcon(
 
 }
 
-fun urlToBitmap(
-    scope: CoroutineScope,
-    imageURL: String,
-    context: Context,
-    onSuccess: (bitmap: Bitmap) -> Unit,
-    onError: (error: Throwable) -> Unit
-) {
-    var bitmap: Bitmap? = null
-    val loadBitmap = scope.launch(Dispatchers.IO) {
-        val loader = ImageLoader(context)
-        val request = ImageRequest.Builder(context)
-            .data(imageURL)
-            .allowHardware(false)
-            .build()
-        val result = loader.execute(request)
-        if (result is SuccessResult) {
-            bitmap = (result.drawable as BitmapDrawable).bitmap
-        } else if (result is ErrorResult) {
-            cancel(result.throwable.localizedMessage ?: "ErrorResult", result.throwable)
-        }
-    }
-    loadBitmap.invokeOnCompletion { throwable ->
-        bitmap?.let {
-            onSuccess(it)
-        } ?: throwable?.let {
-            onError(it)
-        } ?: onError(Throwable("Undefined Error"))
-    }
-}
-fun bitmapDescriptorFromVector(
-    context: Context,
-    vectorResId: Int
-): BitmapDescriptor? {
-
-    // retrieve the actual drawable
-    val drawable = ContextCompat.getDrawable(context, vectorResId) ?: return null
-    drawable.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)
-    val bm = Bitmap.createBitmap(
-        drawable.intrinsicWidth,
-        drawable.intrinsicHeight,
-        Bitmap.Config.ARGB_8888
-    )
-
-    // draw it onto the bitmap
-    val canvas = android.graphics.Canvas(bm)
-    drawable.draw(canvas)
-    return BitmapDescriptorFactory.fromBitmap(bm)
-}

@@ -48,8 +48,12 @@ class ActivityViewModel @Inject constructor(
     val closestActivitiesListState: State<Response<List<Activity>>> = _closestActivitiesListState
     private val _closestFilteredActivitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val closestFilteredActivitiesListState: State<Response<List<Activity>>> = _closestFilteredActivitiesListState
+    private val _closestMoreFilteredActivitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
+    val closestMoreFilteredActivitiesListState: State<Response<List<Activity>>> = _closestMoreFilteredActivitiesListState
     private val _moreclosestActivitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val moreclosestActivitiesListState: State<Response<List<Activity>>> = _moreclosestActivitiesListState
+    private val _moreclosestActivitiesListStateError = mutableStateOf<Response<Void?>?>(null)
+    val moreclosestActivitiesListStateError: State<Response<Void?>?> = _moreclosestActivitiesListStateError
 
     private val _activitiesListState = mutableStateOf<Response<List<Activity>>>(Response.Loading)
     val activitiesListState: State<Response<List<Activity>>> = _activitiesListState
@@ -82,7 +86,8 @@ class ActivityViewModel @Inject constructor(
 
     private val _isInviteAddedToActivity = mutableStateOf<Response<Void?>?>(Response.Success(null))
     val isInviteAddedToActivity: State<Response<Void?>?> = _isInviteAddedToActivity
-
+    private val _tags = MutableStateFlow<ArrayList<String>?>(null)
+    val tags: StateFlow<ArrayList<String>?> = _tags
     private val _isRequestAddedState = mutableStateOf<Response<Void?>>(Response.Success(null))
     val isRequestAddedState: State<Response<Void?>> =_isRequestAddedState
 
@@ -97,13 +102,16 @@ class ActivityViewModel @Inject constructor(
     init {
         // getActivities()
     }
+    fun setTags(tags: ArrayList<String>?){
+        _tags.value=tags
+    }
     fun setLocation(location: LatLng){
         _location.value=location
     }
-    fun getClosestActivities(lat:Double,lng:Double){
+    fun getClosestActivities(lat:Double,lng:Double,radius:Double){
         viewModelScope.launch {
             val list_without_removed_activites: ArrayList<Activity> = ArrayList()
-            repo.getClosestActivities(lat,lng).collect { response ->
+            repo.getClosestActivities(lat,lng,radius).collect { response ->
                 when (response) {
                     is Response.Success -> {
                         response.data.forEach {
@@ -139,10 +147,10 @@ class ActivityViewModel @Inject constructor(
             }
         }
     }
-    fun getMoreFilteredClosestActivities(lat:Double,lng:Double,tags:ArrayList<String>){
+    fun getMoreFilteredClosestActivities(lat:Double,lng:Double,tags:ArrayList<String>,radius:Double){
         viewModelScope.launch {
             val list_without_removed_activites: ArrayList<Activity> = ArrayList()
-            repo.getMoreFilteredClosestActivities(lat,lng,tags).collect { response ->
+            repo.getMoreFilteredClosestActivities(lat,lng,tags,radius).collect { response ->
                 when (response) {
                     is Response.Success -> {
                         response.data.forEach {
@@ -162,15 +170,15 @@ class ActivityViewModel @Inject constructor(
                             it.time_left = time_left
 
                             Log.d("getClosestActivities","list"+list_without_removed_activites.toString())
-                            _closestFilteredActivitiesListState.value =
+                            _closestMoreFilteredActivitiesListState.value =
                                 Response.Success(list_without_removed_activites as List<Activity>)
                         }
                     }
                     is Response.Failure -> {
-                        _closestFilteredActivitiesListState.value = response
+                        _closestMoreFilteredActivitiesListState.value = response
                     }
                     is Response.Loading -> {
-                        _closestFilteredActivitiesListState.value = response
+                        _closestMoreFilteredActivitiesListState.value = response
                     }
                 }
 
@@ -178,10 +186,10 @@ class ActivityViewModel @Inject constructor(
             }
         }
     }
-    fun getClosestFilteredActivities(lat:Double,lng:Double,tags:ArrayList<String>){
+    fun getClosestFilteredActivities(lat:Double,lng:Double,tags:ArrayList<String>,radius:Double){
         viewModelScope.launch {
             val list_without_removed_activites: ArrayList<Activity> = ArrayList()
-            repo.getClosestFilteredActivities(lat,lng,tags).collect { response ->
+            repo.getClosestFilteredActivities(lat,lng,tags,radius).collect { response ->
                 when (response) {
                     is Response.Success -> {
                         response.data.forEach {
@@ -225,10 +233,10 @@ class ActivityViewModel @Inject constructor(
         }
     }
 
-    fun getMoreClosestActivities(lat:Double,lng:Double){
+    fun getMoreClosestActivities(lat:Double,lng:Double,radius:Double){
         viewModelScope.launch {
             val list_without_removed_activites: ArrayList<Activity> = ArrayList()
-            repo.getMoreClosestActivities(lat,lng).collect { response ->
+            repo.getMoreClosestActivities(lat,lng,radius).collect { response ->
                 when (response) {
                     is Response.Success -> {
                         response.data.forEach {
@@ -253,7 +261,7 @@ class ActivityViewModel @Inject constructor(
                         }
                     }
                     is Response.Failure -> {
-                        _moreclosestActivitiesListState.value = response
+                        _moreclosestActivitiesListStateError.value = response
                     }
                     is Response.Loading -> {
                         _moreclosestActivitiesListState.value = response

@@ -54,6 +54,7 @@ class MapViewModel : ViewModel(){
     fun setLocationPicked(location: LatLng?){
         _locations_picked.value=location
     }
+
     fun handleGoToChat( activity:Activity) {
         _clicked_chat_activity.value = activity
         _navigateTo.value = Event(Screen.Chat)

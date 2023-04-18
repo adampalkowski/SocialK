@@ -22,4 +22,7 @@ class SettingsViewModel : ViewModel() {
     fun handleGoToHome( ) {
         _navigateTo.value = Event(Screen.Home)
     }
+    fun handleGoToRange( ) {
+        _navigateTo.value = Event(Screen.Range)
+    }
 }

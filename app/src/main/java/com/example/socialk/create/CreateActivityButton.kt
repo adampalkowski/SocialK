@@ -1,5 +1,6 @@
 package com.example.socialk.create
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,11 +25,12 @@ import com.example.socialk.ui.theme.SocialTheme
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun CreateActivityButton(modifier:Modifier=Modifier, onClick: () -> Unit, text: String, color:Color=SocialTheme.colors.iconInteractive, textColor:Color=Color.White,icon:Int=R.drawable.ic_done ) {
+fun CreateActivityButton(modifier:Modifier=Modifier, onClick: () -> Unit, text: String, color:Color=SocialTheme.colors.iconInteractive,
+                         textColor:Color=Color.White,icon:Int=R.drawable.ic_done,content:@Composable ()->Unit) {
     Card(
         modifier = modifier
             .height(48.dp)
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = 24.dp) .animateContentSize(),
         shape = RoundedCornerShape(100.dp),
         elevation=0.dp,
         backgroundColor = color,
@@ -38,13 +40,8 @@ fun CreateActivityButton(modifier:Modifier=Modifier, onClick: () -> Unit, text: 
             Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(painter = painterResource(id = R.drawable.ic_done), contentDescription =null,tint=Color.White )
              Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = text,
-                style = TextStyle(
-                    color = textColor, fontSize = 16.sp,
-                    fontFamily = Inter, fontWeight = FontWeight.ExtraBold
-                )
-            )
+                content()
+
             }
 
         }

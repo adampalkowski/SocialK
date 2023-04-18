@@ -2,6 +2,7 @@ package com.example.socialk.home
 
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -23,10 +24,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -55,6 +58,8 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.Executor
+import kotlin.collections.ArrayList
+import kotlin.math.tan
 import com.example.socialk.home.MapBox as MapBox1
 
 
@@ -846,7 +851,7 @@ fun HomeScreenContent(
     val formatter = DateTimeFormatter.ofPattern("hh:mm")
     val formattedTime = currentTime.format(formatter)
     var selectedOption by remember { mutableStateOf(0) } // 0 represents "Friends", 1 represents "Public"
-
+    val tags_Flow=activityViewModel?.tags?.collectAsState()
     Box(
         modifier = Modifier
 
@@ -855,7 +860,7 @@ fun HomeScreenContent(
         Column() {
             FriendsPublicPicker(
                 selectedOption,
-                onOptionSelected = { value -> selectedOption = value },openFilter=openFilter,refresh={})
+                onOptionSelected = { value -> selectedOption = value },openFilter=openFilter,refresh={},tags_Flow?.value)
             AnimatedVisibility(
                 visible = if (selectedOption == 0) true else false,
                 enter = fadeIn(tween(500)),
@@ -878,7 +883,7 @@ fun HomeScreenContent(
                 exit = fadeOut(tween(500))
             ) {
 
-                PublicActivities(activityViewModel, activityEvent = activityEvent)
+                PublicActivities(activityViewModel, activityEvent = activityEvent,tags=tags_Flow?.value )
 
             }
             /* PullRefreshIndicator(
@@ -911,143 +916,157 @@ fun HomeScreenContent(
 @Composable
 fun PublicActivities(
     activityViewModel: ActivityViewModel?,
-    activityEvent: (ActivityEvent) -> Unit
+    activityEvent: (ActivityEvent) -> Unit,
+    filtered:Boolean=false,tags:ArrayList<String>?
 ) {
+    val contextP = LocalContext.current
     var activitiesExist = remember { mutableStateOf(false) }
+    var activitiesFilteredExist = remember { mutableStateOf(false) }
     LazyColumn {
-        activityViewModel?.closestFilteredActivitiesListState?.value.let {
-            when (it) {
-                is Response.Success -> {
-                    /* refreshing = false*/
-                    //display activities
+        if(tags!=null && tags.isNotEmpty()){
+            activityViewModel?.closestFilteredActivitiesListState?.value.let {
+                when (it) {
+                    is Response.Success -> {
+                        /* refreshing = false*/
+                        //display activities
+                        items(it.data) { item ->
+                            ActivityItem(
+                                activity = item,
+                                onEvent = activityEvent,
+                                username = item.creator_username,
+                                profilePictureUrl = item.creator_profile_picture,
+                                timeLeft = item.time_left,
+                                title = "FILTERED",
+                                description = item.description,
+                                date = item.date,
+                                liked = item.participants_ids.contains(UserData.user!!.id),
+                                //todo add the time end
+                                timePeriod = item.start_time + " - " + item.end_time,
+                                custom_location = item.custom_location,
+                                location = item.location,
+                                onLongClick = { /*onLongClick(item)*/ }
+                            )
 
-                    items(it.data) { item ->
-                        /*if (updateActivity) {
-                            if (item.id == homeViewModel.camera_activity_id.value) {
-                                item.pictures[UserData.user!!.id] = photo_url
-                            }
-                            updateActivity = false
                         }
-                        if (updateDeleteActivity) {
-                            if (item.id == homeViewModel.camera_activity_id.value) {
-                                item.pictures.remove(UserData.user!!.id)
+                        activitiesFilteredExist.value = true
+                    }
+                    else -> {}
+                }
+            }
+            activityViewModel?.closestMoreFilteredActivitiesListState?.value.let {
+                when (it) {
+                    is Response.Success -> {
+                        items(it.data) { item ->
+                            ActivityItem(
+                                activity = item,
+                                onEvent = activityEvent,
+                                username = item.creator_username,
+                                profilePictureUrl = item.creator_profile_picture,
+                                timeLeft = item.time_left,
+                                title = item.title,
+                                description = item.description,
+                                date = item.date,
+                                liked = item.participants_ids.contains(UserData.user!!.id),
+                                //todo add the time end
+                                timePeriod = item.start_time + " - " + item.end_time,
+                                custom_location = item.custom_location,
+                                location = item.location,
+                                onLongClick = { /*onLongClick(item)*/ }
+                            )
+
+                        }
+                        activitiesFilteredExist.value = true
+                    }
+                    else -> {}
+                }
+            }
+            item {
+                LaunchedEffect(true) {
+                    if (activitiesFilteredExist.value) {
+                        if(activityViewModel?.location!!.value!=null){
+                            if(tags!=null && tags.isNotEmpty()){
+                                activityViewModel.getMoreFilteredClosestActivities(activityViewModel.location.value!!.latitude,activityViewModel.location.value!!.latitude,tags=tags,     50.0*1000.0)
                             }
-                            updateDeleteActivity = false
-                        }*/
-                        ActivityItem(
-                            activity = item,
-                            onEvent = activityEvent,
-                            username = item.creator_username,
-                            profilePictureUrl = item.creator_profile_picture,
-                            timeLeft = item.time_left,
-                            title = "FILTERED",
-                            description = item.description,
-                            date = item.date,
-                            liked = item.participants_ids.contains(UserData.user!!.id),
-                            //todo add the time end
-                            timePeriod = item.start_time + " - " + item.end_time,
-                            custom_location = item.custom_location,
-                            location = item.location,
-                            onLongClick = { /*onLongClick(item)*/ }
-                        )
+
+                        }
+                    }
+                }
+            }
+        }else {
+            activityViewModel?.closestActivitiesListState?.value.let {
+                when (it) {
+                    is Response.Success -> {
+                        items(it.data) { item ->
+                            ActivityItem(
+                                activity = item,
+                                onEvent = activityEvent,
+                                username = item.creator_username,
+                                profilePictureUrl = item.creator_profile_picture,
+                                timeLeft = item.time_left,
+                                title = item.title,
+                                description = item.description,
+                                date = item.date,
+                                liked = item.participants_ids.contains(UserData.user!!.id),
+                                //todo add the time end
+                                timePeriod = item.start_time + " - " + item.end_time,
+                                custom_location = item.custom_location,
+                                location = item.location,
+                                onLongClick = { /*onLongClick(item)*/ }
+                            )
+
+                        }
+                        activitiesExist.value = true
+                    }
+                    else -> {}
+                }
+            }
+            activityViewModel?.moreclosestActivitiesListState?.value.let {
+                when (it) {
+                    is Response.Success -> {
+                        items(it.data) { item ->
+                            ActivityItem(
+                                activity = item,
+                                onEvent = activityEvent,
+                                username = item.creator_username,
+                                profilePictureUrl = item.creator_profile_picture,
+                                timeLeft = item.time_left,
+                                title = item.title,
+                                description = item.description,
+                                date = item.date,
+                                liked = item.participants_ids.contains(UserData.user!!.id),
+                                //todo add the time end
+                                timePeriod = item.start_time + " - " + item.end_time,
+                                custom_location = item.custom_location,
+                                location = item.location,
+                                onLongClick = { /*onLongClick(item)*/ }
+                            )
+
+                        }
+                        activitiesExist.value = true
+                    }
+                    is Response.Failure -> {
 
                     }
-                    activitiesExist.value = true
-                }
-                else -> {}
-            }
-        }
-        activityViewModel?.closestActivitiesListState?.value.let {
-            when (it) {
-                is Response.Success -> {
-                    /* refreshing = false*/
-                    //display activities
 
-                    items(it.data) { item ->
-                        /*if (updateActivity) {
-                            if (item.id == homeViewModel.camera_activity_id.value) {
-                                item.pictures[UserData.user!!.id] = photo_url
-                            }
-                            updateActivity = false
+
+                    else -> {}
+                }
+            }
+
+            item {
+                LaunchedEffect(true) {
+                    if (activitiesExist.value) {
+                        Log.d("getMoreClosestActivities",activityViewModel?.location!!.value.toString())
+                        if(activityViewModel?.location!!.value!=null){
+                            activityViewModel.getMoreClosestActivities(activityViewModel.location.value!!.latitude,activityViewModel.location.value!!.longitude, 50.0*1000.0
+                            )
                         }
-                        if (updateDeleteActivity) {
-                            if (item.id == homeViewModel.camera_activity_id.value) {
-                                item.pictures.remove(UserData.user!!.id)
-                            }
-                            updateDeleteActivity = false
-                        }*/
-                        ActivityItem(
-                            activity = item,
-                            onEvent = activityEvent,
-                            username = item.creator_username,
-                            profilePictureUrl = item.creator_profile_picture,
-                            timeLeft = item.time_left,
-                            title = item.title,
-                            description = item.description,
-                            date = item.date,
-                            liked = item.participants_ids.contains(UserData.user!!.id),
-                            //todo add the time end
-                            timePeriod = item.start_time + " - " + item.end_time,
-                            custom_location = item.custom_location,
-                            location = item.location,
-                            onLongClick = { /*onLongClick(item)*/ }
-                        )
-
                     }
-                    activitiesExist.value = true
                 }
-                else -> {}
             }
         }
-        activityViewModel?.moreclosestActivitiesListState?.value.let {
-            when (it) {
-                is Response.Success -> {
-                    /* refreshing = false*/
-                    //display activities
 
-                    items(it.data) { item ->
-                        /*if (updateActivity) {
-                            if (item.id == homeViewModel.camera_activity_id.value) {
-                                item.pictures[UserData.user!!.id] = photo_url
-                            }
-                            updateActivity = false
-                        }
-                        if (updateDeleteActivity) {
-                            if (item.id == homeViewModel.camera_activity_id.value) {
-                                item.pictures.remove(UserData.user!!.id)
-                            }
-                            updateDeleteActivity = false
-                        }*/
-                        ActivityItem(
-                            activity = item,
-                            onEvent = activityEvent,
-                            username = item.creator_username,
-                            profilePictureUrl = item.creator_profile_picture,
-                            timeLeft = item.time_left,
-                            title = item.title,
-                            description = item.description,
-                            date = item.date,
-                            liked = item.participants_ids.contains(UserData.user!!.id),
-                            //todo add the time end
-                            timePeriod = item.start_time + " - " + item.end_time,
-                            custom_location = item.custom_location,
-                            location = item.location,
-                            onLongClick = { /*onLongClick(item)*/ }
-                        )
 
-                    }
-                    activitiesExist.value = true
-                }
-                else -> {}
-            }
-        }
-           /*item {
-               LaunchedEffect(true) {
-                   if (activitiesExist.value) {
-                       activityViewModel?.getMoreClosestActivities(UserData.user!!.id)
-                   }
-               }
-           }*/
         //space for bottom bar
         item {
             Spacer(modifier = Modifier.height(56.dp))
@@ -1098,46 +1117,6 @@ fun FriendsActivities(
                 else -> {}
             }
         }
-
-        /*   item {
-               AnimatedVisibility(
-                   visible = uploading,
-                   enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
-                   exit = scaleOut()
-               ) {
-
-                   UploadBar(
-                       icon_anim = true,
-                       text = "Uploading image",
-                       icon = R.drawable.ic_add_photo
-                   )
-               }
-           }
-           item {
-               AnimatedVisibility(
-                   visible = uploadingError,
-                   enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
-                   exit = scaleOut()
-               ) {
-
-
-                   ErrorBar(
-                       icon_anim = true,
-                       text = "Error while uploading the image",
-                       icon = R.drawable.ic_error
-                   )
-               }
-           }
-           item {
-               AnimatedVisibility(
-                   visible = deletingImage,
-                   enter = slideInVertically(animationSpec = tween(500, easing = LinearEasing)),
-                   exit = scaleOut()
-               ) {
-
-                   ErrorBar(icon_anim = true, text = "Removing image", icon = R.drawable.ic_remove)
-               }
-           }*/
 
         activityViewModel?.activitiesListState?.value.let {
             when (it) {
@@ -1222,6 +1201,11 @@ fun FriendsActivities(
                 else -> {}
             }
         }
+
+        //space for bottom bar
+        item {
+            Spacer(modifier = Modifier.height(56.dp))
+        }
         item {
             LaunchedEffect(true) {
                 if (activitiesExist.value) {
@@ -1229,104 +1213,114 @@ fun FriendsActivities(
                 }
             }
         }
-        //space for bottom bar
-        item {
-            Spacer(modifier = Modifier.height(56.dp))
-        }
     }
 }
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun FriendsPublicPicker(selectedOption: Int, onOptionSelected: (Int) -> Unit,openFilter:() -> Unit,refresh:() -> Unit) {
+fun FriendsPublicPicker(selectedOption: Int, onOptionSelected: (Int) -> Unit,openFilter:() -> Unit,refresh:() -> Unit,tags:ArrayList<String>?) {
 
     Box(Modifier.fillMaxWidth()) {
-
-        Row(
-            Modifier
-                .padding(top = 8.dp, bottom = 0.dp)) {
-            Spacer(modifier = Modifier.width(12.dp))
-            androidx.compose.material3.Card(modifier=Modifier,onClick = openFilter,shape= CircleShape, border = BorderStroke(1.dp,SocialTheme.colors.uiFloated)) {
-                Box(
-                    Modifier
-                        .background(color = SocialTheme.colors.uiBackground)
-                        .padding(12.dp)){
-                    androidx.compose.material3.Icon(painter = painterResource(id = R.drawable.ic_filter), contentDescription = null, tint = SocialTheme.colors.iconPrimary)
-
-                }
-            }
-            Spacer(Modifier.weight(1f))
-            Row(){
-                Column(Modifier.clickable { onOptionSelected(0) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                    Row(verticalAlignment = Alignment.CenterVertically){
-                        androidx.compose.material3.Icon(
-                            painter = painterResource(id = R.drawable.ic_handshake),
-                            contentDescription = null,
-                            tint =  SocialTheme.colors.iconPrimary
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(text = "Friends",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 12.sp),color=SocialTheme.colors.textPrimary)
-
+        Column(){
+            Row(
+                Modifier
+                    .padding(top = 8.dp, bottom = 0.dp)) {
+                Spacer(modifier = Modifier.width(12.dp))
+                androidx.compose.material3.Card(modifier=Modifier,onClick = openFilter,shape= CircleShape, border = BorderStroke(1.dp,SocialTheme.colors.uiFloated)) {
+                    Box(
+                        Modifier
+                            .background(color = SocialTheme.colors.uiBackground)
+                            .padding(12.dp)){
+                        androidx.compose.material3.Icon(painter = painterResource(id = R.drawable.ic_filter), contentDescription = null, tint = SocialTheme.colors.iconPrimary)
 
                     }
+                }
+                Spacer(Modifier.weight(1f))
+                Row(){
+                    Column(Modifier.clickable { onOptionSelected(0) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                        Row(verticalAlignment = Alignment.CenterVertically){
+                            androidx.compose.material3.Icon(
+                                painter = painterResource(id = R.drawable.ic_handshake),
+                                contentDescription = null,
+                                tint =  SocialTheme.colors.iconPrimary
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(text = "Friends",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 12.sp),color=SocialTheme.colors.textPrimary)
 
-                    AnimatedVisibility(
-                        visible = if (selectedOption == 0) true else false,
-                        enter = fadeIn(tween(300)),
-                        exit = fadeOut(tween(300))
-                    ) {
-                        androidx.compose.material3.Card(
-                            shape = RoundedCornerShape(100.dp),
-                            modifier = Modifier
-                                .width(64.dp)
-                                .height(4.dp)
+
+                        }
+
+                        AnimatedVisibility(
+                            visible = if (selectedOption == 0) true else false,
+                            enter = fadeIn(tween(300)),
+                            exit = fadeOut(tween(300))
                         ) {
-                            Box(Modifier.background(color = SocialTheme.colors.iconPrimary))
+                            androidx.compose.material3.Card(
+                                shape = RoundedCornerShape(100.dp),
+                                modifier = Modifier
+                                    .width(64.dp)
+                                    .height(4.dp)
+                            ) {
+                                Box(Modifier.background(color = SocialTheme.colors.iconPrimary))
+                            }
+                        }
+
+                    }
+                    Spacer(Modifier.width(24.dp))
+                    Column(Modifier.clickable { onOptionSelected(1) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                        Row(verticalAlignment = Alignment.CenterVertically){
+                            androidx.compose.material3.Icon(
+                                painter = painterResource(id = R.drawable.ic_public),
+                                contentDescription = null,
+                                tint =  SocialTheme.colors.iconPrimary
+                            )
+                            Spacer(Modifier.width(4.dp))
+
+                            Text(text = "Public",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 12.sp),color=SocialTheme.colors.textPrimary)
+                        }
+
+                        AnimatedVisibility(
+                            visible = if (selectedOption == 1) true else false,
+                            enter = fadeIn(tween(300)),
+                            exit = fadeOut(tween(300))
+                        ) {
+                            androidx.compose.material3.Card(
+                                shape = RoundedCornerShape(100.dp),
+                                modifier = Modifier
+                                    .width(64.dp)
+                                    .height(4.dp)
+                            ) {
+                                Box(Modifier.background(color =SocialTheme.colors.iconPrimary))
+                            }
                         }
                     }
-
                 }
-                Spacer(Modifier.width(24.dp))
-                Column(Modifier.clickable { onOptionSelected(1) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                    Row(verticalAlignment = Alignment.CenterVertically){
-                        androidx.compose.material3.Icon(
-                            painter = painterResource(id = R.drawable.ic_public),
-                            contentDescription = null,
-                            tint =  SocialTheme.colors.iconPrimary
+                Spacer(Modifier.weight(1f))
+
+                androidx.compose.material3.Card(modifier=Modifier,onClick = refresh,shape= CircleShape, border = BorderStroke(1.dp,SocialTheme.colors.uiFloated)) {
+                    Box(
+                        Modifier
+                            .background(color = SocialTheme.colors.uiBackground)
+                            .padding(12.dp)){
+                        androidx.compose.material3.Icon(painter = painterResource(id = R.drawable.ic_refresh), contentDescription = null, tint = SocialTheme.colors.iconPrimary)
+                    }
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+
+            }
+            if(tags!=null && tags.isNotEmpty()){
+                Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 24.dp)){
+                    tags.forEach(){
+                        Text(text="#"+it,style= TextStyle(fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 14.sp,color=Color(
+                            0xFF3773FF
                         )
-                        Spacer(Modifier.width(4.dp))
-
-                        Text(text = "Public",style=TextStyle(fontFamily = Inter, fontWeight = FontWeight.Medium, fontSize = 12.sp),color=SocialTheme.colors.textPrimary)
+                        ))
+                        Spacer(Modifier.width(12.dp))
                     }
 
-                    AnimatedVisibility(
-                        visible = if (selectedOption == 1) true else false,
-                        enter = fadeIn(tween(300)),
-                        exit = fadeOut(tween(300))
-                    ) {
-                        androidx.compose.material3.Card(
-                            shape = RoundedCornerShape(100.dp),
-                            modifier = Modifier
-                                .width(64.dp)
-                                .height(4.dp)
-                        ) {
-                            Box(Modifier.background(color =SocialTheme.colors.iconPrimary))
-                        }
-                    }
                 }
-            }
-            Spacer(Modifier.weight(1f))
 
-            androidx.compose.material3.Card(modifier=Modifier,onClick = refresh,shape= CircleShape, border = BorderStroke(1.dp,SocialTheme.colors.uiFloated)) {
-                Box(
-                    Modifier
-                        .background(color = SocialTheme.colors.uiBackground)
-                        .padding(12.dp)){
-                    androidx.compose.material3.Icon(painter = painterResource(id = R.drawable.ic_refresh), contentDescription = null, tint = SocialTheme.colors.iconPrimary)
-                }
             }
-            Spacer(modifier = Modifier.width(12.dp))
-
         }
 
 

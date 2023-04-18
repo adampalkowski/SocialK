@@ -14,9 +14,7 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
@@ -49,6 +47,7 @@ import com.example.socialk.signinsignup.PasswordState
 import com.example.socialk.ui.theme.Inter
 import com.example.socialk.ui.theme.Ocean1
 import com.example.socialk.ui.theme.SocialTheme
+import kotlin.math.roundToInt
 
 sealed class SettingsEvent {
     object GoToProfile : SettingsEvent()
@@ -56,6 +55,8 @@ sealed class SettingsEvent {
     object GoToSettings : SettingsEvent()
     object GoToHome : SettingsEvent()
     object GoBack : SettingsEvent()
+    object GoToRange : SettingsEvent()
+    class SaveRange(val range:Double) : SettingsEvent()
 
 }
 
@@ -72,8 +73,14 @@ fun SettingsScreen(viewModel: AuthViewModel?, onEvent: (SettingsEvent) -> Unit) 
     ) {
 
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+
             HomeScreenHeading(onEvent = { onEvent(SettingsEvent.GoBack)}, title = "Settings")
             com.example.socialk.chat.ChatComponents.Divider()
+            settingsDivider(text = "Activities")
+            settingsItem(text = "Change search range", icon = R.drawable.ic_range, onClick = {onEvent(SettingsEvent.GoToRange)})
+
+
+
             Spacer(modifier = Modifier.height(12.dp))
             settingsDivider(text = "Account")
             settingsItem(

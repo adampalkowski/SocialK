@@ -40,6 +40,11 @@
         android:label="SignUp">
     </fragment>
     <fragment
+        android:id="@+id/range_fragment"
+        android:name="com.example.socialk.settings.RangeFragment"
+        android:label="Range">
+    </fragment>
+    <fragment
         android:id="@+id/home_fragment"
         android:name="com.example.socialk.home.HomeFragment"
         android:label="Home">

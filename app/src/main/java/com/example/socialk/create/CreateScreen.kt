@@ -767,7 +767,18 @@ fun CreateScreen(
                     }
 
 
-                }, text = "Ready", modifier = Modifier.width(200.dp))
+                }, text = "Ready", modifier = Modifier.width(200.dp)){
+                    androidx.compose.material3.Text(
+                        text = "Ready",
+                        style = TextStyle(
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontFamily = Inter,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    )
+
+                }
             }
 
             Spacer(modifier = Modifier.height(64.dp))

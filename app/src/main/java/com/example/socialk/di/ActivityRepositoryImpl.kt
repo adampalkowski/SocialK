@@ -2,6 +2,8 @@ package com.example.socialk.di
 
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import com.example.socialk.ActiveUser
 import com.example.socialk.await1
 import com.example.socialk.model.*
@@ -44,12 +46,13 @@ class ActivityRepositoryImpl @Inject constructor(
     private var lastVisibleDataForUserProfile: DocumentSnapshot? = null
     private var lastVisibleClosestData: DocumentSnapshot? = null
     private var lastVisibleFilteredClosestData: DocumentSnapshot? = null
-
     private  var loaded_public_activities: ArrayList<Activity> = ArrayList()
-    override suspend fun getClosestFilteredActivities(lat: Double,lng:Double,tags:ArrayList<String>): Flow<Response<List<Activity>>> =callbackFlow {
+    private  var loaded_user_activities: ArrayList<Activity> = ArrayList()
+    override suspend fun getClosestFilteredActivities(lat: Double,lng:Double,tags:ArrayList<String>,radius:Double): Flow<Response<List<Activity>>> =callbackFlow {
+        Log.d("HOMESCREENTEST","DB getClosestFilteredActivities")
         lastVisibleFilteredClosestData=null
         val center = GeoLocation(lat,lng)
-        val radiusInM = 50.0 * 1000.0
+        val radiusInM =radius
         Log.d("getMoreClosestActivites","settings null")
         val bounds = GeoFireUtils.getGeoHashQueryBounds(center, radiusInM)
         val tasks: MutableList<Task<QuerySnapshot>> = ArrayList()
@@ -108,9 +111,10 @@ class ActivityRepositoryImpl @Inject constructor(
         awaitClose {
         }
     }
-    override suspend fun getMoreFilteredClosestActivities(lat: Double,lng:Double,tags:ArrayList<String>): Flow<Response<List<Activity>>> =callbackFlow {
+    override suspend fun getMoreFilteredClosestActivities(lat: Double,lng:Double,tags:ArrayList<String>,radius:Double): Flow<Response<List<Activity>>> =callbackFlow {
         val center = GeoLocation(lat,lng)
-        val radiusInM = 5.0 * 1000.0
+        val radiusInM =radius
+        Log.d("HOMESCREENTEST","DB getMoreFilteredClosestActivities")
 
 
         val bounds = GeoFireUtils.getGeoHashQueryBounds(center, radiusInM)
@@ -120,7 +124,7 @@ class ActivityRepositoryImpl @Inject constructor(
                 .orderBy("geoHash")
                 .startAfter(lastVisibleFilteredClosestData?.data?.get("geoHash"))
                 .endAt(b.endHash)
-                .limit(1)
+                .limit(2)
             tasks.add(q.get())
         }
         // Collect all the query results together into a single list
@@ -171,11 +175,13 @@ class ActivityRepositoryImpl @Inject constructor(
         awaitClose {
         }
     }
-    override suspend fun getClosestActivities(lat: Double,lng:Double): Flow<Response<List<Activity>>> =callbackFlow {
+    override suspend fun getClosestActivities(lat: Double,lng:Double,radius:Double): Flow<Response<List<Activity>>> =callbackFlow {
+        Log.d("getClosestActivities","DB getClosestActivities")
+
         lastVisibleClosestData=null
         val center = GeoLocation(lat,lng)
-        val radiusInM = 50.0 * 1000.0
-        Log.d("getMoreClosestActivites","settings null")
+        val radiusInM = radius
+        Log.d("getClosestActivities","settings null")
         val bounds = GeoFireUtils.getGeoHashQueryBounds(center, radiusInM)
         val tasks: MutableList<Task<QuerySnapshot>> = ArrayList()
         for (b in bounds) {
@@ -214,7 +220,7 @@ class ActivityRepositoryImpl @Inject constructor(
                     val newActivities = ArrayList<Activity>()
                     for (document in matchingDocs) {
                         val activity = document.toObject<Activity>()
-                        Log.d("ActivityRepositoryImpl",activity.toString())
+                        Log.d("getClosestActivities",activity.toString())
 
                         if (activity!=null){
                             newActivities.add(activity)
@@ -233,10 +239,11 @@ class ActivityRepositoryImpl @Inject constructor(
         awaitClose {
         }
     }
-    override suspend fun getMoreClosestActivities(lat: Double,lng:Double): Flow<Response<List<Activity>>> =callbackFlow {
+    override suspend fun getMoreClosestActivities(lat: Double,lng:Double,radius:Double): Flow<Response<List<Activity>>> =callbackFlow {
         val center = GeoLocation(lat,lng)
-        val radiusInM = 5.0 * 1000.0
-
+        val radiusInM =radius
+        Log.d("getMoreClosestActivities","DB getMoreClosestActivities")
+        Log.d("getMoreClosestActivities",center.toString())
 
         val bounds = GeoFireUtils.getGeoHashQueryBounds(center, radiusInM)
         val tasks: MutableList<Task<QuerySnapshot>> = ArrayList()
@@ -245,7 +252,7 @@ class ActivityRepositoryImpl @Inject constructor(
                 .orderBy("geoHash")
                 .startAfter(lastVisibleClosestData?.data?.get("geoHash"))
                 .endAt(b.endHash)
-                .limit(1)
+                .limit(2)
             tasks.add(q.get())
         }
         // Collect all the query results together into a single list
@@ -283,10 +290,12 @@ class ActivityRepositoryImpl @Inject constructor(
                     lastVisibleClosestData= matchingDocs[matchingDocs.size - 1]
                     loaded_public_activities.addAll(newActivities)
                     val new_instance= ArrayList<Activity>()
-                    Log.d("ActivityRepositoryImpl",loaded_public_activities.toString())
+                    Log.d("getMoreClosestActivities",loaded_public_activities.toString())
                     new_instance.addAll(loaded_public_activities)
                     trySend(Response.Success(new_instance))
 
+                }else if(matchingDocs != null && matchingDocs.isEmpty()){
+                    trySend(Response.Failure(e= SocialException(message = "No more nearby activities",e=Exception())))
                 }
             }.addOnFailureListener(){
                 trySend(Response.Failure(e= SocialException(message = "Nearby activity download failure",e=Exception())))
@@ -300,7 +309,6 @@ class ActivityRepositoryImpl @Inject constructor(
         activitiesRef.document(id).get().addOnSuccessListener {  documentSnapshot ->
             val response = if (documentSnapshot != null) {
                 val activity = documentSnapshot.toObject<Activity>()
-                Log.d("ActivityRepositoryImpl",activity.toString())
                 Response.Success(activity)
             } else {
                 Response.Failure(e= SocialException("getActivty document null",Exception()))
@@ -491,7 +499,8 @@ class ActivityRepositoryImpl @Inject constructor(
         }
     }
     override suspend fun getUserActivities(id: String): Flow<Response<List<Activity>>> =callbackFlow {
-        Log.d("PROFILESCREEN","GET USER ACTIVITIES")
+        Log.d("HOMESCREENTEST","DB getUserActivities")
+
         val snapshotListener = activitiesRef.whereEqualTo("creator_id",id)
             .orderBy("creation_time", Query.Direction.DESCENDING).limit(5).get().addOnCompleteListener { task->
                 var activitiesList:List<Activity> = mutableListOf()
@@ -527,7 +536,6 @@ class ActivityRepositoryImpl @Inject constructor(
         Log.d("GETJOINEDACTIVITIES","CALL")
         val snapshotListener = activitiesRef.whereArrayContains("participants_ids",id)
             .orderBy("creation_time", Query.Direction.DESCENDING).limit(5).get().addOnCompleteListener { task->
-                var activitiesList:List<Activity> = mutableListOf()
                 if (task.isSuccessful) {
                     val documents = task.result?.documents
                     if (documents != null && documents.isNotEmpty()) {
@@ -557,9 +565,10 @@ class ActivityRepositoryImpl @Inject constructor(
 
     }
     override suspend fun getMoreUserActivities(id: String): Flow<Response<List<Activity>>> =callbackFlow {
+        Log.d("HOMESCREENTEST","getMoreUserActivities")
+
         val snapshotListener = activitiesRef.whereEqualTo("creator_id",id)
             .orderBy("creation_time", Query.Direction.DESCENDING).startAfter(lastVisibleUserData?.data?.get("creation_time")).get().addOnCompleteListener { task->
-            var activitiesList:List<Activity> = mutableListOf()
             if (task.isSuccessful) {
                 val documents = task.result?.documents
                 if (documents != null && documents.isNotEmpty()) {
@@ -570,6 +579,9 @@ class ActivityRepositoryImpl @Inject constructor(
                             newActivities.add(activity)
                         }
                     }
+                    Log.d("HOMESCREENTEST",loaded_user_activities.toString())
+
+
                     lastVisibleUserData= documents[documents.size - 1]
                     trySend(Response.Success(newActivities))
 
@@ -682,54 +694,56 @@ class ActivityRepositoryImpl @Inject constructor(
         }
     }
 
-
-    override suspend fun getMoreActivitiesForUser(id: String): Flow<Response<List<Activity>>> =callbackFlow {
-
-        val snapshotListener = activitiesRef.whereArrayContains("invited_users",id)  .orderBy("creation_time", Query.Direction.DESCENDING).startAfter(lastVisibleData?.data?.get("creation_time")).get().addOnCompleteListener { task->
-            var activitiesList:List<Activity> = mutableListOf()
-            if (task.isSuccessful) {
-                val documents = task.result?.documents
-                if (documents != null && documents.isNotEmpty()) {
-                    val newActivities = ArrayList<Activity>()
-                    for (document in documents) {
-                        val activity = document.toObject<Activity>()
-                        if (activity!=null){
-                            newActivities.add(activity)
-                        }
-                    }
-                    lastVisibleData= documents[documents.size - 1]
-                    trySend(Response.Success(newActivities))
-
-                }
-            } else {
-                // There are no more messages to load
-                trySend(Response.Failure(e=SocialException(message="failed to get more activities",e=Exception())))
-            }
-
-        }
-        awaitClose {
-        }
-    }
-
     override suspend fun getActivitiesForUser(id: String): Flow<Response<List<Activity>>> =callbackFlow {
-        Log.d("getActivitiesForUser","getActivitiesForUser 2")
         val snapshotListener = activitiesRef.whereArrayContains("invited_users",id)
             .orderBy("creation_time", Query.Direction.DESCENDING).limit(5).get().addOnCompleteListener { task->
-            var activitiesList:List<Activity> = mutableListOf()
+                if (task.isSuccessful) {
+                    val documents = task.result?.documents
+                    if (documents != null && documents.isNotEmpty()) {
+                        val newActivities = ArrayList<Activity>()
+                        for (document in documents) {
+                            val activity = document.toObject<Activity>()
+                            if (activity!=null){
+                                newActivities.add(activity)
+                            }
+                        }
+                        Log.d("HOMESCREENTEST",documents.size.toString())
+
+                        lastVisibleData= documents[documents.size - 1]
+                        trySend(Response.Success(newActivities))
+
+                    }
+                } else {
+                    // There are no more messages to load
+                    trySend(Response.Failure(e=SocialException(message="failed to get more activities",e=Exception())))
+                }
+
+            }
+        awaitClose {
+        }
+    }
+    override suspend fun getMoreActivitiesForUser(id: String): Flow<Response<List<Activity>>> =callbackFlow {
+        val snapshotListener = activitiesRef.whereArrayContains("invited_users",id).orderBy("creation_time", Query.Direction.DESCENDING)
+            .startAfter(lastVisibleData?.data?.get("creation_time")).limit(3).get().addOnCompleteListener { task->
             if (task.isSuccessful) {
                 val documents = task.result?.documents
                 if (documents != null && documents.isNotEmpty()) {
                     val newActivities = ArrayList<Activity>()
                     for (document in documents) {
                         val activity = document.toObject<Activity>()
-                        Log.d("getActivitiesForUser 2",activity.toString())
-
                         if (activity!=null){
                             newActivities.add(activity)
                         }
                     }
+                    Log.d("HOMESCREENTEST","ROzmuiar")
+                    Log.d("HOMESCREENTEST",documents.size.toString())
+                    loaded_user_activities.addAll(newActivities)
+                    val new_instance=ArrayList<Activity>()
+                    new_instance.addAll(loaded_user_activities)
+                    Log.d("HOMESCREENTEST",new_instance.size.toString())
+
                     lastVisibleData= documents[documents.size - 1]
-                    trySend(Response.Success(newActivities))
+                    trySend(Response.Success(new_instance))
 
                 }
             } else {
@@ -741,6 +755,8 @@ class ActivityRepositoryImpl @Inject constructor(
         awaitClose {
         }
     }
+
+
         //TODO CHANGE WHERE_EQUAL_TO
     override suspend fun getActiveUsers(id: String): Flow<Response<List<ActiveUser>>> = callbackFlow {
         val snapshotListener = activeUsersRef.whereArrayContains("invited_users",id).get().addOnSuccessListener { documents->

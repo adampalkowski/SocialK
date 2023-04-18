@@ -17,6 +17,7 @@
     <item name="memories_fragment" type="id" />
     <item name="friends_picker_fragment" type="id" />
     <item name="live_fragment" type="id" />
+    <item name="range_fragment" type="id" />
     <item name="event_fragment" type="id" />
     <item name="edit_profile_fragment" type="id" />
     <item name="search_fragment" type="id" />

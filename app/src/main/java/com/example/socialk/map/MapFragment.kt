@@ -54,7 +54,7 @@ class MapFragment : Fragment() {
                 val location = locationList.last()
                 viewModel.setLocation(LatLng(location.latitude, location.longitude))
                 activityViewModel.setLocation(LatLng(location.latitude, location.longitude))
-                activityViewModel.getClosestActivities(location.latitude,location.longitude)
+                activityViewModel.getClosestActivities(location.latitude,location.longitude,  50.0*1000.0)
             }
         }
     }
