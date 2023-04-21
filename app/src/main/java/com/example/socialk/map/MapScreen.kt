@@ -1351,11 +1351,7 @@ fun DrawerContent(onEvent: (MapEvent) -> Unit, activityViewModel: ActivityViewMo
             icon = R.drawable.ic_settings,
             onClick = { onEvent(MapEvent.GoToSettings) })
 
-        //help
-        DrawerField(
-            title = "Help",
-            icon = R.drawable.ic_help,
-            onClick = { onEvent(MapEvent.GoToHelp) })
+
 
         //info
         DrawerField(

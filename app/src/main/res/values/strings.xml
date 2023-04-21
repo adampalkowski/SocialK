@@ -21,7 +21,7 @@
     <string name="close">Close</string>
     <string name="show_password">Show password</string>
     <string name="hide_password">Hide password</string>
-
+    <string name="mapbox_access_token">pk.eyJ1IjoiYWRhbXBhbGtvd3NraSIsImEiOiJjbGdxcmVibDUwMTM5M2RvYW80MHc3cjJkIn0.r8_zE04UJq6khCfhWT5F1A</string>
     <!-- survey-->
     <string name="which_jetpack_library">Which Jetpack library are you?</string>
     <string name="question_count">\u00A0of %d</string>
