@@ -51,8 +51,7 @@ This project is currently under construction. New project with updates ui will b
 
 | Sign in | Sign up |
 | :----: | :-------------: |
-| 
-![354747676_3351217801857282_553227590107087092_n](https://github.com/adampalkowski/SocialK/assets/50372825/88654276-2bcc-4a77-a3f3-555ed632bb3f) |![354433334_3577645982477082_121869564981032966_n](https://github.com/adampalkowski/SocialK/assets/50372825/09a02211-aeb2-47eb-83fb-8199056c38d1) |
+| ![354747676_3351217801857282_553227590107087092_n](https://github.com/adampalkowski/SocialK/assets/50372825/88654276-2bcc-4a77-a3f3-555ed632bb3f) |![354433334_3577645982477082_121869564981032966_n](https://github.com/adampalkowski/SocialK/assets/50372825/09a02211-aeb2-47eb-83fb-8199056c38d1) |
 
 | Filter | Activity settings |
 | :----: | :-------------: |
