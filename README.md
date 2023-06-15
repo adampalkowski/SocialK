@@ -42,7 +42,7 @@
 
 | Filter | Activity settings |
 | :----: | :-------------: |
-| ![Sign in](https://github.com/adampalkowski/SocialK/assets/50372825/a6b152a3-5c8f-4dbf-b950-6cce7eaf914)) | ![Sign up](https://github.com/adampalkowski/SocialK/assets/50372825/6fcc575d-c7a8-4a3c-8b3e-6c27fc2556cf)) |
+| ![Filter](https://github.com/adampalkowski/SocialK/assets/50372825/a6b152a3-5c8f-4dbf-b950-6cce7eaf914) | ![Activity settings](https://github.com/adampalkowski/SocialK/assets/50372825/6fcc575d-c7a8-4a3c-8b3e-6c27fc2556cf) |
 ---
 
 ## Installation
