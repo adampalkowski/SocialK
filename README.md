@@ -1,8 +1,7 @@
 # SocialK
 
 <div align="center">
-  <h1>ActivityHub</h1>
-  <img src="app_icon.png" alt="App Icon" width="200px">
+  <h1>SocialK</h1>
   <p>A social app that allows users to create and join activities locally, invite friends, and connect with people nearby.</p>
   <br>
   <img src="https://github.com/adampalkowski/SocialK/assets/50372825/cd694605-d304-4bb1-a6a5-48db6907f42b" alt="Main Screen" width="300px">
@@ -35,7 +34,13 @@
 | Drawer | Settings |
 | :----: | :-------------: |
 | ![Drawer](https://github.com/adampalkowski/SocialK/assets/50372825/e43a7c33-b0e9-4034-8a65-5c1a38bdc502.png) | ![Settings](https://github.com/adampalkowski/SocialK/assets/50372825/57521b47-db49-4a65-b9ec-37c9313670fe.png) |
+
+
+| Sign in | Sign up |
+| :----: | :-------------: |
+| ![Sign in](https://github.com/adampalkowski/SocialK/assets/50372825/f2263203-e0dd-455a-a8df-8b1a8421d458) | ![Sign up](https://github.com/adampalkowski/SocialK/assets/50372825/2918c0e5-3295-4b9a-b292-5699a19798bd) |
 ---
+
 
 
 ## Installation
