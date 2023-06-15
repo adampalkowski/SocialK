@@ -23,7 +23,6 @@
 - Customizable settings for a personalized experience
 
 ---
-![353453591_726162122594668_7802760551678164873_n](https://github.com/adampalkowski/SocialK/assets/50372825/cba5c3d5-5a84-4cbc-9bd2-88a528c150a9)
 
 | Main Screen | Settings |
 | :---------: | :-------------: |
