@@ -30,26 +30,35 @@ This project is currently under construction. New project with updates ui will b
 
 ---
 
+
+
+
+
+
+
 | Main Screen | Activity Display |
 | :---------: | :-------------: |
-|![354477329_979293423452959_2452634882598972479_n](https://github.com/adampalkowski/SocialK/assets/50372825/ddeaa939-d9e7-4713-94a1-167df1aa79d4) | ![Activity Display](https://github.com/adampalkowski/SocialK/assets/50372825/cd694605-d304-4bb1-a6a5-48db6907f42b.png) |
+|![354477329_979293423452959_2452634882598972479_n](https://github.com/adampalkowski/SocialK/assets/50372825/ddeaa939-d9e7-4713-94a1-167df1aa79d4) | ![354714907_828718018676644_2523023637969723084_n](https://github.com/adampalkowski/SocialK/assets/50372825/bad8c6e0-c13c-41f8-9839-6688904cdf11) |
 
 | Chat | Create |
 | :------: | :--: |
-| ![Chat](https://github.com/adampalkowski/SocialK/assets/50372825/a3b1015c-5f2d-4a72-915a-7216ad8f32ce.png) | ![Create](https://github.com/adampalkowski/SocialK/assets/50372825/cba5c3d5-5a84-4cbc-9bd2-88a528c150a9)) |
+|![353170307_1004855113981145_4897619620499043825_n](https://github.com/adampalkowski/SocialK/assets/50372825/59c5bbd9-e5b9-47f2-8483-9033611f358e) |![353453591_726162122594668_7802760551678164873_n](https://github.com/adampalkowski/SocialK/assets/50372825/9925093c-c048-4471-9891-5a18c379886d) |
 
 | Drawer | Settings |
 | :----: | :-------------: |
-| ![Drawer](https://github.com/adampalkowski/SocialK/assets/50372825/e43a7c33-b0e9-4034-8a65-5c1a38bdc502.png) | ![Settings](https://github.com/adampalkowski/SocialK/assets/50372825/57521b47-db49-4a65-b9ec-37c9313670fe.png) |
+| ![354727796_146893538393445_5831219779237896317_n](https://github.com/adampalkowski/SocialK/assets/50372825/f5ee825e-4b4e-46fe-b975-e84f252ab2bf) | ![354473656_297282252636881_7698697578832000242_n](https://github.com/adampalkowski/SocialK/assets/50372825/d1f4031d-c286-4a65-8ccb-8dabcfdeffc8) |
 
 
 | Sign in | Sign up |
 | :----: | :-------------: |
-| ![Sign in](https://github.com/adampalkowski/SocialK/assets/50372825/f2263203-e0dd-455a-a8df-8b1a8421d458) | ![Sign up](https://github.com/adampalkowski/SocialK/assets/50372825/2918c0e5-3295-4b9a-b292-5699a19798bd) |
+| 
+![354747676_3351217801857282_553227590107087092_n](https://github.com/adampalkowski/SocialK/assets/50372825/88654276-2bcc-4a77-a3f3-555ed632bb3f) |
+![354433334_3577645982477082_121869564981032966_n](https://github.com/adampalkowski/SocialK/assets/50372825/09a02211-aeb2-47eb-83fb-8199056c38d1) |
 
 | Filter | Activity settings |
 | :----: | :-------------: |
-| ![Filter](https://github.com/adampalkowski/SocialK/assets/50372825/9033e9b7-1f23-4154-99da-a4e842330a32)| ![Activity settings](https://github.com/adampalkowski/SocialK/assets/50372825/6fcc575d-c7a8-4a3c-8b3e-6c27fc2556cf) |
+| ![354664474_970630867314574_4927154359804431347_n](https://github.com/adampalkowski/SocialK/assets/50372825/88a3f14d-a8e8-417e-b392-91d46025f888)|
+![354722713_1311972386382319_1438442440885312304_n](https://github.com/adampalkowski/SocialK/assets/50372825/d10a5165-c3c8-45aa-81bb-b0833630cd36)|
 ---
 
 
