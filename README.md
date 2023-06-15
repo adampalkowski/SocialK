@@ -23,14 +23,15 @@
 - Customizable settings for a personalized experience
 
 ---
+![353453591_726162122594668_7802760551678164873_n](https://github.com/adampalkowski/SocialK/assets/50372825/cba5c3d5-5a84-4cbc-9bd2-88a528c150a9)
 
-| Main Screen | Create Activity |
+| Main Screen | Settings |
 | :---------: | :-------------: |
-| ![Main Screen](https://github.com/adampalkowski/SocialK/assets/50372825/e50fe02c-1708-423c-b47e-3ef53fdea962.png) | ![Create Activity](https://github.com/adampalkowski/SocialK/assets/50372825/57521b47-db49-4a65-b9ec-37c9313670fe.png) |
+| ![Main Screen](https://github.com/adampalkowski/SocialK/assets/50372825/e50fe02c-1708-423c-b47e-3ef53fdea962.png) | ![Settings](https://github.com/adampalkowski/SocialK/assets/50372825/57521b47-db49-4a65-b9ec-37c9313670fe.png) |
 
-| Settings | Chat |
+| Chat | Create |
 | :------: | :--: |
-| ![Settings](https://github.com/adampalkowski/SocialK/assets/50372825/a3b1015c-5f2d-4a72-915a-7216ad8f32ce.png) | ![Chat](https://github.com/adampalkowski/SocialK/assets/50372825/e43a7c33-b0e9-4034-8a65-5c1a38bdc502.png) |
+| ![Chat](https://github.com/adampalkowski/SocialK/assets/50372825/a3b1015c-5f2d-4a72-915a-7216ad8f32ce.png) | ![Create](https://github.com/adampalkowski/SocialK/assets/50372825/cba5c3d5-5a84-4cbc-9bd2-88a528c150a9)) |
 
 | Drawer | Activity Display |
 | :----: | :-------------: |
