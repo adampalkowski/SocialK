@@ -8,6 +8,7 @@
 </div>
 
 
+
 ---
 
 # Under Construction
@@ -31,7 +32,7 @@ This project is currently under construction. New project with updates ui will b
 
 | Main Screen | Activity Display |
 | :---------: | :-------------: |
-| ![Main Screen](https://github.com/adampalkowski/SocialK/assets/50372825/e50fe02c-1708-423c-b47e-3ef53fdea962.png) | ![Activity Display](https://github.com/adampalkowski/SocialK/assets/50372825/cd694605-d304-4bb1-a6a5-48db6907f42b.png) |
+|![354477329_979293423452959_2452634882598972479_n](https://github.com/adampalkowski/SocialK/assets/50372825/ddeaa939-d9e7-4713-94a1-167df1aa79d4) | ![Activity Display](https://github.com/adampalkowski/SocialK/assets/50372825/cd694605-d304-4bb1-a6a5-48db6907f42b.png) |
 
 | Chat | Create |
 | :------: | :--: |
