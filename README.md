@@ -39,9 +39,11 @@
 | Sign in | Sign up |
 | :----: | :-------------: |
 | ![Sign in](https://github.com/adampalkowski/SocialK/assets/50372825/f2263203-e0dd-455a-a8df-8b1a8421d458) | ![Sign up](https://github.com/adampalkowski/SocialK/assets/50372825/2918c0e5-3295-4b9a-b292-5699a19798bd) |
+
+| Filter | Activity settings |
+| :----: | :-------------: |
+| ![Sign in](https://github.com/adampalkowski/SocialK/assets/50372825/a6b152a3-5c8f-4dbf-b950-6cce7eaf914)) | ![Sign up](https://github.com/adampalkowski/SocialK/assets/50372825/6fcc575d-c7a8-4a3c-8b3e-6c27fc2556cf)) |
 ---
-
-
 
 ## Installation
 
