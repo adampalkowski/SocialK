@@ -8,7 +8,7 @@
 </div>
 
 ---
-![354477329_979293423452959_2452634882598972479_n](https://github.com/adampalkowski/SocialK/assets/50372825/ddeaa939-d9e7-4713-94a1-167df1aa79d4)
+![354714907_828718018676644_2523023637969723084_n](https://github.com/adampalkowski/SocialK/assets/50372825/bad8c6e0-c13c-41f8-9839-6688904cdf11)
 
 
 # Under Construction
