@@ -52,13 +52,11 @@ This project is currently under construction. New project with updates ui will b
 | Sign in | Sign up |
 | :----: | :-------------: |
 | 
-![354747676_3351217801857282_553227590107087092_n](https://github.com/adampalkowski/SocialK/assets/50372825/88654276-2bcc-4a77-a3f3-555ed632bb3f) |
-![354433334_3577645982477082_121869564981032966_n](https://github.com/adampalkowski/SocialK/assets/50372825/09a02211-aeb2-47eb-83fb-8199056c38d1) |
+![354747676_3351217801857282_553227590107087092_n](https://github.com/adampalkowski/SocialK/assets/50372825/88654276-2bcc-4a77-a3f3-555ed632bb3f) |![354433334_3577645982477082_121869564981032966_n](https://github.com/adampalkowski/SocialK/assets/50372825/09a02211-aeb2-47eb-83fb-8199056c38d1) |
 
 | Filter | Activity settings |
 | :----: | :-------------: |
-| ![354664474_970630867314574_4927154359804431347_n](https://github.com/adampalkowski/SocialK/assets/50372825/88a3f14d-a8e8-417e-b392-91d46025f888)|
-![354722713_1311972386382319_1438442440885312304_n](https://github.com/adampalkowski/SocialK/assets/50372825/d10a5165-c3c8-45aa-81bb-b0833630cd36)|
+| ![354664474_970630867314574_4927154359804431347_n](https://github.com/adampalkowski/SocialK/assets/50372825/88a3f14d-a8e8-417e-b392-91d46025f888)|![354722713_1311972386382319_1438442440885312304_n](https://github.com/adampalkowski/SocialK/assets/50372825/d10a5165-c3c8-45aa-81bb-b0833630cd36)|
 ---
 
 
