@@ -24,27 +24,17 @@
 
 ---
 
-| Main Screen 
-| :---------: 
-| <img src="https://github.com/adampalkowski/SocialK/assets/50372825/e50fe02c-1708-423c-b47e-3ef53fdea962" width="300px"> 
-| :-------------: 
-| <img src="https://github.com/adampalkowski/SocialK/assets/50372825/96937270-3e07-4b38-82ae-7c37bbbbf8f2" width="300px">
-| Create Activity 
-| :-------------: 
-| <img src="https://github.com/adampalkowski/SocialK/assets/50372825/57521b47-db49-4a65-b9ec-37c9313670fe" width="300px"> 
-| Settings 
-| :-------------: 
-| <img src="https://github.com/adampalkowski/SocialK/assets/50372825/a3b1015c-5f2d-4a72-915a-7216ad8f32ce)" width="300px">
-| Chat
-| :-------------: 
-| <img src="https://github.com/adampalkowski/SocialK/assets/50372825/e43a7c33-b0e9-4034-8a65-5c1a38bdc502)" width="300px">
+| Main Screen | Create Activity |
+| :---------: | :-------------: |
+| ![Main Screen](https://github.com/adampalkowski/SocialK/assets/50372825/e50fe02c-1708-423c-b47e-3ef53fdea962.png) | ![Create Activity](https://github.com/adampalkowski/SocialK/assets/50372825/57521b47-db49-4a65-b9ec-37c9313670fe.png) |
 
- | Drawer
-| :-------------:
-| <img src="https://github.com/adampalkowski/SocialK/assets/50372825/e43a7c33-b0e9-4034-8a65-5c1a38bdc502)" width="300px">
-|  Activity display|
-| :-------------: |
-| <img src="https://github.com/adampalkowski/SocialK/assets/50372825/cd694605-d304-4bb1-a6a5-48db6907f42b)" width="300px">
+| Settings | Chat |
+| :------: | :--: |
+| ![Settings](https://github.com/adampalkowski/SocialK/assets/50372825/a3b1015c-5f2d-4a72-915a-7216ad8f32ce.png) | ![Chat](https://github.com/adampalkowski/SocialK/assets/50372825/e43a7c33-b0e9-4034-8a65-5c1a38bdc502.png) |
+
+| Drawer | Activity Display |
+| :----: | :-------------: |
+| ![Drawer](https://github.com/adampalkowski/SocialK/assets/50372825/e43a7c33-b0e9-4034-8a65-5c1a38bdc502.png) | ![Activity Display](https://github.com/adampalkowski/SocialK/assets/50372825/cd694605-d304-4bb1-a6a5-48db6907f42b.png) |
 ---
 
 
