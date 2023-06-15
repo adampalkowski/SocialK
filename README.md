@@ -24,14 +24,10 @@
 
 ---
 
-## Screenshots
-
-| Main Screen | Main Screen | Create Activity | Create Activity |
-| :---------: | :--------------: | :-------------: | :-------------: |
-| ![Main Screen](https://github.com/adampalkowski/SocialK/assets/50372825/e50fe02c-1708-423c-b47e-3ef53fdea962.png)
-|![354477329_979293423452959_2452634882598972479_n](https://github.com/adampalkowski/SocialK/assets/50372825/3320eef3-129e-4796-bd7b-5d36802c22ee)
-| ![Create Activity](screenshots/create_activity.png) 
-|
+| Main Screen | Create Activity |
+| :---------: | :-------------: |
+| ![Main Screen](https://github.com/adampalkowski/SocialK/assets/50372825/e50fe02c-1708-423c-b47e-3ef53fdea962.png){: width="300px"}
+| ![Create Activity](screenshots/create_activity.png){: width="300px"} |
 
 
 ---
