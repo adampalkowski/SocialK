@@ -12,7 +12,9 @@
 
 # Under Construction
 :construction: :construction: :construction: :construction: :construction: 
-This project is currently under construction. Check back soon for updates!
+This project is currently under construction. New project with updates ui will be the new version of this.
+
+
 
 ## Features
 - Developed using Kotlin and Jetpack Compose
