@@ -6,6 +6,7 @@
   <br>
   <img src="https://github.com/adampalkowski/SocialK/assets/50372825/cd694605-d304-4bb1-a6a5-48db6907f42b" alt="Main Screen" width="300px">
 </div>
+**Note:** This project is currently under development and is not yet finished.
 
 
 ---
