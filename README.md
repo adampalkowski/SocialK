@@ -4,7 +4,7 @@
   <h1>SocialK</h1>
   <p>A social app that allows users to create and join activities locally, invite friends, and connect with people nearby.</p>
   <br>
-  <img src="https://github.com/adampalkowski/SocialK/assets/50372825/cd694605-d304-4bb1-a6a5-48db6907f42b" alt="Main Screen" width="300px">
+  <img src="https://github.com/adampalkowski/SocialK/assets/50372825/cd694605-d304-4bb1-a6a5-48db6907f42b.png" alt="Main Screen" width="300px">
 </div>
 
 
