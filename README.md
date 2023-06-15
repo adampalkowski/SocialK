@@ -28,7 +28,7 @@
 
 | Main Screen | Activity Details | Create Activity |
 | :---------: | :--------------: | :-------------: |
-| ![Main Screen](screenshots/main_screen.png) | ![Activity Details](screenshots/activity_details.png) | ![Create Activity](screenshots/create_activity.png) |
+| ![Main Screen](https://github.com/adampalkowski/SocialK/assets/50372825/e50fe02c-1708-423c-b47e-3ef53fdea962.png)| ![Activity Details](screenshots/activity_details.png) | ![Create Activity](screenshots/create_activity.png) |
 
 ---
 
