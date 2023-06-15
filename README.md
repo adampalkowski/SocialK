@@ -14,8 +14,8 @@
 - Developed using Kotlin and Jetpack Compose
 - Create and join activities locally
 - Invite friends to activities
-- Make activities public for nearby users to join
-- Integrated chat functionality for each activity
+- Make activities public for nearby users to join, users found based on their location.
+- Integrated chat functionality for each activity, aswell user to user and group chats.
 - Utilizes Google Maps SDK to display activities on the map
 - Multiple filtering options for activities
 - Group feature to organize activities and invite members
@@ -57,12 +57,12 @@ git clone https://github.com/adampalkowski/SocialK.git
 
 ## Technologies Used
 
-- Kotlin
+- Kotlin with Couroutines
 - Jetpack Compose
 - Google Maps SDK
-- Firebase (for chat functionality)
-- Android Architecture Components (ViewModel, LiveData, etc.)
-- Retrofit (for network requests)
+- Firebase (for chat functionality, image storage, firestore, Dynamic links, authentication)
+- Android Architecture Components MVVM (ViewModel, Flows, etc.)
+- Hilt  (for dependency injection)
 - Material Design Components
 
 ---
