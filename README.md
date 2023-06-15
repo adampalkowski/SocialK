@@ -26,8 +26,8 @@
 
 | Main Screen | Create Activity |
 | :---------: | :-------------: |
-| ![Main Screen](https://github.com/adampalkowski/SocialK/assets/50372825/e50fe02c-1708-423c-b47e-3ef53fdea962.png){: width="300px"}
-| ![Create Activity](screenshots/create_activity.png){: width="300px"} |
+| ![Main Screen](https://github.com/adampalkowski/SocialK/assets/50372825/e50fe02c-1708-423c-b47e-3ef53fdea962.png){: width="150px"}
+| ![Create Activity](screenshots/create_activity.png){: width="150px"} |
 
 
 ---
