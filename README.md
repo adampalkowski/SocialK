@@ -5,7 +5,7 @@
   <img src="app_icon.png" alt="App Icon" width="200px">
   <p>A social app that allows users to create and join activities locally, invite friends, and connect with people nearby.</p>
   <br>
-  <img src=![354714907_828718018676644_2523023637969723084_n](https://github.com/adampalkowski/SocialK/assets/50372825/e50fe02c-1708-423c-b47e-3ef53fdea962) alt="Main Screen" width="300px">
+  <img src="https://github.com/adampalkowski/SocialK/assets/50372825/cd694605-d304-4bb1-a6a5-48db6907f42b" alt="Main Screen" width="300px">
 </div>
 
 
@@ -27,23 +27,14 @@
 | Main Screen | Create Activity | Settings | Chat | Drawer |  Activity display|
 | :---------: | :-------------: | :-------------: | :-------------: | :-------------: |
 | <img src="https://github.com/adampalkowski/SocialK/assets/50372825/e50fe02c-1708-423c-b47e-3ef53fdea962.png" width="300px"> 
-| <img src="[screenshots/create_activity.png](https://github.com/adampalkowski/SocialK/assets/50372825/96937270-3e07-4b38-82ae-7c37bbbbf8f2)" width="300px">
-| <img src="https://github.com/adampalkowski/SocialK/assets/50372825/e50fe02c-1708-423c-b47e-3ef53fdea962.png" width="300px"> 
-|
+| <img src="https://github.com/adampalkowski/SocialK/assets/50372825/96937270-3e07-4b38-82ae-7c37bbbbf8f2" width="300px">
+| <img src="[https://github.com/adampalkowski/SocialK/assets/50372825/e50fe02c-1708-423c-b47e-3ef53fdea962.png](https://github.com/adampalkowski/SocialK/assets/50372825/57521b47-db49-4a65-b9ec-37c9313670fe)" width="300px"> 
+| <img src="[screenshots/create_activity.png](https://github.com/adampalkowski/SocialK/assets/50372825/e43a7c33-b0e9-4034-8a65-5c1a38bdc502)](https://github.com/adampalkowski/SocialK/assets/50372825/a3b1015c-5f2d-4a72-915a-7216ad8f32ce)" width="300px">
+| <img src="[screenshots/create_activity.png](https://github.com/adampalkowski/SocialK/assets/50372825/e43a7c33-b0e9-4034-8a65-5c1a38bdc502)](https://github.com/adampalkowski/SocialK/assets/50372825/e43a7c33-b0e9-4034-8a65-5c1a38bdc502)" width="300px">
+| <img src="[screenshots/create_activity.png](https://github.com/adampalkowski/SocialK/assets/50372825/e43a7c33-b0e9-4034-8a65-5c1a38bdc502)" width="300px">
+| <img src="[screenshots/create_activity.png](https://github.com/adampalkowski/SocialK/assets/50372825/e43a7c33-b0e9-4034-8a65-5c1a38bdc502)](https://github.com/adampalkowski/SocialK/assets/50372825/cd694605-d304-4bb1-a6a5-48db6907f42b)" width="300px">
 ---
- <img src="screenshots/create_activity.png" width="300px">
 
-Main screen activity display
-![354477329_979293423452959_2452634882598972479_n](https://github.com/adampalkowski/SocialK/assets/50372825/cd694605-d304-4bb1-a6a5-48db6907f42b)
-
-Settings
-![354473656_297282252636881_7698697578832000242_n](https://github.com/adampalkowski/SocialK/assets/50372825/57521b47-db49-4a65-b9ec-37c9313670fe)
-Drawer
-![354727796_146893538393445_5831219779237896317_n](https://github.com/adampalkowski/SocialK/assets/50372825/e43a7c33-b0e9-4034-8a65-5c1a38bdc502)
-Chat
-![353170307_1004855113981145_4897619620499043825_n](https://github.com/adampalkowski/SocialK/assets/50372825/a3b1015c-5f2d-4a72-915a-7216ad8f32ce)
-Create screen
-![353453591_726162122594668_7802760551678164873_n](https://github.com/adampalkowski/SocialK/assets/50372825/96937270-3e07-4b38-82ae-7c37bbbbf8f2)
 
 ## Installation
 
