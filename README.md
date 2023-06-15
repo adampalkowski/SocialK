@@ -6,10 +6,10 @@
   <br>
 
 </div>
-![354477329_979293423452959_2452634882598972479_n](https://github.com/adampalkowski/SocialK/assets/50372825/ddeaa939-d9e7-4713-94a1-167df1aa79d4)
-
 
 ---
+![354477329_979293423452959_2452634882598972479_n](https://github.com/adampalkowski/SocialK/assets/50372825/ddeaa939-d9e7-4713-94a1-167df1aa79d4)
+
 
 # Under Construction
 :construction: :construction: :construction: :construction: :construction: 
